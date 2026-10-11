@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@clerk/localizations':
+        specifier: ^4.23.0
+        version: 4.23.0(react-dom@19.1.4(react@19.1.4))(react@19.1.4)
       '@clerk/nextjs':
         specifier: ^6.39.7
         version: 6.39.7(next@15.5.9(@playwright/test@1.59.1)(react-dom@19.1.4(react@19.1.4))(react@19.1.4)(sass@1.92.1))(react-dom@19.1.4(react@19.1.4))(react@19.1.4)
@@ -285,6 +288,10 @@ packages:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
       react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
 
+  '@clerk/localizations@4.23.0':
+    resolution: {integrity: sha512-6DiPH+qscEZroIPIm/fYOA4ToBI3kmfgiCn75XgqzU2vR8mFl033bA3PvdmTmvmwNOtdlKWtWKdoe66HXyYD1w==}
+    engines: {node: '>=20.9.0'}
+
   '@clerk/nextjs@6.39.7':
     resolution: {integrity: sha512-J5884xWcNs+/kV4HQAjUVnMw+XR67B8qPveO7yWwrPrYmzARcQC3gxewlROL1dHXzWlx0cqgSvJbolm8KpEppg==}
     engines: {node: '>=18.17.0'}
@@ -296,6 +303,18 @@ packages:
   '@clerk/shared@3.48.0':
     resolution: {integrity: sha512-4VBHItiLUZJGptWNwLazcOvz4yAFBzrjuJaf1yF35KGZWSNg3FrDCNsn8PZdPs5l4kJjx6aIGSmoRZmbOruuSg==}
     engines: {node: '>=18.17.0'}
+    peerDependencies:
+      react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
+      react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  '@clerk/shared@4.40.0':
+    resolution: {integrity: sha512-80KM/uw5ZseYTKwJjIhJj7jsHqX6rFem6cwcFJVCUriE3R4tpzkhXsfbhtdho6cG2pQD3NVqKspxTVbSjATzPg==}
+    engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
       react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -848,6 +867,9 @@ packages:
     resolution: {integrity: sha512-0wDLwCVF5V3x3b1SGXPCDcdsbDHMBe+lkFzBRaHeLvNi+nrrnZ1lA18u+OTWO8iSWU2GxUOCvlXtDuqftc1oiA==}
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
+
+  '@tanstack/query-core@5.104.1':
+    resolution: {integrity: sha512-TiRghcrGkUTE+M4JBxvpPSpBhxvIzQairw+cksrHYGr+2uwC77yW1SY9nYxnYRYOppvucf8rEg6b5byoz4rTpw==}
 
   '@tybys/wasm-util@0.10.0':
     resolution: {integrity: sha512-VyyPYFlOMNylG45GoAe0xDoLwWuowvf92F9kySqzYh8vmYm7D2u4iUJKa1tOUpS70Ku13ASrOkS4ScXFsTaCNQ==}
@@ -2823,6 +2845,9 @@ packages:
     resolution: {integrity: sha512-z/wZZgDrkNV1eA0ULjM/F9/50Ya8fbzgKneSpoPsXSGd0KnpdtHfOZWK+GcwLk+EZbS4F9RBhU+K2RgzuDaItw==}
     engines: {node: '>=20'}
 
+  js-cookie@3.0.8:
+    resolution: {integrity: sha512-yeJd4aNAdYZQjaon2bpD/Gb0B/omw7HQOsynXXcOiWVCacbBcPlgn8S/d1X6blFSaHao7ozqtW7NZW19xpCtIw==}
+
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -4474,6 +4499,13 @@ snapshots:
       react-dom: 19.1.4(react@19.1.4)
       tslib: 2.8.1
 
+  '@clerk/localizations@4.23.0(react-dom@19.1.4(react@19.1.4))(react@19.1.4)':
+    dependencies:
+      '@clerk/shared': 4.40.0(react-dom@19.1.4(react@19.1.4))(react@19.1.4)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
   '@clerk/nextjs@6.39.7(next@15.5.9(@playwright/test@1.59.1)(react-dom@19.1.4(react@19.1.4))(react@19.1.4)(sass@1.92.1))(react-dom@19.1.4(react@19.1.4))(react@19.1.4)':
     dependencies:
       '@clerk/backend': 2.33.7(react-dom@19.1.4(react@19.1.4))(react@19.1.4)
@@ -4494,6 +4526,16 @@ snapshots:
       js-cookie: 3.0.7
       std-env: 3.10.0
       swr: 2.3.4(react@19.1.4)
+    optionalDependencies:
+      react: 19.1.4
+      react-dom: 19.1.4(react@19.1.4)
+
+  '@clerk/shared@4.40.0(react-dom@19.1.4(react@19.1.4))(react@19.1.4)':
+    dependencies:
+      '@tanstack/query-core': 5.104.1
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.8
     optionalDependencies:
       react: 19.1.4
       react-dom: 19.1.4(react@19.1.4)
@@ -5049,6 +5091,8 @@ snapshots:
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
       tailwindcss: 3.4.17
+
+  '@tanstack/query-core@5.104.1': {}
 
   '@tybys/wasm-util@0.10.0':
     dependencies:
@@ -7337,6 +7381,8 @@ snapshots:
   js-cookie@3.0.5: {}
 
   js-cookie@3.0.7: {}
+
+  js-cookie@3.0.8: {}
 
   js-tokens@4.0.0: {}
 

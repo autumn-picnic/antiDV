@@ -16,6 +16,7 @@
     "test:access": "node --test tests/access.test.cjs"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.23.0",
     "@clerk/nextjs": "^6.39.7",
     "@floating-ui/react": "^0.26.25",
     "@formatjs/intl-localematcher": "^0.5.6",

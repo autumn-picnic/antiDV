@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs'
+import { zhCN } from '@clerk/localizations'
 import type { Metadata } from 'next'
 import { getLocaleOnServer } from '@/i18n/server'
 
@@ -65,7 +66,7 @@ const LocaleLayout = async ({
 }) => {
   const locale = await getLocaleOnServer()
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={zhCN}>
       <html lang={locale ?? 'zh-Hans'} className="h-full">
         <head>
           {/* Preconnect to Google Fonts to reduce DNS + TLS latency */}
