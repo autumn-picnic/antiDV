@@ -375,6 +375,12 @@
   mix-blend-mode: multiply;
 }
 
+.home-support-sage .home-support-art,
+.home-support-lavender .home-support-art,
+.home-support-blue .home-support-art {
+  clip-path: inset(0 0 0 16%);
+}
+
 .home-support-arrow {
   display: block;
   margin-top: 20px;
