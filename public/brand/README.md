@@ -2,9 +2,9 @@
 
 所有图片路径统一配置在 `config/brand-assets.ts`，替换同名文件即可更新。
 
-- `xiaoan-portrait.png`：用户提供的图2，首页主图与全站小安头像共用，头像使用 `cover` 居中显示。
-- `support-conversation.png`：图3左侧插画，用于首页第二屏，文字和聊天入口单独实现。
+- `xiaoan-portrait.png`：Figma 的首页图层 `image 46`（节点 `105:63`）导出的高清透明 PNG（1214×972），首页主图与全站小安头像共用，头像使用 `cover` 居中显示。
+- `support-conversation.png`：用户最新提供的完整插画（854×526），用于首页第二屏，文字和聊天入口单独实现。
 - `value-safety.png`、`value-trust.png`、`value-privacy.png`：图4定位说明的三张插画。
 - `help-understand.png`、`help-safety.png`、`help-legal.png`、`help-rebuild.png`：图4四张支持卡片的插画。
 
-插画从用户提供的参考图片裁切，原始分辨率保留。页面文字使用 HTML，支持链接与移动端重排。图2原图为 236×204，放大显示的清晰度受原图限制。
+插画从用户提供的参考图片裁切，原始分辨率保留。页面文字使用 HTML，支持链接与移动端重排。首页与头像原图来源：Figma 文件 `rCHimJFqCjG9i3uTAvGYaQ`；第二屏通过 `mix-blend-mode: multiply` 与首页背景融合。

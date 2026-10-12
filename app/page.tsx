@@ -8,6 +8,7 @@ import ScrollReveal from '@/app/components/scroll-reveal'
 import { brandAssets } from '@/config/brand-assets'
 import './styles/figma-home.css'
 import AppIcon from '@/app/components/base/app-icon'
+import HomeCarousel from '@/app/components/home-carousel'
 
 export const metadata: Metadata = {
   title: {
@@ -27,11 +28,6 @@ export const metadata: Metadata = {
 }
 
 /* ── Inline SVG Icons (stroke 1.5, 20×20, no external deps) ── */
-const IconChat = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="对话">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-)
 const IconPhone = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="电话">
     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -58,10 +54,10 @@ const values = [
 ]
 
 const features = [
-  { num: '01', title: '了解发生什么', image: brandAssets.help.understand, tone: 'peach', desc: '很多伤害没有惊雷。小安帮你分辨哪些行为算暴力、暴力为什么会循环，为什么这不是你的错。', link: '/chat' },
-  { num: '02', title: '让自己更安全', image: brandAssets.help.safety, tone: 'sage', desc: '在你还没决定任何事的时候，就可以先做准备：安全计划、证据怎么留、紧急时去哪里。', link: '/chat' },
-  { num: '03', title: '拿起法律武器', image: brandAssets.help.legal, tone: 'lavender', desc: '有效报警、及时验伤、申请人身安全保护令、寻求进一步法律援助——小安陪你了解每一步可以怎么做。', link: '/chat' },
-  { num: '04', title: '重建个人生活', image: brandAssets.help.rebuild, tone: 'blue', desc: '分开后的骚扰怎么应对、创伤修复需要什么、怎么重新开始——这些也可以和小安聊聊。', link: '/chat' },
+  { num: '01', title: '了解发生什么', image: brandAssets.help.understand, tone: 'peach', desc: '很多伤害没有淤青。小安帮你分辨哪些行为算暴力、暴力为什么会循环，以及为什么这不是你的错。', link: '/chat' },
+  { num: '02', title: '准备安全计划', image: brandAssets.help.safety, tone: 'sage', desc: '有些决定很难立马做出，但你可以先了解：什么是安全计划、证据如何保存、紧急时需要做些什么。', link: '/chat' },
+  { num: '03', title: '寻求法律支持', image: brandAssets.help.legal, tone: 'lavender', desc: '有效报警、及时验伤、申请人身安全保护令、寻求法律援助——小安会告诉你每一步具体怎么办。', link: '/chat' },
+  { num: '04', title: '重塑个人生活', image: brandAssets.help.rebuild, tone: 'blue', desc: '分开后面临骚扰和威胁怎么办、身心创伤如何应对、重新开始可以从哪里开始——这些小安也知道。', link: '/chat' },
 ]
 
 const faqs = [
@@ -140,28 +136,7 @@ const LandingPage: FC = () => {
           <a href="#contact">有话要说</a>
         </nav>
       </header>
-      <section className="home-hero" aria-labelledby="welcome-title">
-        <div className="home-hero-grid">
-          <div className="home-intro">
-            <h1 id="welcome-title">你好，我是<span>小安</span></h1>
-            <p>一个24小时在线<br />倾听你、支持你、帮助你维护权益的AI反家暴志愿者</p>
-            <Link href="/chat" className="home-chat-link">
-              <IconChat /><span>和小安说说话</span><span aria-hidden="true">→</span>
-            </Link>
-          </div>
-          <Image className="home-illustration" src={brandAssets.hero} alt="戴眼镜、穿紫色外套的小安" width={236} height={204} priority />
-        </div>
-        <a href="#about" className="home-scroll">谢谢你的信任，一起来认识小安吧<span aria-hidden="true">⌄</span></a>
-      </section>
-      <section id="about" className="home-conversation" aria-labelledby="conversation-title">
-        <Image className="home-conversation-art" src={brandAssets.conversation} alt="小安向坐在窗边的人递出一盆绿植，陪伴她整理处境" width={922} height={510} />
-        <div className="home-conversation-copy">
-          <h2 id="conversation-title">爱不应该带来伤害，<br />说不清楚的事，<br />跟小安说说</h2>
-          <p>这算不算伤害，接下来怎么办，可以找谁，我们一点点理清。</p>
-          <Link href="/chat" className="home-conversation-link"><span>和小安说说话</span><span className="home-round-arrow" aria-hidden="true">→</span></Link>
-          <a href="#values" className="home-continue">还不想开口？往下看看！</a>
-        </div>
-      </section>
+      <HomeCarousel />
 
       <section id="values" className="home-values" aria-labelledby="values-title">
         <h2 id="values-title">定位说明</h2>
