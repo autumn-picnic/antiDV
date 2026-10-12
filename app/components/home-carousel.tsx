@@ -58,8 +58,8 @@ export default function HomeCarousel() {
             <div className="home-hero-grid">
               <div className="home-intro">
                 {index === 0
-                  ? <h1 className="home-hero-title">你好，我是<span>小安</span></h1>
-                  : <h2 className="home-hero-title">{slide.title.map(line => <span className="home-copy-line" key={line}>{line}</span>)}</h2>}
+                  ? <h1 className="home-hero-title">你好，我是<span className="home-title-name">小安</span></h1>
+                  : <h2 className="home-hero-title">{slide.title.map(line => <span className="home-copy-line" key={line}>{line.includes('小安') ? <>都可以和<span className="home-title-name">小安</span>说说。</> : line}</span>)}</h2>}
                 <p>{slide.description.map(line => <span className="home-copy-line" key={line}>{line}</span>)}</p>
                 <Link href="/chat" className="home-chat-link" tabIndex={active === index ? 0 : -1}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>

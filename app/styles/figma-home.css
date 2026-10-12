@@ -144,7 +144,7 @@
   background: #95684d;
 }
 
-.home-hero-1 .home-hero-title span {
+.home-title-name {
   background: linear-gradient(100deg, #a38abb, #f4b093);
   background-clip: text;
   color: transparent;
@@ -497,4 +497,20 @@
 .home-carousel-viewport:focus-visible {
   outline: 2px solid #e8a87c;
   outline-offset: -2px;
+}
+
+@media (width >= 768px) {
+  .home-hero-2 .home-hero-grid {
+    grid-template-columns: 1fr 1.2fr;
+  }
+
+  .home-hero-2 .home-illustration {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-hero-2 .home-intro {
+    grid-column: 2;
+    grid-row: 1;
+  }
 }
