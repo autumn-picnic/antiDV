@@ -9,17 +9,21 @@ const ts = require('typescript')
 let rendering
 const react = {
   useState(initial) {
-    const runner = rendering, index = runner.cursor++
+    const runner = rendering
+    const index = runner.cursor++
     if (!(index in runner.cells)) runner.cells[index] = typeof initial === 'function' ? initial() : initial
     return [runner.cells[index], value => { runner.cells[index] = typeof value === 'function' ? value(runner.cells[index]) : value }]
   },
   useRef(initial) {
-    const runner = rendering, index = runner.cursor++
+    const runner = rendering
+    const index = runner.cursor++
     if (!(index in runner.cells)) runner.cells[index] = { current: initial }
     return runner.cells[index]
   },
   useEffect(effect, deps) {
-    const runner = rendering, index = runner.cursor++, previous = runner.cells[index]
+    const runner = rendering
+    const index = runner.cursor++
+    const previous = runner.cells[index]
     if (!previous || deps.some((value, i) => !Object.is(value, previous.deps[i]))) {
       runner.effects.push(() => { previous?.cleanup?.(); runner.cells[index] = { deps, cleanup: effect() } })
     }
@@ -83,7 +87,7 @@ test('prompt begins at five completed turns and stays optional for guests', () =
 
 test('actual chat completion counts five rounds; interruption does not count; continue survives remount', async () => {
   const storage = new Map()
-  global.sessionStorage = { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) }
+  globalThis.sessionStorage = { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) }
   try {
     const prompt = hooks(() => useGuestLoginPrompt(false))
     const chat = hooks(() => useChatflow({ authReady: true, signedIn: false, onCompleted: () => prompt.value.completed() }))
@@ -110,11 +114,11 @@ test('actual chat completion counts five rounds; interruption does not count; co
     const restored = hooks(() => useGuestLoginPrompt(false))
     assert.equal(restored.render().visible, false)
   }
-  finally { delete global.sessionStorage; failSend = false }
+  finally { delete globalThis.sessionStorage; failSend = false }
 })
 
 test('blocked browser storage still permits counting and continuing without registration', () => {
-  global.sessionStorage = { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } }
+  globalThis.sessionStorage = { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } }
   try {
     const prompt = hooks(() => useGuestLoginPrompt(false))
     for (let i = 0; i < 5; i++) { prompt.value.completed(); prompt.render() }
@@ -122,5 +126,5 @@ test('blocked browser storage still permits counting and continuing without regi
     prompt.value.dismiss(); prompt.render()
     assert.equal(prompt.value.visible, false)
   }
-  finally { delete global.sessionStorage }
+  finally { delete globalThis.sessionStorage }
 })

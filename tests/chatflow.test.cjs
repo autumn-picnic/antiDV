@@ -32,12 +32,12 @@ const api = load('service/index.ts')
 const { fetchBackend } = load('lib/backend.ts')
 const { proxyChatflow } = load('app/api/utils/proxy.ts')
 const { NextRequest } = require('next/server')
-const originalFetch = global.fetch
+const originalFetch = globalThis.fetch
 const envKeys = ['BACKEND_API_URL', 'BACKEND_API_KEY', 'BACKEND_API_KEY_HEADER', 'FRONTEND_ORIGIN']
 const originalEnv = Object.fromEntries(envKeys.map(key => [key, process.env[key]]))
 afterEach(() => {
   mockActor = { userId: 'user_test', sessionId: 'sess_test', role: 'user', token: 'verified-token' }
-  global.fetch = originalFetch
+  globalThis.fetch = originalFetch
   for (const [key, value] of Object.entries(originalEnv)) {
     if (value === undefined) delete process.env[key]
     else process.env[key] = value
@@ -93,7 +93,7 @@ test('EOF is not completed and includes response ID for reconciliation', async (
 })
 
 test('HTTP 200 SSE error rejects, never retries or accepts a later completion', async () => {
-  global.fetch = () => { throw new Error('must not retry') }
+  globalThis.fetch = () => { throw new Error('must not retry') }
   await assert.rejects(api.readChatStream(stream(start + frame('error', { message: 'sensitive upstream details' }) + done), 'c1', { onDelta() {} }), error => error.status === 503 && !error.message.includes('sensitive'))
 })
 
@@ -119,7 +119,7 @@ test('SSE idle timeout cancels the reader and fails', async () => {
 
 test('native send uses message/debug:false, Cookie credentials and no retry', async () => {
   let calls = 0
-  global.fetch = async (url, init) => {
+  globalThis.fetch = async (url, init) => {
     calls++
     assert.equal(url, '/v1/conversations/c1/responses/stream')
     assert.equal(init.credentials, 'include')
@@ -144,20 +144,20 @@ test('debug mode explicitly requests diagnostics without retrying generation', a
 })
 
 test('invalid message never starts a request', async () => {
-  global.fetch = () => { throw new Error('unexpected request') }
+  globalThis.fetch = () => { throw new Error('unexpected request') }
   await assert.rejects(api.sendChatMessage('c1', ' ', { onDelta() {} }, new AbortController().signal), error => error.status === 422)
   await assert.rejects(api.sendChatMessage('c1', '字'.repeat(4001), { onDelta() {} }, new AbortController().signal), error => error.status === 422)
 })
 
 test('current 404 returns empty; 503 remains a visible error', async () => {
-  global.fetch = async () => new Response(null, { status: 404 })
+  globalThis.fetch = async () => new Response(null, { status: 404 })
   assert.equal(await api.fetchCurrentConversation(), null)
-  global.fetch = async () => new Response('private error', { status: 503 })
+  globalThis.fetch = async () => new Response('private error', { status: 503 })
   await assert.rejects(api.fetchCurrentConversation(), error => error.status === 503 && !error.message.includes('private'))
 })
 
 test('list follows next_offset and history follows next_after', async () => {
-  global.fetch = async url => {
+  globalThis.fetch = async url => {
     if (url.includes('offset=0')) return Response.json({ items: [{ id: 'c1' }], next_offset: 1 })
     if (url.includes('offset=1')) return Response.json({ items: [{ id: 'c2' }], next_offset: null })
     const after = url.includes('after=0') ? 0 : 1
@@ -175,20 +175,20 @@ test('history retains per-turn debug metadata for restored chat', async () => {
 })
 
 test('invalid pagination cursor fails rather than looping', async () => {
-  global.fetch = async () => Response.json({ items: [], next_offset: 0 })
+  globalThis.fetch = async () => Response.json({ items: [], next_offset: 0 })
   await assert.rejects(api.fetchConversations(), /分页/)
 })
 
 test('204 delete succeeds; failed delete rejects', async () => {
-  global.fetch = async () => new Response(null, { status: 204 })
+  globalThis.fetch = async () => new Response(null, { status: 204 })
   await api.deleteConversation('c1')
-  global.fetch = async () => new Response(null, { status: 503 })
+  globalThis.fetch = async () => new Response(null, { status: 503 })
   await assert.rejects(api.deleteConversation('c1'), error => error.status === 503)
 })
 
 test('server config is required; there is no Dify fallback', async () => {
   delete process.env.BACKEND_API_URL
-  global.fetch = () => { throw new Error('unexpected request') }
+  globalThis.fetch = () => { throw new Error('unexpected request') }
   await assert.rejects(fetchBackend('/v1/conversations'), error => error.status === 503)
 })
 
@@ -196,7 +196,7 @@ test('server transport uses a private key, disables cache and redirects', async 
   process.env.BACKEND_API_URL = 'https://backend.example'
   process.env.BACKEND_API_KEY = 'test-key'
   process.env.BACKEND_API_KEY_HEADER = 'api-key'
-  global.fetch = async (url, init) => {
+  globalThis.fetch = async (url, init) => {
     assert.equal(String(url), 'https://backend.example/v1/config/models')
     assert.equal(init.headers.get('api-key'), 'test-key')
     assert.equal(init.cache, 'no-store')
@@ -210,7 +210,7 @@ test('gateway preserves streaming, cookies, status and Origin; filters unrelated
   process.env.BACKEND_API_URL = 'https://backend.example'
   process.env.FRONTEND_ORIGIN = 'https://frontend.example'
   delete process.env.BACKEND_API_KEY
-  global.fetch = async (url, init) => {
+  globalThis.fetch = async (url, init) => {
     assert.equal(String(url), 'https://backend.example/v1/conversations')
     assert.equal(init.headers.get('cookie'), 'xiaoan_current=c1')
     assert.equal(init.headers.get('authorization'), 'Bearer verified-token')
@@ -232,7 +232,7 @@ test('gateway preserves streaming, cookies, status and Origin; filters unrelated
 
 test('gateway rejects cross-origin mutation, unknown routes and unsupported methods', async () => {
   process.env.FRONTEND_ORIGIN = 'https://frontend.example'
-  global.fetch = () => { throw new Error('must not forward') }
+  globalThis.fetch = () => { throw new Error('must not forward') }
   const cross = new NextRequest('https://frontend.example/v1/conversations', { method: 'POST', headers: { Origin: 'https://evil.example' } })
   assert.equal((await proxyChatflow(cross)).status, 403)
   assert.equal((await proxyChatflow(new NextRequest('https://frontend.example/v1/webhooks/clerk'))).status, 404)
@@ -242,7 +242,7 @@ test('gateway rejects cross-origin mutation, unknown routes and unsupported meth
 test('gateway forwards an SSE body without waiting for completion', async () => {
   process.env.BACKEND_API_URL = 'https://backend.example'
   process.env.FRONTEND_ORIGIN = 'https://frontend.example'
-  global.fetch = async () => new Response(new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(start)) } }), { headers: { 'Content-Type': 'text/event-stream' } })
+  globalThis.fetch = async () => new Response(new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(start)) } }), { headers: { 'Content-Type': 'text/event-stream' } })
   const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations/c1/responses/stream', {
     method: 'POST', headers: { Origin: 'https://frontend.example' }, body: JSON.stringify({ message: '合成测试' }),
   }))
@@ -251,13 +251,12 @@ test('gateway forwards an SSE body without waiting for completion', async () => 
   await reader.cancel()
 })
 
-
 test('guest gateway forwards only guest cookies without account authorization', async () => {
   mockActor = null
   process.env.BACKEND_API_URL = 'https://backend.example'
   delete process.env.BACKEND_API_KEY
   let forwarded = false
-  global.fetch = async (_, init) => {
+  globalThis.fetch = async (_, init) => {
     forwarded = true
     assert.equal(init.headers.get('authorization'), null)
     assert.equal(init.headers.get('cookie'), 'xiaoan_guest=guest; xiaoan_current=c1')
@@ -274,7 +273,7 @@ test('guest can create a conversation and receive its HttpOnly credential', asyn
   mockActor = null
   process.env.BACKEND_API_URL = 'https://backend.example'
   delete process.env.BACKEND_API_KEY
-  global.fetch = async (_, init) => {
+  globalThis.fetch = async (_, init) => {
     assert.equal(init.headers.get('authorization'), null)
     return Response.json({ conversation_id: 'guest-c1' }, { status: 201, headers: { 'Set-Cookie': 'xiaoan_guest=opaque; Path=/v1; HttpOnly; SameSite=Strict' } })
   }
@@ -285,7 +284,7 @@ test('guest can create a conversation and receive its HttpOnly credential', asyn
 
 test('guest cannot claim guest chats without an account', async () => {
   mockActor = null
-  global.fetch = () => { throw new Error('must not forward') }
+  globalThis.fetch = () => { throw new Error('must not forward') }
   const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/me/claim-guest', { method: 'POST', headers: { Origin: 'https://frontend.example' } }))
   assert.equal(response.status, 401)
 })
