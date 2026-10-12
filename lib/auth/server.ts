@@ -18,3 +18,10 @@ export async function requireActor(admin = false): Promise<Actor> {
   if (admin) { assertAdmin(actor) }
   return actor
 }
+
+/** Only an absent session is a guest; invalid or revoked sessions still fail closed. */
+export async function optionalActor(): Promise<Actor | null> {
+  const session = await auth()
+  if (!session.userId && !session.sessionId) { return null }
+  return requireActor()
+}

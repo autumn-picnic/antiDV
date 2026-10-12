@@ -41,7 +41,7 @@ function load(file) {
   mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { fileName: filename, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, filename)
   return mod.exports
 }
-const { requireActor } = load('lib/auth/server.ts')
+const { requireActor, optionalActor } = load('lib/auth/server.ts')
 const { roleFromMetadata, assertAdmin } = load('lib/auth/policy.ts')
 const { validateReview } = load('lib/feedback/validation.ts')
 const repository = load('lib/feedback/repository.ts')
@@ -154,4 +154,15 @@ test('cross-origin logout is rejected and cannot clear credentials', async () =>
   assert.equal(response.status, 403)
   assert.equal(response.headers.getSetCookie().length, 0)
   assert.equal(revoked.length, 0)
+})
+
+test('optional actor permits absent sessions but denies revoked and partial sessions', async () => {
+  assert.equal((await optionalActor()).userId, 'user_alice')
+  authState = { userId: null, sessionId: null }
+  assert.equal(await optionalActor(), null)
+  authState = { userId: 'user_alice', sessionId: null }
+  await assert.rejects(optionalActor(), e => e.status === 401)
+  reset()
+  liveSession.status = 'revoked'
+  await assert.rejects(optionalActor(), e => e.status === 401)
 })

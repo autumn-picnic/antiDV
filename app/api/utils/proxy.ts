@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { BackendError, fetchBackend } from '@/lib/backend'
-import { requireActor } from '@/lib/auth/server'
+import { optionalActor } from '@/lib/auth/server'
 import { AccessError } from '@/lib/auth/policy'
 
 const cookieNames = new Set(['xiaoan_guest', 'xiaoan_current', 'xiaoan_session'])
@@ -39,10 +39,11 @@ export async function proxyChatflow(request: NextRequest) {
   const cookies = request.cookies.getAll().filter(cookie => cookieNames.has(cookie.name))
   if (cookies.length) { headers.set('Cookie', cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')) }
   try {
-    const actor = await requireActor()
-    headers.set('Authorization', `Bearer ${actor.token}`)
-    // Account identity owns all new chats. Guest credentials are only for explicit claim.
-    if (path !== '/v1/me/claim-guest') { headers.delete('Cookie')
+    const actor = await optionalActor()
+    if (path === '/v1/me/claim-guest' && !actor) { throw new AccessError(401, '请先登录') }
+    if (actor) { headers.set('Authorization', `Bearer ${actor.token}`) }
+    // Signed-in chats use account identity; guests retain their own credentials.
+    if (actor && path !== '/v1/me/claim-guest') { headers.delete('Cookie')
       const current = request.cookies.get('xiaoan_current')?.value
       if (current) { headers.set('Cookie', `xiaoan_current=${current}`) }
     }

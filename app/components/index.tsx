@@ -1,6 +1,9 @@
 'use client'
 import type { FC } from 'react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useUser } from '@clerk/nextjs'
+import useGuestLoginPrompt from '@/hooks/use-guest-login-prompt'
+import GuestLoginPrompt from '@/app/components/account/guest-login-prompt'
 import { useBoolean } from 'ahooks'
 import Sidebar from '@/app/components/sidebar'
 import Header from '@/app/components/header'
@@ -23,6 +26,8 @@ import '@/app/styles/figma-chat.css'
 export interface IMainProps { params?: unknown }
 
 const Main: FC<IMainProps> = () => {
+  const { isLoaded, isSignedIn } = useUser()
+  const guestPrompt = useGuestLoginPrompt(Boolean(isSignedIn))
   const router = useRouter()
   const [crisisId, setCrisisId] = useState<string | null>(null)
   const dismissed = useRef(new Set<string>())
@@ -36,7 +41,7 @@ const Main: FC<IMainProps> = () => {
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
-  const { conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow()
+  const { conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   useEffect(() => {
     const completedNow = wasResponding.current && !isResponding
     wasResponding.current = isResponding
@@ -116,6 +121,7 @@ const Main: FC<IMainProps> = () => {
       />
       <AccountControls />
       <IncognitoNotice />
+      {guestPrompt.visible && isLoaded && !crisisId && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* sidebar */}
         {!isMobile && renderSidebar()}
@@ -143,7 +149,7 @@ const Main: FC<IMainProps> = () => {
                 chatList={chatList}
                 debugEnabled={debugEnabled}
                 onSend={handleSend}
-                onReview={review}
+                onReview={isSignedIn ? review : undefined}
                 isResponding={isResponding}
                 disabled={busy || Boolean(failure?.needsRecovery)}
                 checkCanSend={checkCanSend}

@@ -18,7 +18,7 @@ function load(file) {
   mod.paths = Module._nodeModulePaths(path.dirname(filename))
   const originalRequire = mod.require.bind(mod)
   mod.require = name => {
-    if (name === '@/lib/auth/server') return { requireActor: async () => { if (!mockActor) { const { AccessError } = load('lib/auth/policy.ts'); throw new AccessError(401, '请先登录') }; return mockActor } }
+    if (name === '@/lib/auth/server') return { optionalActor: async () => mockActor }
     return name === 'server-only' ? {} : name.startsWith('@/') ? load(`${name.slice(2)}.ts`) : originalRequire(name)
   }
   const source = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
@@ -252,10 +252,41 @@ test('gateway forwards an SSE body without waiting for completion', async () => 
 })
 
 
-test('gateway denies logged-out requests before backend fetch', async () => {
+test('guest gateway forwards only guest cookies without account authorization', async () => {
+  mockActor = null
+  process.env.BACKEND_API_URL = 'https://backend.example'
+  delete process.env.BACKEND_API_KEY
+  let forwarded = false
+  global.fetch = async (_, init) => {
+    forwarded = true
+    assert.equal(init.headers.get('authorization'), null)
+    assert.equal(init.headers.get('cookie'), 'xiaoan_guest=guest; xiaoan_current=c1')
+    return Response.json({ items: [] })
+  }
+  const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations', {
+    headers: { Cookie: 'xiaoan_guest=guest; xiaoan_current=c1; __session=private; feedback_auth=secret' },
+  }))
+  assert.equal(response.status, 200)
+  assert.equal(forwarded, true)
+})
+
+test('guest can create a conversation and receive its HttpOnly credential', async () => {
+  mockActor = null
+  process.env.BACKEND_API_URL = 'https://backend.example'
+  delete process.env.BACKEND_API_KEY
+  global.fetch = async (_, init) => {
+    assert.equal(init.headers.get('authorization'), null)
+    return Response.json({ conversation_id: 'guest-c1' }, { status: 201, headers: { 'Set-Cookie': 'xiaoan_guest=opaque; Path=/v1; HttpOnly; SameSite=Strict' } })
+  }
+  const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations', { method: 'POST', headers: { Origin: 'https://frontend.example' } }))
+  assert.equal(response.status, 201)
+  assert.match(response.headers.getSetCookie()[0], /HttpOnly/)
+})
+
+test('guest cannot claim guest chats without an account', async () => {
   mockActor = null
   global.fetch = () => { throw new Error('must not forward') }
-  const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations'))
+  const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/me/claim-guest', { method: 'POST', headers: { Origin: 'https://frontend.example' } }))
   assert.equal(response.status, 401)
 })
 
