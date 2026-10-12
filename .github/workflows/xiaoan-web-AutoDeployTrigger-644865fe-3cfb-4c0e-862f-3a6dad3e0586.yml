@@ -49,18 +49,43 @@ jobs:
                 .value == ("https://" + $fqdn))] | length) == 1
             ' >/dev/null
 
-      - name: Build and push container image to registry
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }}
-          dockerfilePath: Dockerfile
-          targetPort: 3000
-          registryUrl: xiaoanhd5dc8acr.azurecr.io
-          registryUsername: ${{ secrets.XIAOANWEB_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.XIAOANWEB_REGISTRY_PASSWORD }}
-          containerAppName: xiaoan-web
-          resourceGroup: xiaoan-pilot-rg
-          imageToBuild: >-
-            xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${{ github.sha }}
-          buildArguments: |
-            "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.XIAOANWEB_CLERK_PUBLISHABLE_KEY }}"
+      - name: Login to Azure Container Registry
+        run: az acr login --name xiaoanhd5dc8acr
+
+      - name: Build and push image
+        env:
+          IMAGE: xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${{ github.sha }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.XIAOANWEB_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          docker build --file Dockerfile \
+            --build-arg "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY" \
+            --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Update existing web container
+        env:
+          IMAGE: xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${{ github.sha }}
+        run: |
+          az extension add --name containerapp --upgrade --yes
+          az containerapp update \
+            --name xiaoan-web \
+            --resource-group xiaoan-pilot-rg \
+            --container-name web \
+            --image "$IMAGE" \
+            --output none
+
+      - name: Verify deployed revision
+        run: |
+          for attempt in {1..24}; do
+            latest=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query properties.latestRevisionName -o tsv)
+            ready=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query properties.latestReadyRevisionName -o tsv)
+            image=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'properties.template.containers[0].image' -o tsv)
+            containers=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'length(properties.template.containers)' -o tsv)
+            if [[ "$latest" == "$ready" && "$containers" == "1" && "$image" == "xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${GITHUB_SHA}" ]]; then
+              echo "Healthy revision: $latest"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "New xiaoan-web revision did not become ready" >&2
+          exit 1
