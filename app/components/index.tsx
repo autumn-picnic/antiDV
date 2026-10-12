@@ -14,6 +14,8 @@ import useChatflow from '@/hooks/use-chatflow'
 import CrisisDialog from '@/app/components/crisis-dialog'
 import { useRouter } from 'next/navigation'
 import AccountControls from '@/app/components/account/account-controls'
+import { BugAntIcon } from '@heroicons/react/24/outline'
+import { GuardSummary } from '@/app/components/chat/debug-panel'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
 import '@/app/styles/figma-chat.css'
@@ -34,7 +36,7 @@ const Main: FC<IMainProps> = () => {
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
-  const { conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError } = useChatflow()
+  const { conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow()
   useEffect(() => {
     const completedNow = wasResponding.current && !isResponding
     wasResponding.current = isResponding
@@ -128,14 +130,18 @@ const Main: FC<IMainProps> = () => {
         <div className='flex min-w-0 flex-1 overflow-hidden'>
           <div className='flex min-w-0 flex-1 flex-col overflow-y-auto'>
             {/* Conversation name header */}
-            <div className="shrink-0 px-4 py-3 chat-conversation-heading" style={{ borderBottom: '1px solid #F0EBE5' }}>
-              <h1 className="text-base font-semibold" style={{ color: '#3D3028', fontFamily: '\'Noto Serif SC\', serif' }}>
+            <div className="shrink-0 px-4 py-3 chat-conversation-heading flex items-center justify-between gap-3" style={{ borderBottom: '1px solid #F0EBE5' }}>
+              <h1 className="min-w-0 truncate text-base font-semibold" style={{ color: '#3D3028', fontFamily: '\'Noto Serif SC\', serif' }}>
                 {conversationName}
               </h1>
+              <button type="button" title="切换调试信息" aria-label="切换调试信息" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)} className={`shrink-0 rounded border p-1.5 ${debugEnabled ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 text-gray-500'}`}>
+                <BugAntIcon className="h-4 w-4" />
+              </button>
             </div>
             <div className='relative grow w-full max-w-[900px] pb-[220px] px-4 pt-8 mx-auto mb-3.5' ref={chatListDomRef}>
               <Chat
                 chatList={chatList}
+                debugEnabled={debugEnabled}
                 onSend={handleSend}
                 onReview={review}
                 isResponding={isResponding}
@@ -149,6 +155,7 @@ const Main: FC<IMainProps> = () => {
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
                   <p>{failure.message}</p>
+                  {debugEnabled && failure.guard && <p className="mt-2"><GuardSummary guard={failure.guard} /></p>}
                   {failure.query && <p className='mt-2 whitespace-pre-wrap'>未完成的消息：{failure.query}</p>}
                   <button type='button' disabled={busy} onClick={() => void recover()} className='mr-4 mt-2 underline'>刷新会话记录</button>
                   {failure.query && !failure.needsRecovery && <button type='button' disabled={busy} onClick={retry} className='mt-2 underline'>重试这条消息</button>}

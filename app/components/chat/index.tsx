@@ -27,6 +27,7 @@ export interface IChatProps {
   onReview?: (messageId: string, review: { score: number, comment: string }) => Promise<void>
   inputLeft?: number
   inputRight?: number
+  debugEnabled?: boolean
 }
 
 const Chat: FC<IChatProps> = ({
@@ -44,6 +45,7 @@ const Chat: FC<IChatProps> = ({
   onReview,
   inputLeft,
   inputRight,
+  debugEnabled,
 }) => {
   const { t } = useTranslation()
   const { notify } = Toast
@@ -172,6 +174,7 @@ const Chat: FC<IChatProps> = ({
               suggestionClick={suggestionClick}
               onDelete={onDeleteMessage ? () => onDeleteMessage(item.id) : undefined}
               onReview={onReview}
+              debugEnabled={debugEnabled}
             />
           }
           return (
