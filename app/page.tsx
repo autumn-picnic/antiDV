@@ -8,7 +8,7 @@ import ScrollReveal from '@/app/components/scroll-reveal'
 import { brandAssets } from '@/config/brand-assets'
 import './styles/figma-home.css'
 import AppIcon from '@/app/components/base/app-icon'
-import HomeCarousel from '@/app/components/home-carousel'
+import HomeIntro from '@/app/components/home-carousel'
 
 export const metadata: Metadata = {
   title: {
@@ -136,7 +136,7 @@ const LandingPage: FC = () => {
           <a href="#contact">有话要说</a>
         </nav>
       </header>
-      <HomeCarousel />
+      <HomeIntro />
 
       <section id="values" className="home-values" aria-labelledby="values-title">
         <h2 id="values-title">定位说明</h2>

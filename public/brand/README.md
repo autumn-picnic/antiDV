@@ -8,3 +8,5 @@
 - `help-understand.png`、`help-safety.png`、`help-legal.png`、`help-rebuild.png`：图4四张支持卡片的插画。
 
 插画从用户提供的参考图片裁切，原始分辨率保留。页面文字使用 HTML，支持链接与移动端重排。首页与头像原图来源：Figma 文件 `rCHimJFqCjG9i3uTAvGYaQ`；第二屏通过 `mix-blend-mode: multiply` 与首页背景融合。
+
+聊天入口参考：`chat-entry-figma-reference.png` 来自 Figma `Frame 15`（节点 `104:5`）。页面用 HTML/CSS 和 SVG 实现相同的渐变描边、聊天图标与右侧渐变按钮；箭头按用户要求缩短，文字保留可访问的文本。
