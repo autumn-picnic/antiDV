@@ -101,10 +101,6 @@
   border: 1px solid #eee7e0;
 }
 
-.home-chat-link > span:last-child {
-  margin-left: auto;
-}
-
 .home-chat-link:hover {
   box-shadow: 0 3px 12px #c3a58a40;
 }
@@ -137,6 +133,10 @@
   background: linear-gradient(100deg, #a38abb, #f4b093);
   background-clip: text;
   color: transparent;
+}
+
+.home-chat-link > span:last-child {
+  margin-left: auto;
 }
 
 @media (width <= 767px) {
