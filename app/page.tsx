@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { FC } from 'react'
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import ContactForm from '@/app/components/contact-form'
 import ScrollReveal from '@/app/components/scroll-reveal'
 import { brandAssets } from '@/config/brand-assets'
@@ -31,29 +32,6 @@ const IconChat = () => (
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
   </svg>
 )
-const IconShield = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="隐私保护">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-)
-const IconMapPin = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="资源导航">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-)
-const IconBook = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="受害者故事">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-  </svg>
-)
-const IconDoc = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="文档工具库">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-  </svg>
-)
 const IconPhone = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="电话">
     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -73,54 +51,17 @@ const IconWechat = () => (
   </svg>
 )
 
-const IconMindBook = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="心理资源">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
-    <path d="M12 8v4l3 3" />
-  </svg>
-)
+const values = [
+  { title: '安全', image: brandAssets.values.safety, desc: '人身安全与身心安全始终是第一位，是小安的第一位，更是你自己的第一位。' },
+  { title: '信任', image: brandAssets.values.trust, desc: '不管几点，说得多乱，说了又反悔，都可以。在这里，你不必完美，不必自证。' },
+  { title: '私密', image: brandAssets.values.privacy, desc: '你可以选择愿意分享的内容，随时清空当前对话，或使用「快速离开」离开页面。' },
+]
 
 const features = [
-  {
-    icon: <IconChat />,
-    title: '24 小时倾听',
-    desc: '无论几点，小安都在。没有指责，只有支持。你的感受是真实的，你的选择值得被尊重。',
-    num: '01',
-  },
-  {
-    icon: <IconShield />,
-    title: '隐私保护',
-    desc: '对话不留记录于本设备，页面右上角「快速离开」可一键清除并跳离。',
-    num: '02',
-  },
-  {
-    icon: <IconMapPin />,
-    title: '线下支援导航',
-    desc: '提供庇护所、法律援助、心理咨询等资源信息，帮你找到下一步。',
-    link: '/resources',
-    num: '03',
-  },
-  {
-    icon: <IconMindBook />,
-    title: '资源支持库',
-    desc: '整合家暴防治教育资源：心理疗愈书籍、专业文章、支持性网站，帮助你了解、理解、走出困境。',
-    link: '/psych-resources',
-    num: '04',
-  },
-  {
-    icon: <IconBook />,
-    title: '受害者故事',
-    desc: '阅读走出困境的真实故事，你并不孤单，她们也曾和你一样。',
-    link: '/stories',
-    num: '05',
-  },
-  {
-    icon: <IconDoc />,
-    title: '文档工具库',
-    desc: '人身保护令、告诫书等法律文书模板，填写即可生成下载。',
-    link: '/docs-toolkit',
-    num: '06',
-  },
+  { num: '01', title: '了解发生什么', image: brandAssets.help.understand, tone: 'peach', desc: '很多伤害没有惊雷。小安帮你分辨哪些行为算暴力、暴力为什么会循环，为什么这不是你的错。', link: '/chat' },
+  { num: '02', title: '让自己更安全', image: brandAssets.help.safety, tone: 'sage', desc: '在你还没决定任何事的时候，就可以先做准备：安全计划、证据怎么留、紧急时去哪里。', link: '/chat' },
+  { num: '03', title: '拿起法律武器', image: brandAssets.help.legal, tone: 'lavender', desc: '有效报警、及时验伤、申请人身安全保护令、寻求进一步法律援助——小安陪你了解每一步可以怎么做。', link: '/chat' },
+  { num: '04', title: '重建个人生活', image: brandAssets.help.rebuild, tone: 'blue', desc: '分开后的骚扰怎么应对、创伤修复需要什么、怎么重新开始——这些也可以和小安聊聊。', link: '/chat' },
 ]
 
 const faqs = [
@@ -159,12 +100,12 @@ const LandingPage: FC = () => {
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqs.map(faq => ({
+    'mainEntity': faqs.map(faq => ({
       '@type': 'Question',
-      name: faq.q,
-      acceptedAnswer: {
+      'name': faq.q,
+      'acceptedAnswer': {
         '@type': 'Answer',
-        text: faq.a,
+        'text': faq.a,
       },
     })),
   }
@@ -175,7 +116,7 @@ const LandingPage: FC = () => {
       style={{
         minHeight: '100vh',
         backgroundColor: '#FBF9F6',
-        fontFamily: "'Noto Sans SC', system-ui, sans-serif",
+        fontFamily: '\'Noto Sans SC\', system-ui, sans-serif',
         color: '#3D3028',
       }}
     >
@@ -199,11 +140,6 @@ const LandingPage: FC = () => {
           <a href="#contact">有话要说</a>
         </nav>
       </header>
-      <div className="home-notice" role="note">
-        <span>按照自己的节奏，选择你愿意分享的内容。</span>
-        <span>小安提供情感支持与法律知识参考。</span>
-        <span>陪你了解自己的处境，寻找适合你的下一步。</span>
-      </div>
       <section className="home-hero" aria-labelledby="welcome-title">
         <div className="home-hero-grid">
           <div className="home-intro">
@@ -213,95 +149,59 @@ const LandingPage: FC = () => {
               <IconChat /><span>和小安说说话</span><span aria-hidden="true">→</span>
             </Link>
           </div>
-          <img className="home-illustration" src={brandAssets.hero} alt="母亲温柔地拥抱孩子" width="640" height="480" fetchPriority="high" />
+          <Image className="home-illustration" src={brandAssets.hero} alt="戴眼镜、穿紫色外套的小安" width={236} height={204} priority />
         </div>
         <a href="#about" className="home-scroll">谢谢你的信任，一起来认识小安吧<span aria-hidden="true">⌄</span></a>
       </section>
-      <section id="about" className="home-about">
-        <h2>你可以慢慢说，小安在这里</h2>
-        <p>无论你想倾诉、了解自己的处境，还是寻找支持，都可以从这里开始。</p>
+      <section id="about" className="home-conversation" aria-labelledby="conversation-title">
+        <Image className="home-conversation-art" src={brandAssets.conversation} alt="小安向坐在窗边的人递出一盆绿植，陪伴她整理处境" width={922} height={510} />
+        <div className="home-conversation-copy">
+          <h2 id="conversation-title">爱不应该带来伤害，<br />说不清楚的事，<br />跟小安说说</h2>
+          <p>这算不算伤害，接下来怎么办，可以找谁，我们一点点理清。</p>
+          <Link href="/chat" className="home-conversation-link"><span>和小安说说话</span><span className="home-round-arrow" aria-hidden="true">→</span></Link>
+          <a href="#values" className="home-continue">还不想开口？往下看看！</a>
+        </div>
       </section>
 
-      {/* ─── Features (Editorial Rows) ────────────── */}
-      <section id="support" style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px 72px' }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))',
-            gap: 0,
-          }}
-        >
-          {features.map((f, i) => {
-            const row = (
-              <div
-                key={f.title}
-                style={{
-                  borderBottom: '1px solid #E6DDD5',
-                  padding: '28px 0',
-                  display: 'flex',
-                  gap: 16,
-                  alignItems: 'flex-start',
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    fontFamily: "'Noto Serif SC', serif",
-                    fontSize: 48,
-                    fontWeight: 300,
-                    color: '#EDE5DC',
-                    lineHeight: 1,
-                    flexShrink: 0,
-                    width: 56,
-                  }}
-                >
-                  {f.num}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span style={{ color: '#7A6B5D' }}>{f.icon}</span>
-                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#3D3028', margin: 0 }}>{f.title}</h3>
-                  </div>
-                  <p style={{ fontSize: 16, color: '#5C4D3E', lineHeight: 1.8, margin: 0 }}>{f.desc}</p>
-                  {f.link && (
-                    <p style={{ fontSize: 13, color: '#E8A87C', marginTop: 8, fontWeight: 500, textAlign: 'right' }}>了解更多 →</p>
-                  )}
-                </div>
+      <section id="values" className="home-values" aria-labelledby="values-title">
+        <h2 id="values-title">定位说明</h2>
+        <div className="home-values-grid">
+          {values.map(value => (
+            <article key={value.title} className="home-value-card">
+              <Image src={value.image} alt="" width={310} height={278} className="home-value-art" />
+              <div className="home-value-copy"><h3>{value.title}</h3><p>{value.desc}</p></div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="support" className="home-support" aria-labelledby="support-title">
+        <h2 id="support-title">小安帮你</h2>
+        <div className="home-support-grid">
+          {features.map(feature => (
+            <Link key={feature.num} href={feature.link} className={`home-support-card home-support-${feature.tone}`}>
+              <div className="home-support-copy">
+                <h3><span className="home-support-number" aria-hidden="true">{feature.num}</span>{feature.title}</h3>
+                <p>{feature.desc}</p>
+                <span className="home-support-arrow" aria-hidden="true">⟶</span>
               </div>
-            )
-            return f.link
-              ? <ScrollReveal key={f.title} delay={`${i * 60}ms`}><Link href={f.link} style={{ textDecoration: 'none', color: 'inherit' }}>{row}</Link></ScrollReveal>
-              : <ScrollReveal key={f.title} delay={`${i * 60}ms`}>{row}</ScrollReveal>
-          })}
+              <Image src={feature.image} alt="" width={200} height={220} className="home-support-art" />
+            </Link>
+          ))}
         </div>
-      </section>
-
-      {/* ─── Safety Statement ─────────────────────── */}
-      <section style={{ backgroundColor: '#F5E6D3', padding: '56px 24px' }}>
-        <div style={{ maxWidth: 580, margin: '0 auto', textAlign: 'center' }}>
-          <p
-            style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: 20,
-              fontStyle: 'italic',
-              color: '#3D3028',
-              lineHeight: 1.8,
-              marginBottom: 20,
-            }}
-          >
-            你的隐私是我们的首要承诺。对话内容仅用于本次会话，不会长期保存。
-          </p>
-          <p style={{ fontSize: 14, color: '#5C4D3E', lineHeight: 1.8 }}>
-            如果你担心被人看到，可以随时点击右上角<strong>「快速离开」</strong>一键清除记录并跳转。浏览器不会留下返回记录。
-          </p>
-        </div>
+        <nav className="home-resource-links" aria-label="更多支持资源">
+          <Link href="/resources">线下支援导航 →</Link>
+          <Link href="/psych-resources">资源支持库 →</Link>
+          <Link href="/stories">受害者故事 →</Link>
+          <Link href="/docs-toolkit">文档工具库 →</Link>
+        </nav>
       </section>
 
       {/* ─── FAQ ──────────────────────────────────── */}
       <section id="questions" style={{ maxWidth: 680, margin: '0 auto', padding: '72px 24px' }}>
         <h2
           style={{
-            fontFamily: "'Noto Serif SC', serif",
+            fontFamily: '\'Noto Serif SC\', serif',
             fontSize: 22,
             fontWeight: 600,
             marginBottom: 36,
@@ -356,7 +256,7 @@ const LandingPage: FC = () => {
           <div>
             <h2
               style={{
-                fontFamily: "'Noto Serif SC', serif",
+                fontFamily: '\'Noto Serif SC\', serif',
                 fontSize: 22,
                 fontWeight: 600,
                 color: '#3D3028',
