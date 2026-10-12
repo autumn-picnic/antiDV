@@ -1,8 +1,8 @@
 import { createParser } from 'eventsource-parser'
-import type { CompletedResponse, ConversationSummary, ConversationView } from '@/types/chatflow'
+import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationView, GuardDiagnostic } from '../types/chatflow'
 
 export class ChatApiError extends Error {
-  constructor(public status: number, message: string, public responseId?: string) {
+  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic) {
     super(message)
   }
 }
@@ -83,6 +83,13 @@ export interface StreamCallbacks {
   onDelta: (text: string) => void
 }
 
+function guardDiagnostic(value: unknown): GuardDiagnostic | undefined {
+  const guard = (value as { debug?: { output_guard?: GuardDiagnostic } } | null)?.debug?.output_guard
+  return guard && ['allow', 'block', 'inconclusive'].includes(guard.status) && typeof guard.regenerated === 'boolean'
+    ? guard as GuardDiagnostic
+    : undefined
+}
+
 /** Success means completed, never EOF. This function never retries generation. */
 export async function readChatStream(
   response: Response,
@@ -99,6 +106,7 @@ export async function readChatStream(
   let responseId: string | undefined
   let completed: CompletedResponse | undefined
   let sawDebug = false
+  let debug: ChatDebug | undefined
   let lastWasCR = false
   const parser = createParser((event) => {
     if (event.type !== 'event' || completed) { return }
@@ -121,15 +129,16 @@ export async function readChatStream(
       case 'debug':
         if (sawDebug) { throw new ChatApiError(502, '重复的调试事件', responseId) }
         sawDebug = true
-        break // Never include debug in visible text or persisted/exported messages.
+        if (data.debug && typeof data.debug === 'object') { debug = data.debug }
+        break // Diagnostics stay separate from visible and exported answer text.
       case 'completed':
         if (!['normal', 'unclear', 'immediate_danger', 'self_harm'].includes(data.safety_level)) {
           throw new ChatApiError(502, '安全状态格式无效', responseId)
         }
-        completed = data
+        completed = { ...data, debug }
         break
       case 'error':
-        throw new ChatApiError(503, '本次回复未完成，请稍后手动重试', responseId)
+        throw new ChatApiError(503, '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data))
       default:
         throw new ChatApiError(502, '回复事件顺序无效', responseId)
     }
@@ -166,12 +175,12 @@ export async function readChatStream(
   }
 }
 
-export async function sendChatMessage(id: string, message: string, callbacks: StreamCallbacks, signal: AbortSignal) {
+export async function sendChatMessage(id: string, message: string, callbacks: StreamCallbacks, signal: AbortSignal, debug = false) {
   if (!message.trim() || Array.from(message).length > 4000) { throw new ChatApiError(422, httpMessage(422)) }
   const response = await request(`/conversations/${encodeURIComponent(id)}/responses/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-    body: JSON.stringify({ message, debug: false }),
+    body: JSON.stringify({ message, debug }),
     signal,
   })
   return readChatStream(response, id, callbacks)

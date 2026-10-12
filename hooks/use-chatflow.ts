@@ -1,16 +1,16 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { createStreamRenderer } from '@/utils/stream-renderer'
-import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview } from '@/service'
-import type { ChatItem, ConversationItem } from '@/types/app'
-import type { ConversationView } from '@/types/chatflow'
+import { createStreamRenderer } from '../utils/stream-renderer'
+import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview } from '../service'
+import type { ConversationItem } from '../types/app'
+import type { ConversationView, DebugChatItem, GuardDiagnostic } from '../types/chatflow'
 
-function chatItems(view: ConversationView): ChatItem[] {
+function chatItems(view: ConversationView): DebugChatItem[] {
   return view.turns.flatMap((turn, index) => {
     const id = turn.response_id || `${view.conversation_id}-${turn.number ?? index}`
     return [
       { id: `question-${id}`, content: turn.user, isAnswer: false },
-      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level },
+      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level, debug: turn.debug },
     ]
   })
 }
@@ -19,14 +19,15 @@ function errorMessage(error: unknown) {
   return error instanceof ChatApiError ? error.message : '暂时无法连接小安，请稍后重试'
 }
 
-interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean }
+interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic }
 
 export default function useChatflow() {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
   const [conversationId, setConversationId] = useState('-1')
-  const [chatList, setChatList] = useState<ChatItem[]>([])
+  const [chatList, setChatList] = useState<DebugChatItem[]>([])
   const [busy, setBusy] = useState(true)
   const [isResponding, setResponding] = useState(false)
+  const [debugEnabled, setDebugEnabled] = useState(false)
   const [reviewError, setReviewError] = useState('')
   const [failure, setFailure] = useState<Failure | null>(null)
   const lock = useRef(true)
@@ -142,7 +143,7 @@ export default function useChatflow() {
         setConversationId(id)
         setConversationList(list => [{ id, name: `对话 ${id.slice(0, 8)}`, inputs: null, introduction: '' }, ...list])
       }
-      const question: ChatItem = { id: `question-${pendingId}`, content: message, isAnswer: false }
+      const question: DebugChatItem = { id: `question-${pendingId}`, content: message, isAnswer: false }
       setChatList([...committed, question, { id: pendingId, content: '', isAnswer: true }])
       renderer.current = createStreamRenderer((delta) => {
         text += delta
@@ -154,7 +155,7 @@ export default function useChatflow() {
         onDelta: (delta) => {
           renderer.current?.push(delta)
         },
-      }, controller.current!.signal)
+      }, controller.current!.signal, debugEnabled)
       await renderer.current?.finish()
       if (!mounted.current) { return }
       setChatList([...committed, { ...question, id: `question-${completed.response_id}` }, {
@@ -162,6 +163,7 @@ export default function useChatflow() {
         content: text,
         isAnswer: true,
         safetyLevel: completed.safety_level,
+        debug: completed.debug,
       }])
     }
     catch (error) {
@@ -180,6 +182,7 @@ export default function useChatflow() {
         conversationId: expired ? undefined : id,
         responseId: responseId || (error instanceof ChatApiError ? error.responseId : undefined),
         needsRecovery: startedGeneration && !expired,
+        guard: error instanceof ChatApiError ? error.guard : undefined,
       })
     }
     finally { finish() }
@@ -239,6 +242,8 @@ export default function useChatflow() {
   }
 
   return {
+    debugEnabled,
+    setDebugEnabled,
     review,
     reviewError,
     conversationList,

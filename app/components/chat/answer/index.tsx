@@ -2,11 +2,13 @@
 import { brandAssets } from '@/config/brand-assets'
 import type { FC } from 'react'
 import type { FeedbackFunc } from '../type'
-import type { ChatItem, MessageRating } from '@/types/app'
+import type { MessageRating } from '@/types/app'
+import type { DebugChatItem } from '@/types/chatflow'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/24/outline'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReviewModal from './review-modal'
+import DebugPanel from '../debug-panel'
 import Button from '@/app/components/base/button'
 import StreamdownMarkdown from '@/app/components/base/streamdown-markdown'
 import Tooltip from '@/app/components/base/tooltip'
@@ -39,13 +41,14 @@ const IconWrapper: FC<{ children: React.ReactNode | string }> = ({ children }) =
 }
 
 interface IAnswerProps {
-  item: ChatItem
+  item: DebugChatItem
   feedbackDisabled: boolean
   onFeedback?: FeedbackFunc
   isResponding?: boolean
   suggestionClick?: (suggestion: string) => void
   onDelete?: () => void
   onReview?: (messageId: string, review: { score: number, comment: string }) => Promise<void>
+  debugEnabled?: boolean
 }
 
 // The component needs to maintain its own state to control whether to display input component
@@ -57,6 +60,7 @@ const Answer: FC<IAnswerProps> = ({
   suggestionClick = () => { },
   onDelete,
   onReview,
+  debugEnabled,
 }) => {
   const { id, content, feedback, suggestedQuestions = [] } = item
   const [showReviewModal, setShowReviewModal] = useState(false)
@@ -193,6 +197,7 @@ const Answer: FC<IAnswerProps> = ({
                 </div>
               )}
             </div>
+            {debugEnabled && !isResponding && <DebugPanel debug={item.debug} />}
             <div className="absolute top-[-14px] right-[-14px] flex flex-row justify-end gap-1">
               {!feedbackDisabled && !item.feedbackDisabled && renderItemOperation()}
               {/* User feedback must be displayed */}

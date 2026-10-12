@@ -65,6 +65,23 @@ test('SSE handles split UTF-8, CRLF, multi-line data, keepalive and ignores debu
   assert.equal(result.safety_level, 'unclear')
 })
 
+test('SSE keeps debug separate from answer and associates it with completed response', async () => {
+  let answer = ''
+  const diagnostic = { output_guard: { status: 'allow', regenerated: false }, route: { capsule_id: 'baseline' } }
+  const completed = await api.readChatStream(stream(start + frame('delta', { delta: '回答' }) + frame('debug', { debug: diagnostic }) + done), 'c1', { onDelta: delta => { answer += delta } })
+  assert.equal(answer, '回答')
+  assert.deepEqual(completed.debug, diagnostic)
+})
+
+test('SSE failure exposes only typed guard summary to the caller', async () => {
+  const guard = { status: 'block', regenerated: false }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { debug: { output_guard: guard, error: { secret: 'private' } } })), 'c1', { onDelta() {} }), error => {
+    assert.deepEqual(error.guard, guard)
+    assert.equal(error.message.includes('private'), false)
+    return true
+  })
+})
+
 test('SSE accepts multiple events per chunk; terminal prevents further text', async () => {
   let text = ''
   await api.readChatStream(stream(start + frame('delta', { delta: 'A' }) + done + frame('delta', { delta: 'ignored' })), 'c1', { onDelta: delta => { text += delta } })
@@ -114,6 +131,18 @@ test('native send uses message/debug:false, Cookie credentials and no retry', as
   assert.equal(calls, 1)
 })
 
+test('debug mode explicitly requests diagnostics without retrying generation', async () => {
+  let calls = 0
+  globalThis.fetch = async (_url, init) => {
+    calls++
+    assert.deepEqual(JSON.parse(init.body), { message: '合成测试', debug: true })
+    return stream(start + frame('debug', { debug: { output_guard: { status: 'allow', regenerated: false } } }) + done)
+  }
+  const result = await api.sendChatMessage('c1', '合成测试', { onDelta() {} }, new AbortController().signal, true)
+  assert.equal(result.debug.output_guard.status, 'allow')
+  assert.equal(calls, 1)
+})
+
 test('invalid message never starts a request', async () => {
   global.fetch = () => { throw new Error('unexpected request') }
   await assert.rejects(api.sendChatMessage('c1', ' ', { onDelta() {} }, new AbortController().signal), error => error.status === 422)
@@ -136,6 +165,13 @@ test('list follows next_offset and history follows next_after', async () => {
   }
   assert.equal((await api.fetchConversations()).length, 2)
   assert.equal((await api.fetchConversation('c1')).turns.length, 2)
+})
+
+test('history retains per-turn debug metadata for restored chat', async () => {
+  const debug = { output_guard: { status: 'allow', regenerated: false } }
+  globalThis.fetch = async () => Response.json({ conversation_id: 'c1', turns: [{ user: '合成提问', assistant: '合成回复', debug }], next_after: null })
+  const view = await api.fetchConversation('c1')
+  assert.deepEqual(view.turns[0].debug, debug)
 })
 
 test('invalid pagination cursor fails rather than looping', async () => {

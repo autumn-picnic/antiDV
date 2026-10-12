@@ -33,6 +33,20 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install lint dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Super-linter
         uses: super-linter/super-linter@v8.6.0 # x-release-please-version
         env:
@@ -47,7 +61,7 @@ jobs:
           VALIDATE_YAML: true
           VALIDATE_JSON: true
           VALIDATE_MARKDOWN: true
-          # Point ESLint to the project's own config
-          ESLINT_CONFIG_FILE: eslint.config.mjs
+          # Super-Linter looks for eslint.config.mjs in this rules directory.
+          LINTER_RULES_PATH: .
           # Disable the step summary to avoid the 1024k upload limit
           SAVE_SUPER_LINTER_SUMMARY: false

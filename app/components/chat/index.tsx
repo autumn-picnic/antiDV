@@ -7,13 +7,13 @@ import Textarea from 'rc-textarea'
 import Answer from './answer'
 import Question from './question'
 import type { FeedbackFunc } from './type'
-import type { ChatItem } from '@/types/app'
+import type { DebugChatItem } from '@/types/chatflow'
 import AppIcon from '@/app/components/base/app-icon'
 import Tooltip from '@/app/components/base/tooltip'
 import Toast from '@/app/components/base/toast'
 
 export interface IChatProps {
-  chatList: ChatItem[]
+  chatList: DebugChatItem[]
   feedbackDisabled?: boolean
   isHideSendInput?: boolean
   onFeedback?: FeedbackFunc
@@ -27,6 +27,7 @@ export interface IChatProps {
   onReview?: (messageId: string, review: { score: number, comment: string }) => Promise<void>
   inputLeft?: number
   inputRight?: number
+  debugEnabled?: boolean
 }
 
 const Chat: FC<IChatProps> = ({
@@ -44,6 +45,7 @@ const Chat: FC<IChatProps> = ({
   onReview,
   inputLeft,
   inputRight,
+  debugEnabled,
 }) => {
   const { t } = useTranslation()
   const { notify } = Toast
@@ -172,6 +174,7 @@ const Chat: FC<IChatProps> = ({
               suggestionClick={suggestionClick}
               onDelete={onDeleteMessage ? () => onDeleteMessage(item.id) : undefined}
               onReview={onReview}
+              debugEnabled={debugEnabled}
             />
           }
           return (
