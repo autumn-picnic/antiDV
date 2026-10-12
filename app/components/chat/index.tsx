@@ -7,13 +7,13 @@ import Textarea from 'rc-textarea'
 import Answer from './answer'
 import Question from './question'
 import type { FeedbackFunc } from './type'
-import type { ChatItem } from '@/types/app'
+import type { DebugChatItem } from '@/types/chatflow'
 import AppIcon from '@/app/components/base/app-icon'
 import Tooltip from '@/app/components/base/tooltip'
 import Toast from '@/app/components/base/toast'
 
 export interface IChatProps {
-  chatList: ChatItem[]
+  chatList: DebugChatItem[]
   feedbackDisabled?: boolean
   isHideSendInput?: boolean
   onFeedback?: FeedbackFunc

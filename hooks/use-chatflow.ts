@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { createStreamRenderer } from '@/utils/stream-renderer'
-import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview } from '@/service'
-import type { ChatItem, ConversationItem } from '@/types/app'
-import type { ConversationView, GuardDiagnostic } from '@/types/chatflow'
+import { createStreamRenderer } from '../utils/stream-renderer'
+import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview } from '../service'
+import type { ConversationItem } from '../types/app'
+import type { ConversationView, DebugChatItem, GuardDiagnostic } from '../types/chatflow'
 
-function chatItems(view: ConversationView): ChatItem[] {
+function chatItems(view: ConversationView): DebugChatItem[] {
   return view.turns.flatMap((turn, index) => {
     const id = turn.response_id || `${view.conversation_id}-${turn.number ?? index}`
     return [
@@ -24,7 +24,7 @@ interface Failure { message: string, query?: string, conversationId?: string, re
 export default function useChatflow() {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
   const [conversationId, setConversationId] = useState('-1')
-  const [chatList, setChatList] = useState<ChatItem[]>([])
+  const [chatList, setChatList] = useState<DebugChatItem[]>([])
   const [busy, setBusy] = useState(true)
   const [isResponding, setResponding] = useState(false)
   const [debugEnabled, setDebugEnabled] = useState(false)
@@ -143,7 +143,7 @@ export default function useChatflow() {
         setConversationId(id)
         setConversationList(list => [{ id, name: `对话 ${id.slice(0, 8)}`, inputs: null, introduction: '' }, ...list])
       }
-      const question: ChatItem = { id: `question-${pendingId}`, content: message, isAnswer: false }
+      const question: DebugChatItem = { id: `question-${pendingId}`, content: message, isAnswer: false }
       setChatList([...committed, question, { id: pendingId, content: '', isAnswer: true }])
       renderer.current = createStreamRenderer((delta) => {
         text += delta

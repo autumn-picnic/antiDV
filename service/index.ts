@@ -1,5 +1,5 @@
 import { createParser } from 'eventsource-parser'
-import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationView, GuardDiagnostic } from '@/types/chatflow'
+import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationView, GuardDiagnostic } from '../types/chatflow'
 
 export class ChatApiError extends Error {
   constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic) {
@@ -83,8 +83,8 @@ export interface StreamCallbacks {
   onDelta: (text: string) => void
 }
 
-function guardDiagnostic(value: any): GuardDiagnostic | undefined {
-  const guard = value?.debug?.output_guard
+function guardDiagnostic(value: unknown): GuardDiagnostic | undefined {
+  const guard = (value as { debug?: { output_guard?: GuardDiagnostic } } | null)?.debug?.output_guard
   return guard && ['allow', 'block', 'inconclusive'].includes(guard.status) && typeof guard.regenerated === 'boolean'
     ? guard as GuardDiagnostic
     : undefined

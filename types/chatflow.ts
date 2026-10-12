@@ -22,6 +22,8 @@ export interface ChatDebug {
   timings?: Record<string, number | null>
 }
 
+export type DebugChatItem = import('./app').ChatItem & { debug?: ChatDebug | null }
+
 export interface ConversationSummary {
   id: string
   created_at: string | number

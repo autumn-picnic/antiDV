@@ -2,7 +2,8 @@
 import { brandAssets } from '@/config/brand-assets'
 import type { FC } from 'react'
 import type { FeedbackFunc } from '../type'
-import type { ChatItem, MessageRating } from '@/types/app'
+import type { MessageRating } from '@/types/app'
+import type { DebugChatItem } from '@/types/chatflow'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/24/outline'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -40,7 +41,7 @@ const IconWrapper: FC<{ children: React.ReactNode | string }> = ({ children }) =
 }
 
 interface IAnswerProps {
-  item: ChatItem
+  item: DebugChatItem
   feedbackDisabled: boolean
   onFeedback?: FeedbackFunc
   isResponding?: boolean
