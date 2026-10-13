@@ -19,8 +19,8 @@ Clerk 开发实例从 `@accounts.dev` 发信；生产实例从自己的域名发
 Clerk 支持逐模板关闭 Delivered by Clerk，再使用 `email.created` webhook 交给自己的邮件服务发送。这需要可靠的 webhook 验签、去重、重试和投递监控；关闭前须让替代发送通路正常运行。
 
 官方依据：
-- Clerk Email deliverability: https://clerk.com/docs/guides/development/troubleshooting/email-deliverability.md
-- Clerk New domain reputation and email warm-up: https://clerk.com/docs/guides/development/troubleshooting/email-domain-name-warmup.md
+- Clerk Email deliverability: <https://clerk.com/docs/guides/development/troubleshooting/email-deliverability.md>
+- Clerk New domain reputation and email warm-up: <https://clerk.com/docs/guides/development/troubleshooting/email-domain-name-warmup.md>
 
 ## 手机号
 
@@ -31,8 +31,8 @@ Clerk 支持手机短信验证码注册登录；生产使用需要付费方案�
 Clerk 支持关闭短信模板的 Delivered by Clerk，并用 `sms.created` webhook 接自有短信发送服务；该能力与号码是否获准注册是不同条件。
 
 官方依据：
-- Clerk Sign-up and sign-in options: https://clerk.com/docs/guides/configure/auth-strategies/sign-up-sign-in-options.md
-- Clerk Email and SMS templates: https://clerk.com/docs/guides/customizing-clerk/email-sms-templates.md
+- Clerk Sign-up and sign-in options: <https://clerk.com/docs/guides/configure/auth-strategies/sign-up-sign-in-options.md>
+- Clerk Email and SMS templates: <https://clerk.com/docs/guides/customizing-clerk/email-sms-templates.md>
 
 ## 微信
 
@@ -47,10 +47,10 @@ Clerk 当前列出的内置社会化登录没有微信；自定义社会化登�
 小安场景的产品建议：微信与手机号作为可选登录方式，保留访客入口、邮箱备选、退出与历史控制。用户授权页面、邮件或短信可能在共用设备上留下使用线索，提示措辞应保持中性。这是设计建议，非已发生的泄露结论。
 
 官方依据：
-- Clerk Social connections: https://clerk.com/docs/nextjs/guides/configure/auth-strategies/social-connections/overview.md
-- Clerk Custom OAuth provider: https://clerk.com/docs/guides/configure/auth-strategies/social-connections/custom-provider.md
-- 微信网站应用微信登录开发指南: https://developers.weixin.qq.com/doc/oplatform/Website_App/WeChat_Login/Wechat_Login.html
-- Authing PC 微信扫码: https://docs.authing.cn/v2/guides/connections/social/wechat-pc/
+- Clerk Social connections: <https://clerk.com/docs/nextjs/guides/configure/auth-strategies/social-connections/overview.md>
+- Clerk Custom OAuth provider: <https://clerk.com/docs/guides/configure/auth-strategies/social-connections/custom-provider.md>
+- 微信网站应用微信登录开发指南: <https://developers.weixin.qq.com/doc/oplatform/Website_App/WeChat_Login/Wechat_Login.html>
+- Authing PC 微信扫码: <https://docs.authing.cn/v2/guides/connections/social/wechat-pc/>
 
 ## 是否迁移
 

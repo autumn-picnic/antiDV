@@ -11,7 +11,7 @@
 - 邮箱为必填，注册时验证，注册验证和登录均为 `email_code`。
 - 手机号注册、登录和第二因素均已关闭。
 - Azure 前端：`xiaoan-web`，资源组 `xiaoan-pilot-rg`，当前未绑定自有域名。
-- 当前访问源：`https://xiaoan-web.kindisland-409320c5.japaneast.azurecontainerapps.io`。
+- 当前访问源：`<https://xiaoan-web.kindisland-409320c5.japaneast.azurecontainerapps.io`。>
 - 本地 `.env.local` 使用开发实例密钥。本次未输出或更改密钥。
 - 登录与注册页已有检查垃圾邮件和广告邮件的提示。
 
@@ -48,9 +48,9 @@ clerk config pull --instance prod --keys auth_email auth_phone
 
 ## 官方依据
 
-- https://clerk.com/docs/guides/development/deployment/production.md
-- https://clerk.com/docs/guides/development/troubleshooting/email-deliverability.md
+- <https://clerk.com/docs/guides/development/deployment/production.md>
+- <https://clerk.com/docs/guides/development/troubleshooting/email-deliverability.md>
 
 ## 2026-10-13 更新
 
-登录、注册页的收件提示已合入并部署。反馈管理账号 autumnpicnic@proton.me 已在 Azure 当前使用的 Clerk 实例中确认主邮箱已验证，并设置 publicMetadata.role 为 admin。PR #10 同时限制反馈页面及数据接口，要求该已验证主邮箱及 admin 角色。以上权限设置没有创建生产实例或配置邮件 DNS；自有域名与生产邮件切换继续按上方步骤执行。
+登录、注册页的收件提示已合入并部署。反馈管理账号 `autumnpicnic@proton.me` 已在 Azure 当前使用的 Clerk 实例中确认主邮箱已验证，并设置 publicMetadata.role 为 admin。PR #10 同时限制反馈页面及数据接口，要求该已验证主邮箱及 admin 角色。以上权限设置没有创建生产实例或配置邮件 DNS；自有域名与生产邮件切换继续按上方步骤执行。
