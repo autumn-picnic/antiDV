@@ -11,7 +11,9 @@ const buttonClass = 'min-h-11 rounded-lg border border-[#95684D] px-3 text-sm ho
 const fieldNames: Record<PrivacyField, string> = { region: '省市地区', nickname: '称呼', preferences: '回答偏好' }
 function message(error: unknown) { return error instanceof ChatApiError ? error.message : '设置暂时不可用，你仍可继续聊天' }
 
-export default function PrivacyControls({ conversationId, signedIn, authReady, busy, completedId, prepareConversation, refreshConversation }: {
+export default function PrivacyControls({ conversationId, signedIn, authReady, busy, completedId, prepareConversation, refreshConversation, open, onOpenChange }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   conversationId: string
   signedIn: boolean
   authReady: boolean
@@ -23,7 +25,7 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
   const [options, setOptions] = useState<PrivacyOptions | null>(null)
   const [status, setStatus] = useState<PrivacyStatus | null>(null)
   const [snapshot, setSnapshot] = useState<{ id: string, policy: ConversationPolicy } | null>(null)
-  const [open, setOpen] = useState(false)
+  const setOpen = onOpenChange
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState('')
   const [loadError, setLoadError] = useState('')

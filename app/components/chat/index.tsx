@@ -48,15 +48,13 @@ const Chat: FC<IChatProps> = ({
   inputLeft,
   inputRight,
   debugEnabled,
-  privacyControls,
   onComposerResize,
+  privacyControls,
 }) => {
   const { t } = useTranslation()
   const { notify } = Toast
   const isUseInputMethod = useRef(false)
 
-  const [query, setQuery] = React.useState('')
-  const queryRef = useRef('')
   const composerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const element = composerRef.current
@@ -65,6 +63,9 @@ const Chat: FC<IChatProps> = ({
     observer.observe(element)
     return () => observer.disconnect()
   }, [isHideSendInput, onComposerResize])
+
+  const [query, setQuery] = React.useState('')
+  const queryRef = useRef('')
 
   const handleContentChange = (e: any) => {
     const value = e.target.value

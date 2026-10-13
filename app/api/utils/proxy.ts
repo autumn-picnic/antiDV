@@ -43,7 +43,7 @@ export async function proxyChatflow(request: NextRequest) {
   if (cookies.length) { headers.set('Cookie', cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')) }
   try {
     const actor = await optionalActor()
-    if (path === '/v1/me/claim-guest' && !actor) { throw new AccessError(401, '请先登录') }
+    if ((path === '/v1/me/claim-guest' || path.startsWith('/v1/me/privacy')) && !actor) { throw new AccessError(401, '请先登录') }
     if (actor) { headers.set('Authorization', `Bearer ${actor.token}`) }
     // Signed-in chats use account identity; guests retain their own credentials.
     if (actor && path !== '/v1/me/claim-guest') { headers.delete('Cookie')
