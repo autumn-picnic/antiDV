@@ -9,15 +9,31 @@ export interface GuardDiagnostic {
   warnings?: string[]
   character_count?: number
   length_limit?: number
+  length_limit_enforced?: boolean
   question_count?: number
   list_item_count?: number
 }
 
 export interface ChatDebug {
+  [key: string]: unknown
   models?: Record<string, string>
-  safety?: { decision?: string, level?: string }
-  route?: { capsule_id?: string, capsule_title?: string, confidence?: number, method?: string, fallback_reason?: string }
-  ground?: { loaded?: boolean, selected_branch_numbers?: number[], resolved_ground?: string[], warnings?: string[] }
+  redaction?: { redacted_text?: string, pii_tags?: { type: string, placeholder: string }[] }
+  safety?: {
+    decision?: string, level?: string, response_key?: string | null, suspected_crisis_type?: string | null,
+    clarification_question?: string | null, bystander?: boolean, evidence?: string, reason?: string,
+    fallback_reason?: string, supplied_context_turns?: number,
+  }
+  route?: {
+    capsule_id?: string, capsule_title?: string, confidence?: number, method?: string, fallback_reason?: string,
+    reason?: string, should_continue_active_capsule?: boolean, raw_candidate?: { capsule_id: string, confidence: number },
+  }
+  ground?: {
+    loaded?: boolean, selected_branch_numbers?: number[], resolved_ground?: string[], warnings?: string[],
+    entry_count?: number, node_count?: number, loading_reason?: string, selection_reason?: string,
+  }
+  state?: { has_previous_response_id?: boolean, previous_response_model?: string, active_capsule_id?: string, ttl_turns?: number }
+  router_context?: { configured_turns?: number, supplied_completed_turns?: number }
+  capsule_issues?: unknown[]
   output_guard?: GuardDiagnostic
   timings?: Record<string, number | null>
 }
