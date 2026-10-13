@@ -59,3 +59,7 @@ yarn.lock
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Generated Python tool caches
+__pycache__/
+*.py[cod]
