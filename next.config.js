@@ -27,6 +27,10 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/feedback(.*)',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
       // Tell crawlers not to index ephemeral chat sessions
       {
         source: '/chat(.*)',

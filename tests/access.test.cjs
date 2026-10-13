@@ -9,7 +9,7 @@ let authState, liveSession, user, token, queryRows, queryCalls, revoked, failCle
 function reset() {
   authState = { userId: 'user_alice', sessionId: 'sess_1', getToken: async () => token }
   liveSession = { status: 'active', userId: 'user_alice' }
-  user = { publicMetadata: {}, banned: false, locked: false }
+  user = { publicMetadata: {}, banned: false, locked: false, primaryEmailAddressId: 'email_1', emailAddresses: [{ id: 'email_1', emailAddress: 'autumnpicnic@proton.me', verification: { status: 'verified' } }] }
   token = 'session-token'; queryRows = []; queryCalls = []; revoked = []; failClerk = false
 }
 reset()
@@ -165,4 +165,22 @@ test('optional actor permits absent sessions but denies revoked and partial sess
   reset()
   liveSession.status = 'revoked'
   await assert.rejects(optionalActor(), e => e.status === 401)
+})
+
+test('admin feedback requires designated verified primary email even with admin metadata', async () => {
+  user.publicMetadata.role = 'admin'
+  for (const email of ['other@example.com', 'autumnpicnic@proton.me.attacker.example']) {
+    user.emailAddresses[0].emailAddress = email
+    assert.equal((await feedback.GET(req('/api/feedback'))).status, 403)
+    assert.equal(queryCalls.length, 0)
+  }
+  user.emailAddresses[0].emailAddress = 'autumnpicnic@proton.me'
+  user.emailAddresses[0].verification.status = 'unverified'
+  await assert.rejects(requireActor(true), e => e.status === 403)
+  user.emailAddresses[0].verification.status = 'verified'
+  user.primaryEmailAddressId = 'other_email'
+  await assert.rejects(requireActor(true), e => e.status === 403)
+  user.primaryEmailAddressId = 'email_1'
+  user.emailAddresses[0].emailAddress = 'AUTUMNPICNIC@PROTON.ME'
+  assert.equal((await requireActor(true)).role, 'admin')
 })

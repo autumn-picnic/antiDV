@@ -6,14 +6,14 @@
 
 - 聊天需要 Clerk 登录，新会话归属于后端账号，清除本地 Cookie 后也能重新登录读取历史。
 - 普通用户可读取自己的聊天、给自己的已完成回答打 1–5 分并提交最多 500 字建议。
-- `admin` 可访问 `/feedback` 和 `GET /api/feedback`，分页查看活跃账号及未过期游客会话、已完成回答和评价。
+- 仅 Clerk `publicMetadata.role` 为 `admin` 且已验证主邮箱为 `autumnpicnic@proton.me` 的账号可访问 `/feedback` 和 `GET /api/feedback`，分页查看活跃账号及未过期游客会话、已完成回答和评价。
 - 普通用户提交使用独立的 `/api/reviews`；管理员 `/api/feedback` 不接受普通用户查询，也不再接受浏览器上传的聊天记录。
 - 管理员读取对话会写入访问审计，不读取后端 debug/state 内部推理数据。
 - 资源、故事、心理资料、文书模块继续保留。
 
 ## 权限矩阵
 
-| 能力 | 未登录 | 普通用户 | admin |
+| 能力 | 未登录 | 普通用户及其他 admin | 指定邮箱 admin |
 | --- | --- | --- | --- |
 | 首页与资源/故事/文书 | 可访问 | 可访问 | 可访问 |
 | 聊天及自己的历史 | 登录后可用 | 可用 | 可用 |
@@ -32,7 +32,7 @@ Clerk 网络不可用时，私有数据接口返回 503，不降级为游客或�
 
 1. 使用与 XiaoAn 后端相同的 Clerk application，并配置前端站点的允许域名及登录/注册方式。
 2. 在本项目环境填入 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` 和 `CLERK_SECRET_KEY`，按照 `.env.example` 设置 sign-in/up 路径。
-3. 在 Clerk Dashboard 的目标用户 Public metadata 设置 `{"role":"admin"}`；普通用户可设置 `{"role":"user"}` 或留空。首次管理员需要由拥有 Clerk 管理权限的人明确指定，不会自动把首位注册者变成管理员。
+3. 在 Clerk Dashboard 的 `autumnpicnic@proton.me` 用户 Public metadata 设置 `{"role":"admin"}`；普通用户可设置 `{"role":"user"}` 或留空。首次管理员需要由拥有 Clerk 管理权限的人明确指定，不会自动把首位注册者变成管理员。
 4. 角色变更由 Clerk 管理端完成；应用没有普通用户可调用的角色提升接口。由于每次从 Clerk API 读取角色，不需要额外 session metadata 模板。
 5. 正式上线使用生产 Clerk 实例；检查同一客户端多账号会话设置。正常退出流程会调用 Clerk signOut 清理客户端会话，服务端同时撤销当前活动 session。
 
@@ -120,3 +120,9 @@ Cookie 全路径/父域与不同浏览器的 Clear-Site-Data 行为需要 HTTPS 
 ## PR 与最新 main 的整合
 
 PR 基于最新 `origin/main`（b425974）创建，保留其 TypeScript/ESLint 构建门禁、`/safety-pack`、CrisisDialog 和逐帧流式平滑；原生 hook 已接入渲染器，危机弹窗只对新完成的危险级别回答触发。移除了旧 `/v1` 直接 rewrite，所有原生请求经 Clerk 网关。浏览器回归需提供 `CLERK_E2E_STORAGE_STATE`（已登录测试用户的受保护本地文件，勿提交）；未配置时明确跳过。没有运行该浏览器套件。
+
+## 2026-10-13 反馈后台访问限制
+
+页面和 GET /api/feedback 同时要求实时有效的 Clerk 会话、admin 角色和已验证的指定主邮箱。仅添加为次要邮箱、未验证邮箱或其他管理员账号均无法访问。账户菜单使用相同条件显示入口。反馈页设置 robots noindex/nofollow metadata 与 X-Robots-Tag 响应头。
+
+本轮 69 项定向测试与 TypeScript 检查通过，涵盖其他 admin、未验证邮箱、次要邮箱和伪造邮箱后缀被拒绝；Clerk 与数据库使用 mock，真实账号浏览器验收另行记录。
