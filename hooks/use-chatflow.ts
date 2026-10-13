@@ -130,6 +130,23 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     finally { finish() }
   }
 
+  async function prepareConversation() {
+    if (conversationId !== '-1') { return conversationId }
+    if (!start()) { return null }
+    try {
+      const created = await createConversation(controller.current!.signal)
+      if (!mounted.current) { return null }
+      setConversationId(created.conversation_id)
+      setConversationList(list => [{ id: created.conversation_id, name: `对话 ${created.conversation_id.slice(0, 8)}`, inputs: null, introduction: '' }, ...list])
+      return created.conversation_id
+    }
+    catch (error) {
+      if (mounted.current) { setFailure({ message: errorMessage(error) }) }
+      return null
+    }
+    finally { finish() }
+  }
+
   async function send(message: string) {
     if (!message.trim() || Array.from(message).length > 4000) {
       setFailure({ message: '请输入 1–4000 字的消息', query: message })
@@ -251,6 +268,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
   }
 
   return {
+    prepareConversation,
     debugEnabled,
     setDebugEnabled,
     review,

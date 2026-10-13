@@ -8,6 +8,8 @@ export class ChatApiError extends Error {
 }
 
 function httpMessage(status: number) {
+  if (status === 202) { return '变更已提交，恢复保护记录仍在同步。请稍后刷新状态；目前尚未确认完成。' }
+  if (status === 409) { return '设置已在其他请求中更新，请刷新状态后重新选择' }
   if (status === 404) { return '会话已过期或不可访问，请新建对话' }
   if (status === 403) { return '请求未获允许，请检查服务配置' }
   if (status === 422) { return '请输入 1–4000 字的消息' }
@@ -17,7 +19,7 @@ function httpMessage(status: number) {
 
 async function request(path: string, init: RequestInit = {}) {
   const response = await fetch(`/v1${path}`, { ...init, credentials: 'include', cache: 'no-store' })
-  if (!response.ok) {
+  if (!response.ok || response.status === 202) {
     await response.body?.cancel()
     throw new ChatApiError(response.status, httpMessage(response.status))
   }
