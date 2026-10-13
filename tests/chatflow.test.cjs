@@ -29,7 +29,6 @@ function load(file) {
   return mod.exports
 }
 const api = load('service/index.ts')
-const privacy = load('service/privacy.ts')
 const { fetchBackend } = load('lib/backend.ts')
 const { proxyChatflow } = load('app/api/utils/proxy.ts')
 const { NextRequest } = require('next/server')
@@ -295,6 +294,106 @@ test('private API key cannot overwrite Clerk authorization', async () => {
   process.env.BACKEND_API_KEY = 'private-key'
   process.env.BACKEND_API_KEY_HEADER = 'authorization'
   await assert.rejects(fetchBackend('/v1/conversations', { headers: { Authorization: 'Bearer clerk-token' } }), error => error.status === 503)
+})
+
+const privacy = load('service/privacy.ts')
+const historyPolicy = { mode: 'history', retention_days: 30, expiry_basis: 'per_completed_turn', expires_at: 1900000000, policy_version: 2, idle_timeout_seconds: null }
+const status = { available: true, fields: Object.fromEntries(['region', 'nickname', 'preferences'].map(field => [field, { allowed: false, version: 0, expires_at: null }])) }
+
+test('privacy policy preserves server period and renders history, rolling and no-history notice', async () => {
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, '/v1/conversations/c1/policy'); assert.equal(init.credentials, 'include'); assert.equal(init.cache, 'no-store')
+    return Response.json(historyPolicy)
+  }
+  assert.deepEqual(await privacy.fetchConversationPolicy('c1'), historyPolicy)
+  assert.match(privacy.retentionNotice(historyPolicy), /分别保留30天/)
+  assert.match(privacy.retentionNotice({ ...historyPolicy, mode: 'rolling', retention_days: 60 }), /最后一轮成功回答起保留60天/)
+  assert.match(privacy.retentionNotice({ ...historyPolicy, mode: 'ephemeral', retention_days: null }), /不保存.*24小时/)
+  assert.match(privacy.retentionNotice(null), /正在确认/)
+})
+test('retention PATCH carries version and explicit history-save/delete/extension choices', async () => {
+  const body = { policy_version: 2, mode: 'rolling', retention_days: 60, save_existing: false, delete_existing: false, extend_existing: true }
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, '/v1/conversations/c1/policy'); assert.equal(init.method, 'PATCH')
+    assert.deepEqual(JSON.parse(init.body), body)
+    return Response.json({ ...historyPolicy, mode: 'rolling', retention_days: 60, policy_version: 3 })
+  }
+  assert.equal((await privacy.changeConversationPolicy('c1', body)).retention_days, 60)
+})
+test('consent grant transmits only selected field and explicitly provided value', async () => {
+  const body = { version: 0, allowed: true, value: { province_code: '440000', purpose: 'help' }, retention_days: 30, extend: false }
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, '/v1/me/privacy/region'); assert.equal(init.method, 'PATCH')
+    assert.deepEqual(JSON.parse(init.body), body)
+    return Response.json(status)
+  }
+  await privacy.changeConsent('region', body)
+})
+test('consent revoke and extension need no sensitive replacement values', async () => {
+  let calls = 0
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body)
+    assert.equal('value' in body, false); assert.equal(body.version, 3)
+    assert.equal(body.allowed, calls === 1); assert.equal(body.extend, calls === 1)
+    calls++; return Response.json(status)
+  }
+  await privacy.changeConsent('nickname', { version: 3, allowed: false, retention_days: 30, extend: false })
+  await privacy.changeConsent('nickname', { version: 3, allowed: true, retention_days: 60, extend: true })
+  assert.equal(calls, 2)
+})
+test('privacy pending 202 never becomes saved policy or completed deletion', async () => {
+  globalThis.fetch = async () => Response.json({ status: 'privacy_change_pending' }, { status: 202 })
+  await assert.rejects(privacy.changeConversationPolicy('c1', {}), error => error.status === 202 && /尚未确认完成/.test(error.message))
+  await assert.rejects(privacy.changeConsent('region', {}), error => error.status === 202)
+  await assert.rejects(api.deleteConversation('c1'), error => error.status === 202)
+})
+test('privacy conflicts request refresh and never leak upstream details', async () => {
+  globalThis.fetch = async () => Response.json({ detail: 'private database value' }, { status: 409 })
+  await assert.rejects(privacy.fetchPrivacyStatus(), error => error.status === 409 && /刷新/.test(error.message) && !error.message.includes('private'))
+})
+test('malformed privacy policy/status rejected before enabling settings', async () => {
+  globalThis.fetch = async () => Response.json({ ...historyPolicy, retention_days: 999 })
+  await assert.rejects(privacy.fetchConversationPolicy('c1'), error => error.status === 502)
+  globalThis.fetch = async () => Response.json({ available: true, fields: {} })
+  await assert.rejects(privacy.fetchPrivacyStatus(), error => error.status === 502)
+})
+test('privacy options use server defaults and approved geographic codes', async () => {
+  const options = { fields: ['region', 'nickname', 'preferences'], default_allowed: false, default_retention_days: 30, max_retention_days: 90, provinces: { '440000': '广东省' }, city_codes: ['440100'] }
+  globalThis.fetch = async (url) => { assert.equal(url, '/v1/privacy/options'); return Response.json(options) }
+  assert.deepEqual(await privacy.fetchPrivacyOptions(), options)
+})
+test('gateway forwards privacy PATCH body, authenticated identity and pending status', async () => {
+  process.env.BACKEND_API_URL = 'https://backend.example'; process.env.FRONTEND_ORIGIN = 'https://frontend.example'
+  const body = { version: 0, allowed: false, retention_days: 30, extend: false }
+  globalThis.fetch = async (url, init) => {
+    assert.equal(String(url), 'https://backend.example/v1/me/privacy/region'); assert.equal(init.method, 'PATCH')
+    assert.equal(init.headers.get('authorization'), 'Bearer verified-token')
+    assert.deepEqual(JSON.parse(new TextDecoder().decode(init.body)), body)
+    return Response.json({ status: 'privacy_change_pending' }, { status: 202 })
+  }
+  const result = await proxyChatflow(new NextRequest('https://frontend.example/v1/me/privacy/region', {
+    method: 'PATCH', headers: { Origin: 'https://frontend.example', 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  }))
+  assert.equal(result.status, 202)
+  assert.equal((await result.json()).status, 'privacy_change_pending')
+})
+test('guest gateway forwards retention changes with guest cookies', async () => {
+  mockActor = null; process.env.BACKEND_API_URL = 'https://backend.example'; process.env.FRONTEND_ORIGIN = 'https://frontend.example'
+  globalThis.fetch = async (url, init) => {
+    assert.equal(init.headers.get('cookie'), 'xiaoan_guest=guest-token'); assert.equal(init.headers.get('authorization'), null)
+    return Response.json(historyPolicy)
+  }
+  const result = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations/c1/policy', {
+    method: 'PATCH', headers: { Origin: 'https://frontend.example', Cookie: 'xiaoan_guest=guest-token' }, body: '{}',
+  }))
+  assert.equal(result.status, 200)
+})
+test('gateway rejects cross-origin, unsupported fields and methods for privacy mutations', async () => {
+  process.env.FRONTEND_ORIGIN = 'https://frontend.example'
+  globalThis.fetch = () => { throw new Error('must not forward') }
+  assert.equal((await proxyChatflow(new NextRequest('https://frontend.example/v1/me/privacy/region', { method: 'PATCH', headers: { Origin: 'https://evil.example' } }))).status, 403)
+  assert.equal((await proxyChatflow(new NextRequest('https://frontend.example/v1/me/privacy/age', { method: 'PATCH', headers: { Origin: 'https://frontend.example' } }))).status, 404)
+  assert.equal((await proxyChatflow(new NextRequest('https://frontend.example/v1/privacy/options', { method: 'PATCH', headers: { Origin: 'https://frontend.example' } }))).status, 405)
 })
 
 test('privacy gateway forwards versioned PATCH payload using account credentials', async () => {
