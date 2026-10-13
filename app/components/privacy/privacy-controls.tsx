@@ -11,7 +11,7 @@ const buttonClass = 'min-h-11 rounded-lg border border-[#95684D] px-3 text-sm ho
 const fieldNames: Record<PrivacyField, string> = { region: '省市地区', nickname: '称呼', preferences: '回答偏好' }
 function message(error: unknown) { return error instanceof ChatApiError ? error.message : '设置暂时不可用，你仍可继续聊天' }
 
-export default function PrivacyControls({ conversationId, signedIn, authReady, busy, completedId, prepareConversation, refreshConversation, open, onOpenChange }: {
+export default function PrivacyControls({ conversationId, signedIn, authReady, busy, completedId, refreshConversation, open, onOpenChange }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   conversationId: string
@@ -19,7 +19,6 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
   authReady: boolean
   busy: boolean
   completedId?: string
-  prepareConversation: () => Promise<string | null>
   refreshConversation: () => Promise<void>
 }) {
   const [options, setOptions] = useState<PrivacyOptions | null>(null)
@@ -53,13 +52,6 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
   }, [authReady, conversationId, completedId, busy, reload])
   useEffect(() => () => mutation.current?.abort(), [conversationId, signedIn])
 
-  async function showSettings() {
-    if (busy) { return }
-    if (conversationId === '-1' && !await prepareConversation()) { return }
-    setNotice('')
-    refresh()
-    setOpen(true)
-  }
   async function mutate(action: (signal: AbortSignal) => Promise<void>) {
     if (saving || busy || mutation.current) { return }
     const abort = new AbortController()
@@ -89,10 +81,13 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
     ? `新对话默认每轮保留${options.default_retention_days}天，可在「隐私与保存」中修改。`
     : retentionNotice(policy)
   return <div className='mt-2 text-center text-xs leading-5 text-[#65594F]'>
-    <p>尽量不要输入真实姓名、身份证号、电话或详细住址等个人敏感信息。</p>
-    <p aria-live='polite'>{fineprint}</p>
-    {policy?.expires_at != null && <p>{policy.mode === 'ephemeral' ? '临时上下文到期：' : '当前已保存内容最晚到期：'}{expiryText(policy.expires_at)}</p>}
-    <button type='button' onClick={() => void showSettings()} disabled={busy || !authReady} className='min-h-11 px-3 underline underline-offset-4 disabled:opacity-50'>隐私与保存</button>
+    <div className='max-w-full overflow-x-auto'>
+      <div className='mx-auto flex w-max flex-nowrap items-center gap-x-4 whitespace-nowrap'>
+        <span>尽量不要输入真实姓名、身份证号、电话或详细住址等个人敏感信息。</span>
+        <span aria-live='polite'>{fineprint}</span>
+        {policy?.expires_at != null && <span>{policy.mode === 'ephemeral' ? '临时上下文到期：' : '当前已保存内容最晚到期：'}{expiryText(policy.expires_at)}</span>}
+      </div>
+    </div>
     {pending && <p role='status'>恢复保护记录仍在同步，尚未确认完成。</p>}
     {open && <PrivacyDialog onClose={() => setOpen(false)} saving={saving}>
       <p className='text-sm leading-6'>可以直接聊天，也可以选择保存期限。个人信息仅用于在对话中提供适合你的回答；拒绝保存不影响基本聊天。</p>

@@ -44,7 +44,7 @@ const Main: FC<IMainProps> = () => {
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerHeight, setComposerHeight] = useState(220)
-  const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
+  const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   useEffect(() => {
     const completedNow = wasResponding.current && !isResponding
     wasResponding.current = isResponding
@@ -177,11 +177,9 @@ const Main: FC<IMainProps> = () => {
                   authReady={isLoaded}
                   busy={busy || Boolean(failure?.needsRecovery)}
                   completedId={chatList.filter(item => item.isAnswer).at(-1)?.id}
-                  prepareConversation={prepareConversation}
                   refreshConversation={() => selectConversation(currConversationId)}
                 />}
               />
-              {reviewError && <p role='status' className='text-sm text-amber-800'>{reviewError}</p>}
               {isResponding && <button type='button' onClick={stop} className='px-3 py-2 text-sm underline'>停止接收</button>}
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
