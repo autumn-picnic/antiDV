@@ -6,6 +6,9 @@ import { AccessError } from '@/lib/auth/policy'
 const cookieNames = new Set(['xiaoan_guest', 'xiaoan_current', 'xiaoan_session'])
 
 function allowedMethods(path: string): string[] {
+  if (path === '/v1/privacy/options' || path === '/v1/me/privacy') { return ['GET'] }
+  if (/^\/v1\/me\/privacy\/(?:region|nickname|preferences)$/.test(path)) { return ['PATCH'] }
+  if (/^\/v1\/conversations\/[a-zA-Z0-9_-]+\/policy$/.test(path)) { return ['GET', 'PATCH'] }
   if (path === '/v1/config/models') { return ['GET'] }
   if (path === '/v1/conversations') { return ['GET', 'POST'] }
   if (path === '/v1/me/claim-guest') { return ['POST'] }
@@ -50,7 +53,7 @@ export async function proxyChatflow(request: NextRequest) {
     const response = await fetchBackend(`${path}${request.nextUrl.search}`, {
       method: request.method,
       headers,
-      body: request.method === 'POST' ? await request.arrayBuffer() : undefined,
+      body: ['POST', 'PATCH'].includes(request.method) ? await request.arrayBuffer() : undefined,
       signal: request.signal,
     })
     const responseHeaders = new Headers({
