@@ -23,7 +23,7 @@ function load(file) {
   }
   const source = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
     fileName: filename,
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText
   mod._compile(source, filename)
   return mod.exports
@@ -477,4 +477,51 @@ test('retention client keeps history, rolling and ephemeral expiry semantics dis
   }
   globalThis.fetch = async () => Response.json({ mode: 'history', retention_days: 100, expires_at: null, policy_version: 2 })
   await assert.rejects(() => privacy.fetchConversationPolicy('c1'), error => error.status === 502)
+})
+
+test('debug panel renders every backend group, nested fields and unknown additions', () => {
+  const React = require('react')
+  const { renderToStaticMarkup } = require('react-dom/server')
+  const { default: DebugPanel } = load('app/components/chat/debug-panel.tsx')
+  const diagnostic = {
+    timings: { safety_ms: 0, router_ms: 32.5, response_ttft_ms: null, future_timing_ms: 12 },
+    safety: { decision: 'NO_IMMEDIATE_CRISIS', level: 'normal', response_key: null, bystander: false, evidence: ['脱敏证据'], reason: '<script>alert(1)</script>' },
+    route: { capsule_id: 'baseline', confidence: 0.59, raw_candidate: { capsule_id: 'n2', confidence: 0.59 }, fallback_reason: '低于阈值' },
+    ground: { loaded: false, selected_branch_numbers: [], resolved_ground: ['wiki#node'], selection_reason: '选择理由' },
+    models: { safety: 'gpt-4.1-mini', response: 'gemini' },
+    output_guard: { status: 'allow', regenerated: false, length_limit_enforced: false },
+    state: { has_previous_response_id: false, ttl_turns: 0 },
+    router_context: { configured_turns: 3, supplied_completed_turns: 0 },
+    redaction: { redacted_text: '[PII_EMAIL]', pii_tags: [{ type: 'EMAIL', placeholder: '[PII_EMAIL]' }] },
+    capsule_issues: [],
+    future_diagnostic: { new_field: '保留新增字段' },
+  }
+  const html = renderToStaticMarkup(React.createElement(DebugPanel, { debug: diagnostic }))
+  for (const [group, value] of Object.entries(diagnostic)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const field of Object.keys(value)) { assert.ok(html.includes(field), `Missing ${group}.${field}`) }
+    } else {
+      assert.ok(html.includes(group), `Missing ${group}`)
+    }
+  }
+  for (const title of ['耗时', 'Safety 安全判断', '路由／胶囊', 'Ground 知识依据', '模型', 'Output Guard 输出检查', '跨轮状态', '路由上下文', 'PII 脱敏', '胶囊问题', '其他诊断']) {
+    assert.ok(html.includes(title), `Missing section ${title}`)
+  }
+  assert.ok(html.includes('0 ms'))
+  assert.ok(html.includes('32.5 ms'))
+  assert.ok(html.includes('未提供（null）'))
+  assert.ok(html.includes('否（false）'))
+  assert.ok(html.includes('[]'))
+  assert.ok(html.includes('wiki#node'))
+  assert.ok(html.includes('&lt;script&gt;'))
+  assert.equal(html.includes('<script>'), false)
+})
+
+test('debug panel explains missing diagnostics and handles empty payloads', () => {
+  const React = require('react')
+  const { renderToStaticMarkup } = require('react-dom/server')
+  const { default: DebugPanel } = load('app/components/chat/debug-panel.tsx')
+  const render = debug => renderToStaticMarkup(React.createElement(DebugPanel, { debug }))
+  assert.ok(render(null).includes('本轮无诊断数据'))
+  assert.ok(render({ safety: {}, capsule_issues: [] }).includes('{}'))
 })
