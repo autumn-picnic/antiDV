@@ -2,6 +2,7 @@
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useState } from 'react'
+import { isFeedbackAdminEmail } from '@/lib/auth/policy'
 import { quickEscape } from '@/app/components/quick-exit'
 
 export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
@@ -47,7 +48,7 @@ export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () =
     <span>已登录{user?.firstName ? `：${user.firstName}` : ''}</span>
     <button type='button' onClick={quickEscape} className='underline'>退出并清除此设备登录</button>
     <button type='button' disabled={busy} onClick={() => void claim()} className='underline'>将本设备旧游客记录关联到账号</button>
-    {user?.publicMetadata.role === 'admin' && <Link href='/feedback' className='underline'>反馈管理</Link>}
+    {user?.publicMetadata.role === 'admin' && isFeedbackAdminEmail(user.primaryEmailAddress?.emailAddress, user.primaryEmailAddress?.verification?.status === 'verified') && <Link href='/feedback' className='underline'>反馈管理</Link>}
     {status && <span role='status'>{status}</span>}
   </div>
 }

@@ -9,6 +9,12 @@ export function roleFromMetadata(metadata: Record<string, unknown>): Role {
   return metadata.role === 'admin' ? 'admin' : 'user'
 }
 
+export const FEEDBACK_ADMIN_EMAIL = 'autumnpicnic@proton.me'
+
+export function isFeedbackAdminEmail(email: string | undefined, verified: boolean): boolean {
+  return verified && email?.trim().toLowerCase() === FEEDBACK_ADMIN_EMAIL
+}
+
 export function assertAdmin(actor: Actor) {
   if (actor.role !== 'admin') { throw new AccessError(403, '仅管理员可以访问') }
 }
