@@ -27,6 +27,8 @@ export interface IChatProps {
   onReview?: (messageId: string, review: { score: number, comment: string }) => Promise<void>
   inputLeft?: number
   inputRight?: number
+  onComposerResize?: (height: number) => void
+  privacyControls?: React.ReactNode
   debugEnabled?: boolean
 }
 
@@ -46,10 +48,21 @@ const Chat: FC<IChatProps> = ({
   inputLeft,
   inputRight,
   debugEnabled,
+  onComposerResize,
+  privacyControls,
 }) => {
   const { t } = useTranslation()
   const { notify } = Toast
   const isUseInputMethod = useRef(false)
+
+  const composerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const element = composerRef.current
+    if (!element || !onComposerResize) { return }
+    const observer = new ResizeObserver(() => onComposerResize(element.getBoundingClientRect().height))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [isHideSendInput, onComposerResize])
 
   const [query, setQuery] = React.useState('')
   const queryRef = useRef('')
@@ -192,6 +205,7 @@ const Chat: FC<IChatProps> = ({
       {
         !isHideSendInput && (
           <div
+            ref={composerRef}
             className='chat-composer-dock'
             style={{ left: inputLeft ?? 0, right: inputRight ?? 0 }}
           >
@@ -296,6 +310,7 @@ const Chat: FC<IChatProps> = ({
                   </Tooltip>
                 </div>
               </div>
+              {privacyControls}
               <p className="chat-disclaimer">小安是AI助手，回答可能有误。</p>
             </div>
           </div>

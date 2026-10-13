@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { quickEscape } from '@/app/components/quick-exit'
 
-export default function AccountControls() {
+export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
   const { user, isLoaded, isSignedIn } = useUser()
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -30,6 +30,20 @@ export default function AccountControls() {
     </div>
   }
   return <div className='flex flex-wrap items-center gap-4 px-4 py-2 text-sm'>
+    <details className='relative'>
+      <summary aria-label='账号菜单' className='flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#95684D]'>
+        {user?.imageUrl
+          ? <img src={user.imageUrl} alt='' width={32} height={32} className='h-8 w-8 rounded-full object-cover' />
+          : <span aria-hidden='true' className='flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF1E5]'>我</span>}
+      </summary>
+      <div className='absolute left-0 top-full z-50 mt-1 w-56 rounded-xl border border-[#D5C9BF] bg-white p-2 shadow-lg'>
+        <button type='button' onClick={(event) => {
+          event.currentTarget.closest('details')?.removeAttribute('open')
+          onOpenPrivacy()
+        }} className='min-h-11 w-full rounded-lg px-3 text-left hover:bg-[#FFF1E5]'>隐私与保存</button>
+        <button type='button' onClick={quickEscape} className='min-h-11 w-full rounded-lg px-3 text-left hover:bg-[#FFF1E5]'>退出并清除此设备登录</button>
+      </div>
+    </details>
     <span>已登录{user?.firstName ? `：${user.firstName}` : ''}</span>
     <button type='button' onClick={quickEscape} className='underline'>退出并清除此设备登录</button>
     <button type='button' disabled={busy} onClick={() => void claim()} className='underline'>将本设备旧游客记录关联到账号</button>

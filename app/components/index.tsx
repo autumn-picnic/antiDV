@@ -17,6 +17,7 @@ import useChatflow from '@/hooks/use-chatflow'
 import CrisisDialog from '@/app/components/crisis-dialog'
 import { useRouter } from 'next/navigation'
 import AccountControls from '@/app/components/account/account-controls'
+import PrivacyControls from '@/app/components/privacy/privacy-controls'
 import { BugAntIcon } from '@heroicons/react/24/outline'
 import { GuardSummary } from '@/app/components/chat/debug-panel'
 import { setLocaleOnClient } from '@/i18n/client'
@@ -41,7 +42,9 @@ const Main: FC<IMainProps> = () => {
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
-  const { conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [composerHeight, setComposerHeight] = useState(220)
+  const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   useEffect(() => {
     const completedNow = wasResponding.current && !isResponding
     wasResponding.current = isResponding
@@ -64,8 +67,17 @@ const Main: FC<IMainProps> = () => {
     return () => cancelAnimationFrame(frame)
   }, [chatList, currConversationId])
 
+  useEffect(() => { setPrivacyOpen(false) }, [isSignedIn])
+
+  const openPrivacy = async () => {
+    if (busy || !isLoaded || failure?.needsRecovery) { return }
+    if (!await prepareConversation()) { return }
+    setPrivacyOpen(true)
+  }
+
   const handleConversationIdChange = (id: string) => {
     if (busy) { return }
+    setPrivacyOpen(false)
     void selectConversation(id)
     hideSidebar()
   }
@@ -119,7 +131,7 @@ const Main: FC<IMainProps> = () => {
         onShowResourcePanel={isDesktop ? togglePanelCollapse : showResourcePanel}
         hasSetInputs={hasSetInputs}
       />
-      <AccountControls />
+      <AccountControls onOpenPrivacy={() => void openPrivacy()} />
       <IncognitoNotice />
       {guestPrompt.visible && isLoaded && !crisisId && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -144,7 +156,7 @@ const Main: FC<IMainProps> = () => {
                 <BugAntIcon className="h-4 w-4" />
               </button>
             </div>
-            <div className='relative grow w-full max-w-[900px] pb-[220px] px-4 pt-8 mx-auto mb-3.5' ref={chatListDomRef}>
+            <div className='relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: composerHeight + 24 }} ref={chatListDomRef}>
               <Chat
                 chatList={chatList}
                 debugEnabled={debugEnabled}
@@ -155,6 +167,19 @@ const Main: FC<IMainProps> = () => {
                 checkCanSend={checkCanSend}
                 inputLeft={inputLeft}
                 inputRight={inputRight}
+                onComposerResize={setComposerHeight}
+                privacyControls={<PrivacyControls
+                  key={isSignedIn ? 'account' : 'guest'}
+                  open={privacyOpen}
+                  onOpenChange={setPrivacyOpen}
+                  conversationId={currConversationId}
+                  signedIn={Boolean(isSignedIn)}
+                  authReady={isLoaded}
+                  busy={busy || Boolean(failure?.needsRecovery)}
+                  completedId={chatList.filter(item => item.isAnswer).at(-1)?.id}
+                  prepareConversation={prepareConversation}
+                  refreshConversation={() => selectConversation(currConversationId)}
+                />}
               />
               {reviewError && <p role='status' className='text-sm text-amber-800'>{reviewError}</p>}
               {isResponding && <button type='button' onClick={stop} className='px-3 py-2 text-sm underline'>停止接收</button>}
