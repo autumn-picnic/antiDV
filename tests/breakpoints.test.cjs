@@ -30,7 +30,7 @@ test('server and initial client render match at mobile, tablet and desktop width
       assert.equal(renderToString(React.createElement(View)), server)
     }
   }
-  finally { if (saved === undefined) delete globalThis.innerWidth; else globalThis.innerWidth = saved }
+  finally { if (saved === undefined) { delete globalThis.innerWidth } else { globalThis.innerWidth = saved } }
 })
 
 test('mount reads actual viewport, resize updates it, and unmount removes listener', () => {
@@ -53,5 +53,5 @@ test('mount reads actual viewport, resize updates it, and unmount removes listen
     cleanup()
     assert.equal(listener, null)
   }
-  finally { if (saved === undefined) delete globalThis.window; else globalThis.window = saved }
+  finally { if (saved === undefined) { delete globalThis.window } else { globalThis.window = saved } }
 })
