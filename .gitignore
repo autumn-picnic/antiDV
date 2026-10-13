@@ -56,3 +56,6 @@ yarn.lock
 
 #test
 /Users/mingjiexing/Desktop/ADVchatbot/frontend/load-test
+
+# clerk configuration (can include secrets)
+/.clerk/
