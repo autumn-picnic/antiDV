@@ -27,26 +27,6 @@ export const metadata: Metadata = {
   },
 }
 
-/* ── Inline SVG Icons (stroke 1.5, 20×20, no external deps) ── */
-const IconPhone = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="电话">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-  </svg>
-)
-const IconMail = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="邮件">
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <polyline points="22,7 12,13 2,7" />
-  </svg>
-)
-const IconWechat = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="微信">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
-    <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
-  </svg>
-)
-
 const values = [
   { title: '安全', image: brandAssets.values.safety, desc: '人身安全与身心安全始终是第一位，是小安的第一位，更是你自己的第一位。' },
   { title: '信任', image: brandAssets.values.trust, desc: '不管几点，说得多乱，说了又反悔，都可以。在这里，你不必完美，不必自证。' },
@@ -54,10 +34,29 @@ const values = [
 ]
 
 const features = [
-  { num: '01', title: '了解发生什么', image: brandAssets.help.understand, tone: 'peach', desc: '很多伤害没有淤青。小安帮你分辨哪些行为算暴力、暴力为什么会循环，以及为什么这不是你的错。', link: '/chat' },
-  { num: '02', title: '准备安全计划', image: brandAssets.help.safety, tone: 'sage', desc: '有些决定很难立马做出，但你可以先了解：什么是安全计划、证据如何保存、紧急时需要做些什么。', link: '/chat' },
-  { num: '03', title: '寻求法律支持', image: brandAssets.help.legal, tone: 'lavender', desc: '有效报警、及时验伤、申请人身安全保护令、寻求法律援助——小安会告诉你每一步具体怎么办。', link: '/chat' },
-  { num: '04', title: '重塑个人生活', image: brandAssets.help.rebuild, tone: 'blue', desc: '分开后面临骚扰和威胁怎么办、身心创伤如何应对、重新开始可以从哪里开始——这些小安也知道。', link: '/chat' },
+  { num: '01', title: '了解发生什么', image: brandAssets.help.understand, tone: 'peach', desc: '很多伤害没有淤青。小安帮你分辨哪些行为算暴力、暴力为什么会循环，为什么这不是你的错', link: '/chat' },
+  { num: '02', title: '让自己更安全', image: brandAssets.help.safety, tone: 'sage', desc: '小安为你提供，在你还没决定任何事的时候，就可以先做的准备：安全计划、证据怎么留、紧急时去哪', link: '/chat' },
+  { num: '03', title: '拿起法律武器', image: brandAssets.help.legal, tone: 'lavender', desc: '有效报警、及时验伤、申请人身安全保护令、寻求进一步法律援助，小安会告诉你每一步具体怎么办', link: '/chat' },
+  { num: '04', title: '重建个人生活', image: brandAssets.help.rebuild, tone: 'blue', desc: '分开后的骚扰怎么应对、创伤修复需要什么、怎么重新开始——这些小安也知道', link: '/chat' },
+]
+
+const knowledgeGroups = [
+  {
+    title: '相关科普',
+    items: [
+      { num: '01', title: '这也是家暴吗？', desc: '身体、精神、性、经济控制——很多伤害不留痕迹', href: '/psych-resources#understanding-dv' },
+      { num: '02', title: '为什么离开这么难？', desc: '暴力循环、习得性无助，以及离开很难的现实原因', href: '/psych-resources#understanding-dv' },
+      { num: '03', title: '谁可能遭受家暴？', desc: '同居、前任、同性伴侣、老人、孩子、男性——谁都可能遇到', href: '/psych-resources#understanding-dv' },
+    ],
+  },
+  {
+    title: '行动资源',
+    items: [
+      { num: '04', title: '身边人受暴怎么办？', desc: '如何倾听、怎么避免二次伤害、可以做些什么支持TA', href: '/psych-resources#support-communities' },
+      { num: '05', title: '法律资源有哪些？', desc: '《反家庭暴力法》、保护令、告诫书，以及实际怎么用', href: '/resources#legal-aid' },
+      { num: '06', title: '反家暴资源地图', desc: '咨询热线、反家暴庇护所、法律援助、心理咨询', href: '/resources' },
+    ],
+  },
 ]
 
 const faqs = [
@@ -128,12 +127,10 @@ const LandingPage: FC = () => {
           <span>小安</span>
         </Link>
         <nav aria-label="主导航" className="home-nav">
-          <Link href="/" aria-current="page">首页</Link>
-          <a href="#about">小安是谁</a>
           <a href="#support">小安帮你</a>
           <a href="#questions">关于家暴</a>
-          <a href="#contact">联系我们</a>
-          <a href="#contact">有话要说</a>
+          <a href="#welcome">小安是谁</a>
+          <a href="#message">有话要说</a>
         </nav>
       </header>
       <HomeIntro />
@@ -160,20 +157,50 @@ const LandingPage: FC = () => {
                 <p>{feature.desc}</p>
                 <span className="home-support-arrow" aria-hidden="true">⟶</span>
               </div>
-              <Image src={feature.image} alt="" width={200} height={220} className="home-support-art" />
+              <Image src={feature.image} alt="" width={200} height={200} sizes="(max-width: 767px) 120px, 170px" className="home-support-art" />
             </Link>
           ))}
         </div>
-        <nav className="home-resource-links" aria-label="更多支持资源">
-          <Link href="/resources">线下支援导航 →</Link>
-          <Link href="/psych-resources">资源支持库 →</Link>
-          <Link href="/stories">受害者故事 →</Link>
-          <Link href="/docs-toolkit">文档工具库 →</Link>
-        </nav>
+      </section>
+
+      <section id="questions" className="home-knowledge" aria-labelledby="knowledge-title">
+        <h2 id="knowledge-title">关于<span>家暴</span>，你可能想知道的</h2>
+        <blockquote className="home-knowledge-intro">
+          <p>家庭暴力不是家务事，是违法行为。</p>
+          <p>反对家庭暴力不是受暴者一个人的事，而需要全社会一起努力。</p>
+          <p>了解更多家暴相关知识，为了更好支持自己、支持他人。</p>
+        </blockquote>
+        <div className="home-knowledge-panel">
+          {knowledgeGroups.map(group => (
+            <div key={group.title} className="home-knowledge-group">
+              <h3>{group.title}</h3>
+              <div className="home-knowledge-grid">
+                {group.items.map(item => (
+                  <Link key={item.num} href={item.href} className="home-knowledge-link">
+                    <h4><span aria-hidden="true">{item.num}</span>{item.title}</h4>
+                    <p>{item.desc}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="contact" className="home-contact" aria-labelledby="contact-title">
+        <h2 id="contact-title">联系我们</h2>
+        <div className="home-contact-grid">
+          <ul className="home-contact-copy">
+            <li>小安由反家暴领域研究者、一线社工和技术团队共同搭建。</li>
+            <li>里面的每一条建议，都经过实务工作者校对——不是法条的复制粘贴，而是这些事在国内真实办起来是什么样。</li>
+            <li>因为小安希望为每一位家暴亲历者提供及时、可信赖、有效的支持</li>
+          </ul>
+          <Image src={brandAssets.contact} alt="小安团队成员接听电话的插画" width={702} height={702} sizes="(max-width: 767px) 280px, 320px" className="home-contact-art" />
+        </div>
       </section>
 
       {/* ─── FAQ ──────────────────────────────────── */}
-      <section id="questions" style={{ maxWidth: 680, margin: '0 auto', padding: '72px 24px' }}>
+      <section id="faq" style={{ maxWidth: 680, margin: '0 auto', padding: '72px 24px' }}>
         <h2
           style={{
             fontFamily: '\'Noto Serif SC\', serif',
@@ -218,57 +245,16 @@ const LandingPage: FC = () => {
         </div>
       </section>
 
-      {/* ─── Contact ──────────────────────────────── */}
-      <section id="contact" style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px 72px' }}>
-        <hr style={{ border: 'none', borderTop: '1px solid #E6DDD5', marginBottom: 48 }} />
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 40,
-          }}
-        >
-          <div>
-            <h2
-              style={{
-                fontFamily: '\'Noto Serif SC\', serif',
-                fontSize: 22,
-                fontWeight: 600,
-                color: '#3D3028',
-                marginBottom: 12,
-              }}
-            >
-              联系我们
-            </h2>
-            <p style={{ fontSize: 16, color: '#5C4D3E', lineHeight: 1.8, marginBottom: 28 }}>
-              如有合作意向、问题反馈或需要进一步帮助，欢迎联系我们。
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                { icon: <IconPhone />, label: '联系电话', value: '请联系机构负责人' },
-                { icon: <IconWechat />, label: '微信公众号', value: '请联系机构负责人' },
-                { icon: <IconMail />, label: '电子邮件', value: '请联系机构负责人' },
-              ].map(item => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ color: '#7A6B5D' }}>{item.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#7A6B5D', marginBottom: 2 }}>{item.label}</div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: '#3D3028' }}>{item.value}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#3D3028', marginBottom: 4 }}>
-              给我们留言
-            </h3>
-            <p style={{ fontSize: 12, color: '#7A6B5D', marginBottom: 20 }}>
-              留言信息不会公开，仅供团队查看。
-            </p>
-            <ContactForm />
-          </div>
-        </div>
+      <section id="message" className="home-message" aria-labelledby="message-title">
+        <h2 id="message-title">有话要说</h2>
+        <p>留言信息不会公开，仅供团队查看。</p>
+        <ContactForm />
+        <nav className="home-resource-links" aria-label="更多支持资源">
+          <Link href="/resources">线下支援导航 →</Link>
+          <Link href="/psych-resources">资源支持库 →</Link>
+          <Link href="/stories">受害者故事 →</Link>
+          <Link href="/docs-toolkit">文档工具库 →</Link>
+        </nav>
       </section>
 
       {/* ─── Footer ───────────────────────────────── */}

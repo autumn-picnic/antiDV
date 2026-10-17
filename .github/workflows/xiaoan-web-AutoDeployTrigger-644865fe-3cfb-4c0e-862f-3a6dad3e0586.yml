@@ -39,14 +39,16 @@ jobs:
         run: |
           az containerapp show -n xiaoan-web -g xiaoan-pilot-rg -o json |
             jq -e '
-              .properties.configuration.ingress.fqdn as $fqdn |
+              .properties.configuration.ingress as $ingress |
               .properties.template.containers[0].env as $env |
               ([$env[] | select(.name == "CLERK_SECRET_KEY" and
                 .secretRef == "clerk-secret-key")] | length) == 1 and
               ([$env[] | select(.name == "BACKEND_API_URL" and
                 .value == "http://xiaoan-api")] | length) == 1 and
               ([$env[] | select(.name == "FRONTEND_ORIGIN" and
-                .value == ("https://" + $fqdn))] | length) == 1
+                (.value == ("https://" + $ingress.fqdn) or
+                  .value == "https://xiaoan.app" and
+                  ([$ingress.customDomains[]? | select(.name == "xiaoan.app")] | length) == 1))] | length) == 1
             ' >/dev/null
 
       - name: Login to Azure Container Registry
