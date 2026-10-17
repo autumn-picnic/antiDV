@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 const values = [
   { title: '安全', image: brandAssets.values.safety, desc: '人身安全与身心安全始终是第一位，是小安的第一位，更是你自己的第一位。' },
-  { title: '信任', image: brandAssets.values.trust, desc: '不管几点，说得多乱，说了又反悔，都可以。在这里，你不必完美，不必自证。' },
+  { title: '信任', image: brandAssets.values.trust, desc: '你有权利讲述真实经历与感受，并且不被评判，小安希望信任你，然后被你信任。' },
   { title: '私密', image: brandAssets.values.privacy, desc: '你可以选择愿意分享的内容，随时清空当前对话，或使用「快速离开」离开页面。' },
 ]
 
@@ -140,7 +140,7 @@ const LandingPage: FC = () => {
         <div className="home-values-grid">
           {values.map(value => (
             <article key={value.title} className="home-value-card">
-              <Image src={value.image} alt="" width={310} height={278} className="home-value-art" />
+              <Image src={value.image} alt="" width={287} height={232} sizes="(max-width: 767px) calc(100vw - 48px), (max-width: 1280px) 29vw, 360px" className="home-value-art" />
               <div className="home-value-copy"><h3>{value.title}</h3><p>{value.desc}</p></div>
             </article>
           ))}

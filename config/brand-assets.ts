@@ -8,9 +8,9 @@ export const brandAssets = {
   contact: '/brand/contact-original.png',
   conversation: '/brand/support-conversation.png',
   values: {
-    safety: '/brand/value-safety.png',
-    trust: '/brand/value-trust.png',
-    privacy: '/brand/value-privacy.png',
+    safety: '/brand/value-safety-figma.png',
+    trust: '/brand/value-trust-figma.png',
+    privacy: '/brand/value-privacy-figma.png',
   },
   help: {
     understand: '/brand/help-understand-original.png',

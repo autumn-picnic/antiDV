@@ -28,3 +28,9 @@
 - `home-intro-original.png`：首屏 image 62，节点 `23:10`，960×720，光球支持插画。
 - `home-welcome-original.png`：第二屏 image 46，节点 `1:35`，1214×972。
 - 核对画板：首屏 `1:2`、第二屏 `1:36`；首屏采用“讲出来，让支持发生”、橙色开始对话入口；第二屏采用新版说明与“立即倾诉”按钮。
+
+## 定位说明（2026-10-18）
+
+Figma 文件 `vaLK0i9cvHgsHAYVVcgnnf` 的 `Frame 54`（节点 `1:58`）对应首页定位说明。
+`value-safety-figma.png`、`value-trust-figma.png`、`value-privacy-figma.png` 为用户提供的同版附件中提取的插画区域，保留原始分辨率（287×232），不包含卡片文字。
+信任文案与设计同步；私密文案保留当前产品已支持的分享选择、清空对话与快速离开功能说明。

@@ -159,53 +159,56 @@
 }
 
 .home-values {
-  max-width: 1120px;
   margin: 0 auto;
-  padding: 64px 32px;
+  padding: 48px max(24px, calc((100% - 1184px) / 2)) 32px;
+  background: #f5f5f5;
 }
 
 .home-values h2 {
-  font-size: 32px;
-  font-weight: 750;
-  margin-bottom: 28px;
-  color: #252525;
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 700;
+  margin-bottom: 48px;
+  color: #5d534d;
+  text-align: center;
 }
 
 .home-values-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+  gap: 36px;
 }
 
 .home-value-card {
-  border: 1px solid #eee8e2;
+  border: 1px solid #e9e1dc;
   border-radius: 20px;
   overflow: hidden;
-  background: #fffcf9;
+  background: #fffbfb;
+  box-shadow: 1px 2px 3px #3d30281a;
 }
 
 .home-value-art {
   width: 100%;
   height: auto;
-  aspect-ratio: 310 / 278;
+  display: block;
+  aspect-ratio: 287 / 232;
   object-fit: cover;
 }
 
 .home-value-copy {
-  padding: 26px 24px 30px;
+  padding: 32px 22px 40px;
 }
 
 .home-value-copy h3 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 12px;
-  color: #242424;
+  margin-bottom: 18px;
+  color: #111;
 }
 
 .home-value-copy p {
   font-size: 16px;
-  line-height: 1.9;
-  color: #45413d;
+  line-height: 1.6;
+  color: #111;
 }
 
 .home-support {
