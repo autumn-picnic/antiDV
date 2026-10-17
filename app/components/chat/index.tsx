@@ -65,6 +65,7 @@ const Chat: FC<IChatProps> = ({
   }, [isHideSendInput, onComposerResize])
 
   const [query, setQuery] = React.useState('')
+  const [showAllStarters, setShowAllStarters] = React.useState(false)
   const queryRef = useRef('')
 
   const handleContentChange = (e: any) => {
@@ -124,6 +125,9 @@ const Chat: FC<IChatProps> = ({
   }
 
   const isWelcome = !chatList.some(item => !item.isOpeningStatement)
+  useEffect(() => {
+    if (!isWelcome) { setShowAllStarters(false) }
+  }, [isWelcome])
   const configuredStarters = chatList.find(item => item.isOpeningStatement)?.suggestedQuestions
   const starterQuestions = configuredStarters?.length
     ? configuredStarters
@@ -211,12 +215,26 @@ const Chat: FC<IChatProps> = ({
           >
             <div className="chat-composer-inner">
               {isWelcome && (
-                <div className="chat-starters" aria-label="可以从这些话题开始">
-                  {starterQuestions.map(question => (
-                    <button type="button" key={question} disabled={disabled || isResponding} onClick={() => suggestionClick(question)}>
-                      <span>{question}</span><span aria-hidden="true">⟶</span>
+                <div className="chat-starter-section">
+                  <div id="chat-starter-questions" className="chat-starters" aria-label="可以从这些话题开始">
+                    {starterQuestions.slice(0, showAllStarters ? undefined : 3).map(question => (
+                      <button type="button" key={question} disabled={disabled || isResponding} onClick={() => suggestionClick(question)}>
+                        <span>{question}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {starterQuestions.length > 3 && (
+                    <button
+                      type="button"
+                      className="chat-more-questions"
+                      aria-expanded={showAllStarters}
+                      aria-controls="chat-starter-questions"
+                      onClick={() => setShowAllStarters(value => !value)}
+                    >
+                      {showAllStarters ? '收起其他问题' : '看看其他问题'}
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m6 3 5 5-5 5" /></svg>
                     </button>
-                  ))}
+                  )}
                 </div>
               )}
               {/* Quick-action chips */}
@@ -281,7 +299,7 @@ const Chat: FC<IChatProps> = ({
                   className={`
                   block w-full bg-transparent pl-5 pr-16 py-[7px] leading-5 max-h-none text-base text-gray-700 outline-none appearance-none resize-none
                 `}
-                  placeholder="和小安说说话"
+                  placeholder="你可以从任何地方开始说起。"
                   aria-label="和小安说说话"
                   value={query}
                   maxLength={4000}
