@@ -90,6 +90,11 @@
   cursor: not-allowed;
 }
 
+.figma-chat-shell button:focus-visible, .figma-chat-shell a:focus-visible {
+  outline: 2px solid #95684d;
+  outline-offset: 3px;
+}
+
 .chat-starters button:not(:disabled):hover {
   background: #fff3e9;
   border-color: #dfb99a;
@@ -301,9 +306,4 @@
     transition: none !important;
     transform: none !important;
   }
-}
-
-.figma-chat-shell button:focus-visible, .figma-chat-shell a:focus-visible {
-  outline: 2px solid #95684d;
-  outline-offset: 3px;
 }
