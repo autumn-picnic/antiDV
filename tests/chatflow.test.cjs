@@ -525,3 +525,16 @@ test('debug panel explains missing diagnostics and handles empty payloads', () =
   assert.ok(render(null).includes('本轮无诊断数据'))
   assert.ok(render({ safety: {}, capsule_issues: [] }).includes('{}'))
 })
+
+test('review client saves score/comment with credentials and reloads persisted reviews', async () => {
+  let call
+  globalThis.fetch = async (url, init) => { call = { url, init }; return Response.json({ responseId: 'r1', score: 5, comment: '清楚' }) }
+  await api.saveReview('c1', 'r1', { score: 5, comment: '清楚' })
+  assert.equal(call.url, '/api/reviews')
+  assert.equal(call.init.credentials, 'include')
+  assert.deepEqual(JSON.parse(call.init.body), { conversationId: 'c1', responseId: 'r1', score: 5, comment: '清楚' })
+  globalThis.fetch = async () => Response.json({ items: [{ responseId: 'r1', score: 5, comment: '清楚' }] })
+  assert.deepEqual(await api.fetchReviews('c1'), { r1: { score: 5, comment: '清楚' } })
+  globalThis.fetch = async () => new Response(null, { status: 503 })
+  await assert.rejects(api.saveReview('c1', 'r1', { score: 5, comment: '' }), /评价未保存/)
+})
