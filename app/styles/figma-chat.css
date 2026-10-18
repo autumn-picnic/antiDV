@@ -6,11 +6,13 @@
   padding: 24px;
   background: #fbf9f7;
 }
+
 .chat-topbar-identity {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .chat-topbar-brand {
   display: inline-flex;
   align-items: center;
@@ -20,6 +22,7 @@
   font-size: 24px;
   font-weight: 500;
 }
+
 .chat-topbar-actions {
   position: absolute;
   top: 18px;
@@ -28,6 +31,7 @@
   align-items: center;
   gap: 4px;
 }
+
 .chat-topbar-actions > a,
 .chat-topbar-actions > button,
 .chat-settings > summary {
@@ -39,10 +43,12 @@
   border-radius: 6px;
   cursor: pointer;
 }
+
 .chat-topbar-actions svg {
   width: 18px;
   height: 18px;
 }
+
 .chat-account-controls {
   display: flex;
   align-items: center;
@@ -50,21 +56,26 @@
   color: #898178;
   font-size: 12px;
 }
+
 .chat-account-guest > div {
   position: absolute;
   top: 74px;
   right: 24px;
 }
+
 .chat-account-signed-in {
   flex-wrap: wrap;
   padding-top: 16px;
 }
+
 .chat-settings {
   position: relative;
 }
+
 .chat-settings > summary {
   list-style: none;
 }
+
 .chat-settings-menu {
   position: absolute;
   right: 0;
@@ -75,6 +86,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 18px #4c49471a;
 }
+
 .chat-settings-menu > button {
   display: block;
   width: 100%;
@@ -398,27 +410,33 @@
     min-height: 156px;
     padding: 16px;
   }
+
   .chat-topbar-brand {
     font-size: 20px;
   }
+
   .chat-topbar-actions {
     top: 56px;
     right: 12px;
     gap: 0;
   }
+
   .chat-topbar-actions > a,
   .chat-topbar-actions > button,
   .chat-settings > summary {
     width: 30px;
     height: 36px;
   }
+
   .chat-account-status {
     max-width: 130px;
   }
+
   .chat-account-guest > div {
     top: 104px;
     right: 16px;
   }
+
   .chat-settings-menu {
     right: -4px;
   }

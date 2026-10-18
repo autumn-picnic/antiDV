@@ -209,6 +209,7 @@
   height: auto;
   object-fit: contain;
 }
+
 .home-value-image {
   display: flex;
   align-items: center;
@@ -216,21 +217,27 @@
   aspect-ratio: 350 / 280;
   overflow: hidden;
 }
+
 .home-value-image-safety {
   background: #fbe0cd;
 }
+
 .home-value-image-trust {
   background: #e4ebdb;
 }
+
 .home-value-image-privacy {
   background: #e0e3f5;
 }
+
 .home-value-image-safety .home-value-art {
   width: 73.43%;
 }
+
 .home-value-image-trust .home-value-art {
   width: 87.43%;
 }
+
 .home-value-image-privacy .home-value-art {
   width: 64.29%;
 }
@@ -1066,8 +1073,6 @@
   margin: 56px 0 32px;
 }
 
-
-
 .home-message-actions svg {
   width: 36px;
   height: 36px;
@@ -1090,8 +1095,6 @@
   font-size: 14px;
   line-height: 1.6;
 }
-
-
 
 @media (width <= 767px) {
   .home-message {
