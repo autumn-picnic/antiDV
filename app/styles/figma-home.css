@@ -1,3 +1,19 @@
+.home-message-actions a,
+.home-message-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: #29251f;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.home-message-return span {
+  display: block;
+  font-size: 28px;
+}
+
 .figma-home section[id] {
   scroll-margin-top: 24px;
 }
@@ -1026,16 +1042,7 @@
   margin: 56px 0 32px;
 }
 
-.home-message-actions a,
-.home-message-actions button {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  color: #29251f;
-  font-size: 18px;
-  cursor: pointer;
-}
+
 
 .home-message-actions svg {
   width: 36px;
@@ -1059,10 +1066,7 @@
   line-height: 1.6;
 }
 
-.home-message-return span {
-  display: block;
-  font-size: 28px;
-}
+
 
 @media (width <= 767px) {
   .home-message {
