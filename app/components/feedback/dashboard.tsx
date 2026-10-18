@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 interface Summary { id: string, userId: string | null, turnCount: number, reviewCount: number }
 interface Turn { number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
+interface Contact { id: string, createdAt: string, message: string, name: string | null, phone: string | null, wechat: string | null, email: string | null }
 interface Page<T> { items: T[], nextOffset: number | null }
 
 export default function FeedbackDashboard() {
@@ -16,7 +17,12 @@ export default function FeedbackDashboard() {
   const [error, setError] = useState('')
   const [loadingList, setLoadingList] = useState(false)
   const [loadingTurns, setLoadingTurns] = useState(false)
+  const [section, setSection] = useState<'chat' | 'contact'>('chat')
+  const [contacts, setContacts] = useState<Page<Contact>>({ items: [], nextOffset: null })
+  const [contactOffset, setContactOffset] = useState(0)
+  const [loadingContacts, setLoadingContacts] = useState(false)
   useEffect(() => {
+    if (section !== 'chat') { return }
     const abort = new AbortController()
     setLoadingList(true)
     setConversations({ items: [], nextOffset: null })
@@ -30,10 +36,10 @@ export default function FeedbackDashboard() {
       .catch((err) => { if (!abort.signal.aborted) { setError(err.message) } })
       .finally(() => { if (!abort.signal.aborted) { setLoadingList(false) } })
     return () => abort.abort()
-  }, [listOffset, version])
+  }, [section, listOffset, version])
   useEffect(() => {
     setTurns({ items: [], nextOffset: null })
-    if (!selected) { return }
+    if (section !== 'chat' || !selected) { return }
     const abort = new AbortController()
     setLoadingTurns(true)
     setError('')
@@ -46,7 +52,23 @@ export default function FeedbackDashboard() {
       .catch((err) => { if (!abort.signal.aborted) { setError(err.message) } })
       .finally(() => { if (!abort.signal.aborted) { setLoadingTurns(false) } })
     return () => abort.abort()
-  }, [selected, turnOffset, version])
+  }, [section, selected, turnOffset, version])
+  useEffect(() => {
+    if (section !== 'contact') { return }
+    const abort = new AbortController()
+    setLoadingContacts(true)
+    setContacts({ items: [], nextOffset: null })
+    setError('')
+    fetch(`/api/contact?offset=${contactOffset}`, { cache: 'no-store', signal: abort.signal })
+      .then(async response => {
+        if (!response.ok) { throw new Error(response.status === 403 ? '无管理员权限' : '留言读取失败，请重试') }
+        const data = await response.json()
+        if (!abort.signal.aborted) { setContacts(data) }
+      })
+      .catch(error => { if (!abort.signal.aborted) { setError(error.message) } })
+      .finally(() => { if (!abort.signal.aborted) { setLoadingContacts(false) } })
+    return () => abort.abort()
+  }, [section, contactOffset, version])
   const button = 'rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40 focus-visible:outline focus-visible:outline-2'
   return <main className='min-h-screen bg-[#FBF8F4] p-6 text-gray-900'>
     <div className='mb-6 flex flex-wrap items-center gap-5'>
@@ -54,8 +76,12 @@ export default function FeedbackDashboard() {
       <Link href='/chat' className='underline'>回到聊天</Link>
       <button type='button' className={button} onClick={() => setVersion(v => v + 1)}>刷新</button>
     </div>
+    <div className='mb-6 flex gap-2 border-b border-gray-200' role='group' aria-label='反馈类型'>
+      <button type='button' aria-pressed={section === 'chat'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'chat' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('chat') }}>聊天评价</button>
+      <button type='button' aria-pressed={section === 'contact'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'contact' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('contact') }}>在线留言</button>
+    </div>
     {error && <p role='alert' className='mb-4 text-red-700'>{error}</p>}
-    <div className='grid gap-6 md:grid-cols-[280px_1fr]'>
+    {section === 'chat' && <div className='grid gap-6 md:grid-cols-[280px_1fr]'>
       <section aria-label='会话列表'>
         {loadingList ? <p role='status'>正在读取…</p> : !conversations.items.length && <p>暂无可查看会话</p>}
         <ul className='space-y-2'>{conversations.items.map(item => <li key={item.id}>
@@ -88,6 +114,23 @@ export default function FeedbackDashboard() {
           <button type='button' className={button} disabled={loadingTurns || turns.nextOffset === null} onClick={() => setTurnOffset(turns.nextOffset!)}>后 50 轮</button>
         </div>}
       </section>
-    </div>
+    </div>}
+    {section === 'contact' && <section aria-label='在线留言' className='space-y-4'>
+      {loadingContacts ? <p role='status'>正在读取…</p> : !contacts.items.length && <p>暂无在线留言</p>}
+      {contacts.items.map(contact => <article key={contact.id} className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='flex flex-wrap justify-between gap-2 break-all text-xs text-gray-500'><time dateTime={contact.createdAt}>{new Date(contact.createdAt).toLocaleString('zh-CN')}</time><span>{contact.id}</span></div>
+        <p className='mt-3 whitespace-pre-wrap break-words'>{contact.message}</p>
+        {(contact.name || contact.phone || contact.wechat || contact.email) && <dl className='mt-4 grid gap-1 break-words border-t pt-3 text-sm sm:grid-cols-[auto_1fr]'>
+          {contact.name && <><dt className='font-medium'>姓名</dt><dd>{contact.name}</dd></>}
+          {contact.phone && <><dt className='font-medium'>手机</dt><dd>{contact.phone}</dd></>}
+          {contact.wechat && <><dt className='font-medium'>微信</dt><dd>{contact.wechat}</dd></>}
+          {contact.email && <><dt className='font-medium'>邮箱</dt><dd>{contact.email}</dd></>}
+        </dl>}
+      </article>)}
+      <div className='flex gap-3'>
+        <button type='button' className={button} disabled={loadingContacts || contactOffset === 0} onClick={() => setContactOffset(n => Math.max(0, n - 50))}>上一页</button>
+        <button type='button' className={button} disabled={loadingContacts || contacts.nextOffset === null} onClick={() => setContactOffset(contacts.nextOffset!)}>下一页</button>
+      </div>
+    </section>}
   </main>
 }

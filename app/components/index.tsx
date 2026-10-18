@@ -44,7 +44,7 @@ const Main: FC<IMainProps> = () => {
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerHeight, setComposerHeight] = useState(220)
-  const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
+  const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   useEffect(() => {
     const completedNow = wasResponding.current && !isResponding
     wasResponding.current = isResponding
@@ -185,6 +185,7 @@ const Main: FC<IMainProps> = () => {
                   {failure.query && !failure.needsRecovery && <button type='button' disabled={busy} onClick={retry} className='mt-2 underline'>重试这条消息</button>}
                 </div>
               )}
+              {reviewError && <p role='alert' className='my-3 text-sm text-amber-800'>{reviewError}</p>}
               {/* Export only committed turns. */}
               {chatList.filter(i => !i.isOpeningStatement).length > 0 && (
                 <div className="flex justify-end px-2 pt-1 pb-2">

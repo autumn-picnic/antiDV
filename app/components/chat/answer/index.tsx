@@ -121,7 +121,7 @@ const Answer: FC<IAnswerProps> = ({
     }
 
     const reviewOperation = () => {
-      if (isResponding) { return null }
+      if (isResponding || !onReview) { return null }
       return (
         <Tooltip selector={`review-${randomString(16)}`} content={item.userReview ? '修改评价' : '评价此回复'}>
           {OperationBtn({

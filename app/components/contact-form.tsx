@@ -52,7 +52,7 @@ export default function ContactForm() {
             })
             const data = await res.json()
             if (!res.ok) {
-                setErrorMsg(data.error || '提交失败，请稍后再试')
+                setErrorMsg(data.message || data.error || '提交失败，请稍后再试')
                 setStatus('error')
             }
             else {

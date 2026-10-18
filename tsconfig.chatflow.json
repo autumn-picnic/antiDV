@@ -14,6 +14,7 @@
     "lib/auth/**/*.ts",
     "lib/feedback/**/*.ts",
     "app/api/reviews/route.ts",
+    "app/api/contact/route.ts",
     "app/api/feedback/route.ts",
     "app/api/session/clear/route.ts",
     "app/components/account/**/*.tsx",

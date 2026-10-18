@@ -47,6 +47,7 @@ const { validateReview } = load('lib/feedback/validation.ts')
 const repository = load('lib/feedback/repository.ts')
 const feedback = load('app/api/feedback/route.ts')
 const reviews = load('app/api/reviews/route.ts')
+const contact = load('app/api/contact/route.ts')
 const clear = load('app/api/session/clear/route.ts')
 const originalOrigin = process.env.FRONTEND_ORIGIN
 afterEach(() => { reset(); if (originalOrigin === undefined) delete process.env.FRONTEND_ORIGIN; else process.env.FRONTEND_ORIGIN = originalOrigin })
@@ -183,4 +184,61 @@ test('admin feedback requires designated verified primary email even with admin 
   user.primaryEmailAddressId = 'email_1'
   user.emailAddresses[0].emailAddress = 'AUTUMNPICNIC@PROTON.ME'
   assert.equal((await requireActor(true)).role, 'admin')
+})
+
+test('contact submissions are anonymous, parameterized and preserve the requested field names', async () => {
+  authState = { userId: null, sessionId: null }
+  queryRows = [{ id: 'contact-1' }]
+  const response = await contact.POST(req('/api/contact', { method: 'POST', headers: { Origin: 'https://site.example' }, body: JSON.stringify({ message: "  用户的 '留言'  ", name: '  姓名  ', phone: '', wechat: '', email: '' }) }))
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { success: true, id: 'contact-1' })
+  assert.match(queryCalls[0].sql, /"createdAt"/)
+  assert.deepEqual(queryCalls[0].values.slice(1), ["用户的 '留言'", '姓名', null, null, null])
+  assert(!queryCalls[0].sql.includes("用户的 '留言'"))
+})
+
+test('contact rejects invalid payloads and cross-origin writes before touching the database', async () => {
+  for (const body of ['null', '{', '[]', JSON.stringify({ message: '' }), JSON.stringify({ message: 'x'.repeat(2001) }), JSON.stringify({ message: 'ok', phone: 123 }), JSON.stringify({ message: 'ok', email: 'x'.repeat(101) }), JSON.stringify({ message: 'ok', id: 'forged' })]) {
+    assert.equal((await contact.POST(req('/api/contact', { method: 'POST', headers: { Origin: 'https://site.example' }, body }))).status, 400)
+  }
+  assert.equal((await contact.POST(req('/api/contact', { method: 'POST', headers: { Origin: 'https://other.example' }, body: '{}' }))).status, 403)
+  assert.equal(queryCalls.length, 0)
+})
+
+test('contact reads require the designated verified primary admin; legacy secrets cannot bypass Clerk', async () => {
+  authState = { userId: null, sessionId: null }
+  assert.equal((await contact.GET(req('/api/contact?secret=xiao-an-admin'))).status, 401)
+  reset()
+  assert.equal((await contact.GET(req('/api/contact'))).status, 403)
+  user.publicMetadata.role = 'admin'
+  user.emailAddresses[0].emailAddress = 'other@example.com'
+  assert.equal((await contact.GET(req('/api/contact'))).status, 403)
+  user.emailAddresses[0].emailAddress = 'autumnpicnic@proton.me'
+  user.emailAddresses[0].verification.status = 'unverified'
+  assert.equal((await contact.GET(req('/api/contact'))).status, 403)
+  user.emailAddresses[0].verification.status = 'verified'
+  user.primaryEmailAddressId = 'other'
+  assert.equal((await contact.GET(req('/api/contact'))).status, 403)
+  assert.equal(queryCalls.length, 0)
+})
+
+test('contact reads paginate and commit an administrator access audit', async () => {
+  user.publicMetadata.role = 'admin'
+  queryRows = Array.from({ length: 51 }, (_, i) => ({ id: `contact-${i}`, createdAt: '2026-10-18T00:00:00Z', message: 'test', name: null, phone: null, wechat: null, email: null }))
+  const response = await contact.GET(req('/api/contact?offset=50'))
+  assert.equal(response.status, 200)
+  const data = await response.json()
+  assert.equal(data.items.length, 50)
+  assert.equal(data.nextOffset, 100)
+  assert(queryCalls.some(q => q.sql.includes('LIMIT 51 OFFSET $1') && q.values[0] === 50))
+  assert(queryCalls.some(q => q.sql.includes('INSERT INTO xiaoan_contact_admin_access') && q.values[0] === 'user_alice'))
+  assert.equal(queryCalls.at(-1).sql, 'COMMIT')
+  assert.equal(response.headers.get('Cache-Control'), 'no-store')
+})
+
+test('contact Clerk outage fails closed before database reads', async () => {
+  user.publicMetadata.role = 'admin'
+  failClerk = true
+  assert.equal((await contact.GET(req('/api/contact'))).status, 503)
+  assert.equal(queryCalls.length, 0)
 })
