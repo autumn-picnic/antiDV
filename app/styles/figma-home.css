@@ -228,7 +228,7 @@
 }
 
 .home-support {
-  padding: 56px max(24px, calc((100% - 1000px) / 2)) 52px;
+  padding: 56px max(24px, calc((100% - 1108px) / 2)) 52px;
   background: #ffefdf;
 }
 
@@ -268,7 +268,7 @@
 .home-support-copy {
   position: relative;
   z-index: 1;
-  width: 62%;
+  width: calc(100% - 210px);
   min-width: 0;
 }
 
