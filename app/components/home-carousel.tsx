@@ -7,7 +7,7 @@ export default function HomeIntro() {
     <>
       <section id="about" className="home-hero home-screen-1" aria-labelledby="about-title">
         <div className="home-hero-grid">
-          <Image className="home-illustration" src={brandAssets.homeIntro} alt="小安将一颗星星递给蜷坐着的人，陪你一起寻找支持" width={1700} height={1220} sizes="(max-width: 767px) 90vw, 480px" priority />
+          <Image className="home-illustration" src={brandAssets.homeIntro} alt="小安将一颗星星递给蜷坐着的人，陪你一起寻找支持" width={1056} height={792} sizes="(max-width: 767px) 90vw, 480px" priority />
           <div className="home-intro">
             <p className="home-hero-eyebrow">讲出来，让支持发生</p>
             <h1 id="about-title" className="home-hero-title">令你不安的一切，<br />都可以和小安说说。</h1>

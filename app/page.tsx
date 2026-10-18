@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import ContactFeedback from '@/app/components/contact-feedback'
-import ScrollReveal from '@/app/components/scroll-reveal'
+import { ChevronDoubleUpIcon } from '@heroicons/react/24/outline'
 import { brandAssets } from '@/config/brand-assets'
 import './styles/figma-home.css'
 import AppIcon from '@/app/components/base/app-icon'
@@ -28,9 +28,9 @@ export const metadata: Metadata = {
 }
 
 const values = [
-  { title: '安全', image: brandAssets.values.safety, desc: '人身安全与身心安全始终是第一位，是小安的第一位，更是你自己的第一位。' },
-  { title: '信任', image: brandAssets.values.trust, desc: '你有权利讲述真实经历与感受，并且不被评判，小安希望信任你，然后被你信任。' },
-  { title: '私密', image: brandAssets.values.privacy, desc: '对话数据经过严格脱敏与加密，绝不商用。你可以随时清空记录，随时安全离开。' },
+  { title: '安全', image: brandAssets.values.safety, width: 514, height: 470, desc: '人身安全与身心安全始终是第一位，是小安的第一位，更是你自己的第一位。' },
+  { title: '信任', image: brandAssets.values.trust, width: 612, height: 408, desc: '你有权利讲述真实经历与感受，并且不被评判，小安希望信任你，然后被你信任。' },
+  { title: '私密', image: brandAssets.values.privacy, width: 450, height: 412, desc: '对话数据经过严格脱敏与加密，绝不商用。你可以随时清空记录，随时安全离开。' },
 ]
 
 const features = [
@@ -59,25 +59,6 @@ const knowledgeGroups = [
   },
 ]
 
-const faqs = [
-  {
-    q: '我的对话记录会被保存吗？',
-    a: '小安不会在你的设备上长期保存对话内容。使用完毕后，建议点击「快速离开」按钮清除当前记录。',
-  },
-  {
-    q: '如果我身处危险，小安能帮我吗？',
-    a: '如果你现在面临紧急危险，请立即拨打 110 报警。小安可以提供情感支持和资源信息，但无法替代紧急救援服务。',
-  },
-  {
-    q: '我需要先确认自己是不是「家暴受害者」才能使用吗？',
-    a: '不需要。只要你感到不安全、受到伤害或需要倾诉，都可以找小安聊。',
-  },
-  {
-    q: '小安是真人还是AI？',
-    a: '小安是一个AI助手，由人工智能驱动。它不能替代专业心理咨询师或社工，但可以在你需要时第一时间陪伴你。',
-  },
-]
-
 const reducedMotionStyle = `
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
@@ -92,19 +73,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible {
 `
 
 const LandingPage: FC = () => {
-  const faqJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    'mainEntity': faqs.map(faq => ({
-      '@type': 'Question',
-      'name': faq.q,
-      'acceptedAnswer': {
-        '@type': 'Answer',
-        'text': faq.a,
-      },
-    })),
-  }
-
   return (
     <div
       className="figma-home"
@@ -115,10 +83,6 @@ const LandingPage: FC = () => {
         color: '#3D3028',
       }}
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
       <style dangerouslySetInnerHTML={{ __html: reducedMotionStyle }} />
 
       <header className="home-header">
@@ -140,7 +104,7 @@ const LandingPage: FC = () => {
         <div className="home-values-grid">
           {values.map(value => (
             <article key={value.title} className="home-value-card">
-              <Image src={value.image} alt="" width={287} height={232} sizes="(max-width: 767px) calc(100vw - 48px), (max-width: 1280px) 29vw, 360px" className="home-value-art" />
+              <div className={`home-value-image home-value-image-${value.title === '安全' ? 'safety' : value.title === '信任' ? 'trust' : 'privacy'}`}><Image src={value.image} alt="" width={value.width} height={value.height} sizes="(max-width: 767px) calc(100vw - 48px), 350px" className="home-value-art" /></div>
               <div className="home-value-copy"><h3>{value.title}</h3><p>{value.desc}</p></div>
             </article>
           ))}
@@ -155,7 +119,7 @@ const LandingPage: FC = () => {
               <div className="home-support-copy">
                 <h3><span className="home-support-number" aria-hidden="true">{feature.num}</span>{feature.title}</h3>
                 <p>{feature.desc}</p>
-                <span className="home-support-arrow" aria-hidden="true">⟶</span>
+                <span className="home-support-arrow" aria-hidden="true"><svg width="50" height="8" viewBox="0 0 50 8"><path d="M0 4h43" stroke="currentColor" strokeWidth="1.5" /><path d="m42 1 8 3-8 3Z" fill="currentColor" /></svg></span>
               </div>
               <Image src={feature.image} alt="" width={200} height={200} sizes="(max-width: 767px) 120px, 170px" unoptimized={feature.num === '04'} className="home-support-art" />
             </Link>
@@ -199,52 +163,6 @@ const LandingPage: FC = () => {
         </div>
       </section>
 
-      {/* ─── FAQ ──────────────────────────────────── */}
-      <section id="faq" style={{ maxWidth: 680, margin: '0 auto', padding: '72px 24px' }}>
-        <h2
-          style={{
-            fontFamily: 'inherit',
-            fontSize: 22,
-            fontWeight: 600,
-            marginBottom: 36,
-            color: '#3D3028',
-          }}
-        >
-          常见问题
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {faqs.map((faq, i) => (
-            <ScrollReveal key={faq.q} delay={`${i * 50}ms`}>
-              <details
-                key={faq.q}
-                style={{ borderBottom: '1px solid #E6DDD5', padding: '20px 0' }}
-              >
-                <summary
-                  style={{
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: 16,
-                    color: '#3D3028',
-                    listStyle: 'none',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 8,
-                    minHeight: 44,
-                  }}
-                >
-                  {faq.q}
-                  <span className="faq-arrow" style={{ color: '#E8A87C', flexShrink: 0, fontSize: 14 }}>▸</span>
-                </summary>
-                <p style={{ fontSize: 16, color: '#5C4D3E', marginTop: 12, lineHeight: 1.8 }}>
-                  {faq.a}
-                </p>
-              </details>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
-
       <section id="message" className="home-message" aria-labelledby="message-title">
         <h2 id="message-title">有话想对我们说</h2>
         <div className="home-message-intro">
@@ -253,41 +171,9 @@ const LandingPage: FC = () => {
           <p>反馈可以匿名，我们不会主动联系你，除非你留下方式并希望我们回复</p>
         </div>
         <ContactFeedback />
-        <a href="#about" className="home-message-return"><span aria-hidden="true">⌃</span>你今天只是看了看，也很好。<br />小安随时都在。</a>
-        <nav className="home-resource-links" aria-label="更多支持资源">
-          <Link href="/resources">线下支援导航 →</Link>
-          <Link href="/psych-resources">资源支持库 →</Link>
-          <Link href="/stories">受害者故事 →</Link>
-          <Link href="/docs-toolkit">文档工具库 →</Link>
-        </nav>
+        <a href="#about" className="home-message-return"><ChevronDoubleUpIcon aria-hidden="true" />你今天只是看了看，也很好。<br />小安随时都在。</a>
       </section>
 
-      {/* ─── Footer ───────────────────────────────── */}
-      <footer
-        style={{
-          backgroundColor: '#3D3028',
-          padding: '40px 24px',
-          textAlign: 'center',
-        }}
-      >
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#FBF8F4', marginBottom: 12 }}>
-          紧急求助热线
-        </p>
-        <p style={{ fontSize: 16, color: '#FBF8F4', marginBottom: 20 }}>
-          <a href="tel:110" style={{ color: '#E8A87C', fontWeight: 700, marginRight: 24 }}>
-            110 报警
-          </a>
-          <a href="tel:12338" style={{ color: '#7CB9A8', fontWeight: 700, marginRight: 24 }}>
-            12338 妇女热线
-          </a>
-          <a href="tel:120" style={{ color: '#D4A574', fontWeight: 700 }}>
-            120 急救
-          </a>
-        </p>
-        <p style={{ fontSize: 12, color: '#B5A898' }}>
-          © {new Date().getFullYear()} 小安 反家暴AI助手 · 如有需要请联系当地社会服务机构
-        </p>
-      </footer>
     </div>
   )
 }

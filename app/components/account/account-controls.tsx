@@ -22,15 +22,15 @@ export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () =
   }
   if (!isLoaded) { return null }
   if (!isSignedIn) {
-    return <div className='flex items-center justify-between gap-3 px-4 py-2 text-sm'>
-      <span>正在以游客身份聊天</span>
+    return <div className='chat-account-controls chat-account-guest'>
+      <span className="chat-account-status">正在以游客身份聊天</span>
       <div className='flex shrink-0 items-center gap-3'>
         <Link href='/sign-in' className='flex min-h-11 items-center px-2 underline'>登录</Link>
         <Link href='/sign-up' className='flex min-h-11 items-center rounded-lg border border-[#95684D] bg-white px-4 font-medium text-[#80583F] hover:bg-[#FFF1E5]'>注册</Link>
       </div>
     </div>
   }
-  return <div className='flex flex-wrap items-center gap-4 px-4 py-2 text-sm'>
+  return <div className='chat-account-controls chat-account-signed-in'>
     <details className='relative'>
       <summary aria-label='账号菜单' className='flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#95684D]'>
         {user?.imageUrl

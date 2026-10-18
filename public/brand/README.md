@@ -45,3 +45,12 @@ Figma 文件 `vaLK0i9cvHgsHAYVVcgnnf` 的 `Frame 54`（节点 `1:58`）对应首
 
 `help-rebuild-figma.png` 由同版 Figma 房屋原图重新编码为 RGBA PNG，保留 358×358 像素及透明背景；仅第 04 张小插画直出原图，避免已复现的优化图浏览器解码失败。
 Figma 标题「小安帮你」（`1:119`）使用 `PingFang SC`、500 字重。网页以苹方为首选，缺少该系统字体时使用现有 Noto Sans SC 等回退字体；没有分发或复制苹果系统字体文件。
+
+## Figma 原图与设计差异收敛（2026-10-18）
+
+- `home-star-source.png`：首屏插画节点 `23:10`，1056×792，保留导出透明边缘与光效。
+- `value-safety-source.png`：image 51，节点 `1:67`，514×470。
+- `value-trust-source.png`：image 53，节点 `1:73`，612×408。
+- `value-privacy-source.png`：image 55，节点 `1:79`，450×412。
+
+上述素材使用 Figma Copy as PNG 原始导出，替换截图裁切素材；卡片底色、文字和布局仍由网页实现。

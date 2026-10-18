@@ -3,14 +3,14 @@ export const brandAssets = {
   avatar: '/brand/xiaoan-portrait.png',
   avatarSize: 'cover',
   hero: '/brand/xiaoan-portrait.png',
-  homeIntro: '/brand/home-star-art.png',
+  homeIntro: '/brand/home-star-source.png',
   homeWelcome: '/brand/home-welcome-original.png',
   contact: '/brand/contact-original.png',
   conversation: '/brand/support-conversation.png',
   values: {
-    safety: '/brand/value-safety-figma.png',
-    trust: '/brand/value-trust-figma.png',
-    privacy: '/brand/value-privacy-figma.png',
+    safety: '/brand/value-safety-source.png',
+    trust: '/brand/value-trust-source.png',
+    privacy: '/brand/value-privacy-source.png',
   },
   help: {
     understand: '/brand/help-understand-original.png',

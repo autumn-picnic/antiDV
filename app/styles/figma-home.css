@@ -9,9 +9,11 @@
   cursor: pointer;
 }
 
-.home-message-return span {
+.home-message-return svg {
   display: block;
-  font-size: 28px;
+  width: 24px;
+  height: 24px;
+  margin: 0 auto 8px;
 }
 
 .figma-home section[id] {
@@ -176,7 +178,7 @@
 
 .home-values {
   margin: 0 auto;
-  padding: 48px max(24px, calc((100% - 1184px) / 2)) 32px;
+  padding: 48px max(24px, calc((100% - 1108px) / 2)) 54px;
   background: #f5f5f5;
 }
 
@@ -191,7 +193,7 @@
 .home-values-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 36px;
+  gap: 32px;
 }
 
 .home-value-card {
@@ -203,11 +205,34 @@
 }
 
 .home-value-art {
-  width: 100%;
+  width: 88%;
   height: auto;
-  display: block;
-  aspect-ratio: 287 / 232;
-  object-fit: cover;
+  object-fit: contain;
+}
+.home-value-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 350 / 280;
+  overflow: hidden;
+}
+.home-value-image-safety {
+  background: #fbe0cd;
+}
+.home-value-image-trust {
+  background: #e4ebdb;
+}
+.home-value-image-privacy {
+  background: #e0e3f5;
+}
+.home-value-image-safety .home-value-art {
+  width: 73.43%;
+}
+.home-value-image-trust .home-value-art {
+  width: 87.43%;
+}
+.home-value-image-privacy .home-value-art {
+  width: 64.29%;
 }
 
 .home-value-copy {
@@ -301,7 +326,6 @@
   display: block;
   margin-top: 22px;
   color: #bfc0bd;
-  font-size: 32px;
   line-height: 1;
 }
 
@@ -538,7 +562,7 @@
   }
 
   .home-hero-grid {
-    gap: 36px;
+    gap: 32px;
   }
 
   .home-support-card {
@@ -1049,6 +1073,7 @@
   height: 36px;
   color: #e9ad62;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 3px #dfb78c55);
 }
 
 .home-message-form {

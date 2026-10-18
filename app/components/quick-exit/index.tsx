@@ -13,7 +13,6 @@ export default function QuickExit() {
   const pathname = usePathname()
   // null = use default CSS position (top-right); once dragged, track in px
   const [pos, setPos] = useState<{ x: number, y: number } | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
   const dragRef = useRef<{
     startX: number
     startY: number
@@ -29,14 +28,6 @@ export default function QuickExit() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [pathname])
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    setIsMobile(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
 
   const startDrag = (clientX: number, clientY: number) => {
     const btn = btnRef.current
@@ -98,7 +89,7 @@ export default function QuickExit() {
 
   const posStyle = pos
     ? { left: pos.x, top: pos.y, right: 'auto' as const, bottom: 'auto' as const }
-    : { top: 12, right: 12 }
+    : { top: 14, right: 20 }
 
   if (pathname === '/exit') { return null }
 
@@ -114,31 +105,26 @@ export default function QuickExit() {
         position: 'fixed',
         zIndex: 9999,
         cursor: 'grab',
-        backgroundColor: '#E8A87C',
-        color: '#fff',
-        border: 'none',
-        borderRadius: isMobile ? '50%' : '20px',
-        padding: isMobile ? '0' : '6px 14px',
-        width: isMobile ? '32px' : undefined,
-        height: isMobile ? '32px' : undefined,
+        backgroundColor: pathname === '/' ? '#ffebcf' : '#d9b18d',
+        color: pathname === '/' ? '#c45c21' : '#fff',
+        border: pathname === '/' ? '1px solid #d97639' : '1px solid transparent',
+        borderRadius: 999,
+        padding: '6px 14px',
+        minHeight: 36,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: isMobile ? '15px' : '13px',
-        fontWeight: 700,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-        letterSpacing: '0.03em',
-        transition: 'background-color 0.15s',
-        fontFamily: '\'Noto Sans SC\', sans-serif',
+        fontSize: 13,
+        fontWeight: 400,
+        boxShadow: 'none',
+        fontFamily: 'inherit',
         userSelect: 'none',
         WebkitUserSelect: 'none',
         touchAction: 'none',
         ...posStyle,
       }}
-      onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#D98B5A')}
-      onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#E8A87C')}
     >
-      {isMobile ? '✕' : '快速离开'}
+      快速离开 <span aria-hidden="true" style={{ marginLeft: 4 }}>×</span>
     </button>
   )
 }

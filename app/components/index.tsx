@@ -18,7 +18,7 @@ import CrisisDialog from '@/app/components/crisis-dialog'
 import { useRouter } from 'next/navigation'
 import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
-import { BugAntIcon } from '@heroicons/react/24/outline'
+import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 import { GuardSummary } from '@/app/components/chat/debug-panel'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
@@ -130,9 +130,12 @@ const Main: FC<IMainProps> = () => {
         onCreateNewChat={() => handleConversationIdChange('-1')}
         onShowResourcePanel={isDesktop ? togglePanelCollapse : showResourcePanel}
         hasSetInputs={hasSetInputs}
+        accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
+        settings={<details className="chat-settings">
+          <summary aria-label="对话设置"><AdjustmentsHorizontalIcon /></summary>
+          <div className="chat-settings-menu"><IncognitoNotice /><button type="button" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)}>调试信息：{debugEnabled ? '开启' : '关闭'}</button></div>
+        </details>}
       />
-      <AccountControls onOpenPrivacy={() => void openPrivacy()} />
-      <IncognitoNotice />
       {guestPrompt.visible && isLoaded && !crisisId && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* sidebar */}
@@ -147,15 +150,7 @@ const Main: FC<IMainProps> = () => {
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
           <div className='flex min-w-0 flex-1 flex-col overflow-y-auto'>
-            {/* Conversation name header */}
-            <div className="shrink-0 px-4 py-3 chat-conversation-heading flex items-center justify-between gap-3" style={{ borderBottom: '1px solid #F0EBE5' }}>
-              <h1 className="min-w-0 truncate text-base font-semibold" style={{ color: '#3D3028', fontFamily: '\'Noto Serif SC\', serif' }}>
-                {conversationName}
-              </h1>
-              <button type="button" title="切换调试信息" aria-label="切换调试信息" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)} className={`shrink-0 rounded border p-1.5 ${debugEnabled ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-gray-200 text-gray-500'}`}>
-                <BugAntIcon className="h-4 w-4" />
-              </button>
-            </div>
+            <h1 className="sr-only">{conversationName}</h1>
             <div className='relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: composerHeight + 24 }} ref={chatListDomRef}>
               <Chat
                 chatList={chatList}
