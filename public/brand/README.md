@@ -34,3 +34,9 @@
 Figma 文件 `vaLK0i9cvHgsHAYVVcgnnf` 的 `Frame 54`（节点 `1:58`）对应首页定位说明。
 `value-safety-figma.png`、`value-trust-figma.png`、`value-privacy-figma.png` 为用户提供的同版附件中提取的插画区域，保留原始分辨率（287×232），不包含卡片文字。
 信任文案与设计同步；私密文案保留当前产品已支持的分享选择、清空对话与快速离开功能说明。
+
+## 首屏与留言区（2026-10-18）
+
+`home-star-art.png` 从 Figma `vaLK0i9cvHgsHAYVVcgnnf` 的「小安与星光对话 1」（`104:25`）Copy as PNG 导出后提取左侧插画，并去除米色纸纹背景；首屏文字与按钮独立实现，支持移动端重排。
+留言区对应 `Frame 58`（`1:176`），采用设计中的邮箱、匿名反馈说明和回到首屏入口；在线反馈复用现有表单与接口。
+私密卡文案按本次用户附件更新。

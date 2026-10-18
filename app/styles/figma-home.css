@@ -479,15 +479,15 @@
 }
 
 .home-message {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 24px 72px;
+  padding: 80px max(24px, calc((100% - 1000px) / 2)) 64px;
+  background: #fcf7ec;
+  text-align: center;
 }
 
 .home-message h2 {
-  font-size: 24px;
+  font-size: clamp(28px, 3.5vw, 40px);
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 48px;
 }
 
 .home-message > p {
@@ -785,7 +785,8 @@
 }
 
 .home-screen-1 .home-hero-grid {
-  grid-template-columns: 480px minmax(0, 480px);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  max-width: 1040px;
   gap: 48px;
 }
 
@@ -829,6 +830,7 @@
   place-items: center;
   align-self: stretch;
   min-width: 140px;
+  margin-left: auto;
   padding: 12px 20px;
   border-radius: 999px;
   color: #fff;
@@ -994,7 +996,6 @@
   max-width: 480px;
   transform: none;
   mix-blend-mode: normal;
-  mask-image: radial-gradient(ellipse 70% 65% at center, #000 55%, transparent 100%);
 }
 
 .home-chat-link:hover .home-chat-action,
@@ -1011,3 +1012,75 @@
   outline-offset: 4px;
 }
 
+.home-message-intro {
+  color: #655e56;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.home-message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px 64px;
+  margin: 56px 0 32px;
+}
+
+.home-message-actions a,
+.home-message-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: #29251f;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.home-message-actions svg {
+  width: 36px;
+  height: 36px;
+  color: #e9ad62;
+  flex-shrink: 0;
+}
+
+.home-message-form {
+  max-width: 672px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.home-message-return {
+  display: block;
+  width: fit-content;
+  margin: 88px auto 0;
+  color: #85796c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.home-message-return span {
+  display: block;
+  font-size: 28px;
+}
+
+@media (width <= 767px) {
+  .home-message {
+    padding: 56px 24px 40px;
+  }
+
+  .home-message h2 {
+    margin-bottom: 28px;
+  }
+
+  .home-message-intro {
+    font-size: 15px;
+  }
+
+  .home-message-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 32px;
+  }
+}

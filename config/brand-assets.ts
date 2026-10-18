@@ -3,7 +3,7 @@ export const brandAssets = {
   avatar: '/brand/xiaoan-portrait.png',
   avatarSize: 'cover',
   hero: '/brand/xiaoan-portrait.png',
-  homeIntro: '/brand/home-intro-original.png',
+  homeIntro: '/brand/home-star-art.png',
   homeWelcome: '/brand/home-welcome-original.png',
   contact: '/brand/contact-original.png',
   conversation: '/brand/support-conversation.png',

@@ -9,7 +9,7 @@ const inputStyle: React.CSSProperties = {
     backgroundColor: '#FBF8F4',
     color: '#3D2C1E',
     fontSize: 14,
-    outline: 'none',
+    outlineOffset: 3,
     fontFamily: 'inherit',
     transition: 'border-color 0.2s',
 }
@@ -68,10 +68,10 @@ export default function ContactForm() {
 
     if (status === 'success') {
         return (
-            <div style={{ textAlign: 'center', padding: '40px 24px' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+            <div role="status" style={{ textAlign: 'center', padding: '40px 24px' }}>
+                <p aria-hidden="true" style={{ fontSize: 36, color: '#2C6B5E', marginBottom: 16 }}>✓</p>
                 <p style={{ fontSize: 16, fontWeight: 600, color: '#2C6B5E', marginBottom: 8 }}>留言已收到，感谢你的反馈！</p>
-                <p style={{ fontSize: 13, color: '#8F7E6E', marginBottom: 24 }}>我们会尽快与你联系（如你留下了联系方式）。</p>
+                <p style={{ fontSize: 13, color: '#8F7E6E', marginBottom: 24 }}>我们会认真阅读你的反馈；只有你希望回复并留下联系方式时，我们才会联系你。</p>
                 <button
                     onClick={() => setStatus('idle')}
                     style={{
@@ -92,18 +92,19 @@ export default function ContactForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form onSubmit={handleSubmit} noValidate aria-label="匿名反馈表单">
             {/* Optional contact info */}
             <p style={{ fontSize: 12, color: '#B5A898', marginBottom: 20, lineHeight: 1.8 }}>
-                以下联系方式均为<strong>选填</strong>，你可以选择完全匿名留言。如果你希望我们回复，请至少留下一种联系方式。
+                以下联系方式均为<strong>选填</strong>，你可以完全匿名留言。只有希望我们回复时，才需要留下一种联系方式。
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
                 <div>
-                    <label style={labelStyle}>姓名（选填）</label>
+                    <label htmlFor="contact-name" style={labelStyle}>姓名（选填）</label>
                     <input
                         type="text"
                         placeholder="你的称呼"
+                        id="contact-name"
                         value={form.name}
                         onChange={set('name')}
                         maxLength={50}
@@ -111,10 +112,11 @@ export default function ContactForm() {
                     />
                 </div>
                 <div>
-                    <label style={labelStyle}>手机号码（选填）</label>
+                    <label htmlFor="contact-phone" style={labelStyle}>手机号码（选填）</label>
                     <input
                         type="tel"
                         placeholder="例：138 0000 0000"
+                        id="contact-phone"
                         value={form.phone}
                         onChange={set('phone')}
                         maxLength={20}
@@ -122,10 +124,11 @@ export default function ContactForm() {
                     />
                 </div>
                 <div>
-                    <label style={labelStyle}>微信号（选填）</label>
+                    <label htmlFor="contact-wechat" style={labelStyle}>微信号（选填）</label>
                     <input
                         type="text"
                         placeholder="你的微信号"
+                        id="contact-wechat"
                         value={form.wechat}
                         onChange={set('wechat')}
                         maxLength={50}
@@ -133,10 +136,11 @@ export default function ContactForm() {
                     />
                 </div>
                 <div>
-                    <label style={labelStyle}>邮箱（选填）</label>
+                    <label htmlFor="contact-email" style={labelStyle}>邮箱（选填）</label>
                     <input
                         type="email"
                         placeholder="example@mail.com"
+                        id="contact-email"
                         value={form.email}
                         onChange={set('email')}
                         maxLength={100}
@@ -147,11 +151,14 @@ export default function ContactForm() {
 
             {/* Message */}
             <div style={{ marginBottom: 8 }}>
-                <label style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
+                <label htmlFor="contact-message" style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
                     <span>留言内容 <span style={{ color: '#E8734A' }}>*</span></span>
                     <span style={{ fontWeight: 400, color: '#B5A898' }}>{form.message.length} / 2000</span>
                 </label>
                 <textarea
+                    id="contact-message"
+                    aria-describedby={errorMsg ? 'contact-error' : undefined}
+                    aria-invalid={!!errorMsg}
                     placeholder="请写下你想说的话，比如：对小安的建议、遇到的困难、想要的帮助……"
                     value={form.message}
                     onChange={set('message')}
@@ -168,7 +175,7 @@ export default function ContactForm() {
             </div>
 
             {errorMsg && (
-                <p style={{ fontSize: 13, color: '#E8734A', marginBottom: 12 }}>{errorMsg}</p>
+                <p id="contact-error" role="alert" style={{ fontSize: 13, color: '#B54727', marginBottom: 12 }}>{errorMsg}</p>
             )}
 
             <button

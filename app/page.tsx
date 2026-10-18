@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import ContactForm from '@/app/components/contact-form'
+import ContactFeedback from '@/app/components/contact-feedback'
 import ScrollReveal from '@/app/components/scroll-reveal'
 import { brandAssets } from '@/config/brand-assets'
 import './styles/figma-home.css'
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 const values = [
   { title: '安全', image: brandAssets.values.safety, desc: '人身安全与身心安全始终是第一位，是小安的第一位，更是你自己的第一位。' },
   { title: '信任', image: brandAssets.values.trust, desc: '你有权利讲述真实经历与感受，并且不被评判，小安希望信任你，然后被你信任。' },
-  { title: '私密', image: brandAssets.values.privacy, desc: '你可以选择愿意分享的内容，随时清空当前对话，或使用「快速离开」离开页面。' },
+  { title: '私密', image: brandAssets.values.privacy, desc: '对话数据经过严格脱敏与加密，绝不商用。你可以随时清空记录，随时安全离开。' },
 ]
 
 const features = [
@@ -246,9 +246,14 @@ const LandingPage: FC = () => {
       </section>
 
       <section id="message" className="home-message" aria-labelledby="message-title">
-        <h2 id="message-title">有话要说</h2>
-        <p>留言信息不会公开，仅供团队查看。</p>
-        <ContactForm />
+        <h2 id="message-title">有话想对我们说</h2>
+        <div className="home-message-intro">
+          <p>用得不顺、答得不对、或者你想到了小安该改的地方——都欢迎告诉我们！</p>
+          <p>你的安全和隐私是第一位的</p>
+          <p>反馈可以匿名，我们不会主动联系你，除非你留下方式并希望我们回复</p>
+        </div>
+        <ContactFeedback />
+        <a href="#about" className="home-message-return"><span aria-hidden="true">⌃</span>你今天只是看了看，也很好。<br />小安随时都在。</a>
         <nav className="home-resource-links" aria-label="更多支持资源">
           <Link href="/resources">线下支援导航 →</Link>
           <Link href="/psych-resources">资源支持库 →</Link>
