@@ -16,6 +16,6 @@ export const brandAssets = {
     understand: '/brand/help-understand-original.png',
     safety: '/brand/help-safety-original.png',
     legal: '/brand/help-legal-original.png',
-    rebuild: '/brand/help-rebuild-original.png',
+    rebuild: '/brand/help-rebuild-figma.png',
   },
 } as const

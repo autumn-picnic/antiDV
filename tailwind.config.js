@@ -8,7 +8,7 @@ module.exports = {
     typography: require('./typography'),
     extend: {
       fontFamily: {
-        sans: ['Noto Sans SC', 'system-ui', 'sans-serif'],
+        sans: ['PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'],
       },
       colors: {
         // 小安暖色系統

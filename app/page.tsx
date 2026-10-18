@@ -111,7 +111,7 @@ const LandingPage: FC = () => {
       style={{
         minHeight: '100vh',
         backgroundColor: '#FBF9F6',
-        fontFamily: '\'Noto Sans SC\', system-ui, sans-serif',
+        fontFamily: '\'PingFang SC\', \'Noto Sans SC\', \'Microsoft YaHei\', system-ui, sans-serif',
         color: '#3D3028',
       }}
     >
@@ -157,7 +157,7 @@ const LandingPage: FC = () => {
                 <p>{feature.desc}</p>
                 <span className="home-support-arrow" aria-hidden="true">⟶</span>
               </div>
-              <Image src={feature.image} alt="" width={200} height={200} sizes="(max-width: 767px) 120px, 170px" className="home-support-art" />
+              <Image src={feature.image} alt="" width={200} height={200} sizes="(max-width: 767px) 120px, 170px" unoptimized={feature.num === '04'} className="home-support-art" />
             </Link>
           ))}
         </div>
@@ -203,7 +203,7 @@ const LandingPage: FC = () => {
       <section id="faq" style={{ maxWidth: 680, margin: '0 auto', padding: '72px 24px' }}>
         <h2
           style={{
-            fontFamily: '\'Noto Serif SC\', serif',
+            fontFamily: 'inherit',
             fontSize: 22,
             fontWeight: 600,
             marginBottom: 36,
