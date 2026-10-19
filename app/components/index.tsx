@@ -40,6 +40,26 @@ const Main: FC<IMainProps> = () => {
   const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
   const chatListDomRef = useRef<HTMLDivElement>(null)
+  const settingsRef = useRef<HTMLDetailsElement>(null)
+
+  useEffect(() => {
+    const closeSettings = (event: PointerEvent) => {
+      const settings = settingsRef.current
+      if (settings && !settings.contains(event.target as Node)) { settings.open = false }
+    }
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && settingsRef.current?.open) {
+        settingsRef.current.open = false
+        settingsRef.current.querySelector('summary')?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', closeSettings, true)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeSettings, true)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
 
   useEffect(() => {
     document.title = APP_INFO.title
@@ -114,9 +134,13 @@ const Main: FC<IMainProps> = () => {
         onShowResourcePanel={isDesktop ? togglePanelCollapse : showResourcePanel}
         hasSetInputs={hasSetInputs}
         accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
-        settings={<details className="chat-settings">
+        settings={<details ref={settingsRef} className="chat-settings">
           <summary aria-label="对话设置"><AdjustmentsHorizontalIcon /></summary>
-          <div className="chat-settings-menu"><IncognitoNotice /><button type="button" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)}>调试信息：{debugEnabled ? '开启' : '关闭'}</button></div>
+          <div className="chat-settings-menu" onClick={() => { if (settingsRef.current) { settingsRef.current.open = false } }}>
+            <IncognitoNotice />
+            <button type="button" disabled={busy || !chatList.some(item => !item.isOpeningStatement)} onClick={() => void handleExport()}>导出聊天记录 (.xlsx)</button>
+            <button type="button" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)}>调试信息：{debugEnabled ? '开启' : '关闭'}</button>
+          </div>
         </details>}
       />
       {guestPrompt.visible && isLoaded && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
@@ -141,6 +165,7 @@ const Main: FC<IMainProps> = () => {
                 onSend={handleSend}
                 onReview={isSignedIn ? review : undefined}
                 isResponding={isResponding}
+                onStop={stop}
                 disabled={busy || Boolean(failure?.needsRecovery)}
                 checkCanSend={checkCanSend}
                 inputLeft={inputLeft}
@@ -158,7 +183,6 @@ const Main: FC<IMainProps> = () => {
                   refreshConversation={() => selectConversation(currConversationId)}
                 />}
               />
-              {isResponding && <button type='button' onClick={stop} className='px-3 py-2 text-sm underline'>停止接收</button>}
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
                   <p>{failure.message}</p>
@@ -169,23 +193,6 @@ const Main: FC<IMainProps> = () => {
                 </div>
               )}
               {reviewError && <p role='alert' className='my-3 text-sm text-amber-800'>{reviewError}</p>}
-              {/* Export only committed turns. */}
-              {chatList.filter(i => !i.isOpeningStatement).length > 0 && (
-                <div className="flex justify-end px-2 pt-1 pb-2">
-                  <button
-                    onClick={() => void handleExport()}
-                    disabled={busy}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    导出聊天记录 (.xlsx)
-                  </button>
-                </div>
-              )}
             </div>
           </div>
           {/* Desktop resource panel */}

@@ -89,7 +89,7 @@ const PsychResourcesPage: FC = () => {
                         marginBottom: 12,
                     }}
                 >
-                    心理资源支持库
+                    家暴防治教育资源
                 </h1>
                 <p style={{ fontSize: 16, color: '#B5A898', fontStyle: 'italic', marginBottom: 16 }}>
                     家暴防治教育资源

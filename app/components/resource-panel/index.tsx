@@ -43,7 +43,7 @@ const ALL_RESOURCES: ResourceItem[] = [
     },
     {
         id: 'psych-resources',
-        title: '心理资源支持库',
+        title: '家暴防治教育资源',
         desc: '家暴防治教育资源：书籍、文章、网站，助你理解与疗愈。',
         href: '/psych-resources',
         tags: ['心理', '疗愈'],
