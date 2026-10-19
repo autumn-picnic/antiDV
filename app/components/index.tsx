@@ -14,8 +14,6 @@ import IncognitoNotice from '@/app/components/incognito-notice'
 import Toast from '@/app/components/base/toast'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import useChatflow from '@/hooks/use-chatflow'
-import CrisisDialog from '@/app/components/crisis-dialog'
-import { useRouter } from 'next/navigation'
 import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
 import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
@@ -29,11 +27,6 @@ export interface IMainProps { params?: unknown }
 const Main: FC<IMainProps> = () => {
   const { isLoaded, isSignedIn } = useUser()
   const guestPrompt = useGuestLoginPrompt(Boolean(isSignedIn))
-  const router = useRouter()
-  const [crisisId, setCrisisId] = useState<string | null>(null)
-  const dismissed = useRef(new Set<string>())
-  const observed = useRef(new Set<string>())
-  const wasResponding = useRef(false)
   const media = useBreakpoints()
   const isMobile = media === MediaType.mobile
   const isDesktop = media === MediaType.pc
@@ -45,15 +38,6 @@ const Main: FC<IMainProps> = () => {
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerHeight, setComposerHeight] = useState(220)
   const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
-  useEffect(() => {
-    const completedNow = wasResponding.current && !isResponding
-    wasResponding.current = isResponding
-    const last = chatList[chatList.length - 1]
-    if (completedNow && last?.isAnswer && !observed.current.has(last.id)
-      && (last.safetyLevel === 'immediate_danger' || last.safetyLevel === 'self_harm')
-      && !dismissed.current.has(last.id)) { setCrisisId(last.id) }
-    if (!isResponding) { chatList.forEach(item => observed.current.add(item.id)) }
-  }, [chatList, isResponding])
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
   const chatListDomRef = useRef<HTMLDivElement>(null)
 
@@ -121,7 +105,6 @@ const Main: FC<IMainProps> = () => {
 
   return (
     <div className='figma-chat-shell'>
-      {crisisId && <CrisisDialog onContinue={() => { dismissed.current.add(crisisId); setCrisisId(null) }} onExit={() => { dismissed.current.add(crisisId); setCrisisId(null); router.push('/safety-pack') }} />}
       <BackExitGuard />
       <Header
         title={APP_INFO.title}
@@ -136,7 +119,7 @@ const Main: FC<IMainProps> = () => {
           <div className="chat-settings-menu"><IncognitoNotice /><button type="button" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)}>调试信息：{debugEnabled ? '开启' : '关闭'}</button></div>
         </details>}
       />
-      {guestPrompt.visible && isLoaded && !crisisId && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
+      {guestPrompt.visible && isLoaded && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* sidebar */}
         {!isMobile && renderSidebar()}

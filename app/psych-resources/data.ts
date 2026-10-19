@@ -160,13 +160,20 @@ export const psychResources: PsychResourceCategory[] = [
                 tags: ['法律', '政策'],
                 author: '全国人民代表大会',
             },
-            // {
-            //     title: '人身安全保护令：申请流程详解',
-            //     description: '谁可以申请？向哪个法院申请？需要哪些材料？生效后施暴者必须做什么？本文逐步解答。',
-            //     type: 'guide',
-            //     url: '#',
-            //     tags: ['保护令', '法律', '实操'],
-            // },
+            {
+                title: '人身安全保护令申请书模板',
+                description: '整理申请人、被申请人和家暴事实等关键信息，填写后生成保护令申请书文档。',
+                type: 'guide',
+                url: '/docs-toolkit/protection-order',
+                tags: ['保护令', '法律', '填写模板'],
+            },
+            {
+                title: '家庭暴力告诫书模板',
+                description: '了解公安机关告诫书的内容结构，填写家暴记录和证据线索后生成参考文档。',
+                type: 'guide',
+                url: '/docs-toolkit/admonishment-letter',
+                tags: ['告诫书', '法律', '填写模板'],
+            },
             {
                 title: '离婚诉讼中的家暴认定与权益保障',
                 description: '家暴证据在离婚诉讼中的证明力、损害赔偿请求权、子女抚养权的裁量标准等核心法律问题。',

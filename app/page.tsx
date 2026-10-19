@@ -53,7 +53,7 @@ const knowledgeGroups = [
     title: '行动资源',
     items: [
       { num: '04', title: '身边人受暴怎么办？', desc: '如何倾听、怎么避免二次伤害、可以做些什么支持TA', href: '/psych-resources#support-communities' },
-      { num: '05', title: '法律资源有哪些？', desc: '《反家庭暴力法》、保护令、告诫书，以及实际怎么用', href: '/resources#legal-aid' },
+      { num: '05', title: '法律资源有哪些？', desc: '《反家庭暴力法》、保护令、告诫书，以及实际怎么用', href: '/psych-resources#legal-knowledge' },
       { num: '06', title: '反家暴资源地图', desc: '咨询热线、反家暴庇护所、法律援助、心理咨询', href: '/resources' },
     ],
   },

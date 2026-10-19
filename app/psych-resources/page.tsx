@@ -286,8 +286,9 @@ const PsychResourcesPage: FC = () => {
                                     {res.url && res.url !== '#' ? (
                                         <a
                                             href={res.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            {...(res.url.startsWith('http')
+                                                ? { target: '_blank', rel: 'noopener noreferrer' }
+                                                : {})}
                                             style={{
                                                 fontSize: 13,
                                                 color: '#E8A87C',
