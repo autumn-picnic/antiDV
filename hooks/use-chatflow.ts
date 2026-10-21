@@ -82,14 +82,14 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
   }, [authReady, signedIn])
 
   useEffect(() => {
-    if (!signedIn || conversationId === '-1' || isResponding) { return }
+    if (!authReady || conversationId === '-1' || isResponding) { return }
     const abort = new AbortController()
     setReviewError('')
     fetchReviews(conversationId, abort.signal).then((reviews) => {
       if (!abort.signal.aborted) { setChatList(list => list.map(item => ({ ...item, userReview: reviews[item.id] }))) }
     }).catch(() => { if (!abort.signal.aborted) { setReviewError('历史评价暂时无法读取；已保存的评价不会因此删除。') } })
     return () => abort.abort()
-  }, [conversationId, isResponding, busy, signedIn])
+  }, [conversationId, isResponding, busy, signedIn, authReady])
 
   async function review(responseId: string, value: { score: number, comment: string }) {
     if (lock.current || !chatList.some(item => item.isAnswer && item.id === responseId)) { throw new Error('请等待回答完成后再评价') }

@@ -163,7 +163,7 @@ const Main: FC<IMainProps> = () => {
                 chatList={chatList}
                 debugEnabled={debugEnabled}
                 onSend={handleSend}
-                onReview={isSignedIn ? review : undefined}
+                onReview={review}
                 isResponding={isResponding}
                 onStop={stop}
                 disabled={busy || Boolean(failure?.needsRecovery)}

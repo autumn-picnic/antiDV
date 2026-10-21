@@ -189,14 +189,14 @@ export async function sendChatMessage(id: string, message: string, callbacks: St
 }
 
 export async function fetchReviews(conversationId: string, signal?: AbortSignal): Promise<Record<string, { score: number, comment: string }>> {
-  const response = await fetch(`/api/reviews?conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'include', cache: 'no-store', signal })
+  const response = await fetch(`/v1/reviews?conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'include', cache: 'no-store', signal })
   if (!response.ok) { throw new ChatApiError(response.status, '评价暂时无法读取') }
   const data = await response.json()
   return Object.fromEntries(data.items.map((item: { responseId: string, score: number, comment: string }) => [item.responseId, { score: item.score, comment: item.comment }]))
 }
 
 export async function saveReview(conversationId: string, responseId: string, review: { score: number, comment: string }) {
-  const response = await fetch('/api/reviews', {
+  const response = await fetch('/v1/reviews', {
     method: 'POST',
     credentials: 'include',
     cache: 'no-store',

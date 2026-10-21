@@ -5,11 +5,12 @@ const path = require('node:path')
 const Module = require('node:module')
 const ts = require('typescript')
 const { NextRequest } = require('next/server')
-let authState, liveSession, user, token, queryRows, queryCalls, revoked, failClerk
+let authState, liveSession, user, token, queryRows, queryCalls, revoked, failClerk, guestStatus, guestCalls
 function reset() {
   authState = { userId: 'user_alice', sessionId: 'sess_1', getToken: async () => token }
   liveSession = { status: 'active', userId: 'user_alice' }
   user = { publicMetadata: {}, banned: false, locked: false, primaryEmailAddressId: 'email_1', emailAddresses: [{ id: 'email_1', emailAddress: 'autumnpicnic@proton.me', verification: { status: 'verified' } }] }
+  guestStatus = 200; guestCalls = []
   token = 'session-token'; queryRows = []; queryCalls = []; revoked = []; failClerk = false
 }
 reset()
@@ -31,6 +32,7 @@ function load(file) {
   mod.paths = Module._nodeModulePaths(path.dirname(filename))
   const originalRequire = mod.require.bind(mod)
   mod.require = name => {
+    if (name === '@/lib/backend') return { fetchBackend: async (path, init) => { guestCalls.push({ path, init }); return Response.json({ conversation_id: 'c1' }, { status: guestStatus }) } }
     if (name === 'server-only') return {}
     if (name === '@clerk/nextjs/server') return { auth: async () => authState, clerkClient: async () => clerk }
     if (name === './database') return { feedbackDatabase: () => db }
@@ -241,4 +243,36 @@ test('contact Clerk outage fails closed before database reads', async () => {
   failClerk = true
   assert.equal((await contact.GET(req('/api/contact'))).status, 503)
   assert.equal(queryCalls.length, 0)
+})
+
+test('guest reviews require backend-verified ownership before database access', async () => {
+  authState = { userId: null, sessionId: null }
+  const payload = { conversationId: 'c1', responseId: 'r1', score: 5, comment: '游客建议' }
+  const request = cookie => req('/v1/reviews', { method: 'POST', headers: { Origin: 'https://site.example', Cookie: cookie }, body: JSON.stringify(payload) })
+  assert.equal((await reviews.POST(request(''))).status, 401)
+  assert.equal(queryCalls.length, 0)
+  guestStatus = 404
+  assert.equal((await reviews.POST(request('xiaoan_guest=wrong'))).status, 404)
+  assert.equal(queryCalls.length, 0)
+  guestStatus = 200
+  queryRows = [{ responseId: 'r1', score: 5, comment: '游客建议' }]
+  assert.equal((await reviews.POST(request('xiaoan_guest=valid'))).status, 200)
+  assert.equal(guestCalls.at(-1).init.headers.Cookie, 'xiaoan_guest=valid')
+  assert.deepEqual(queryCalls[0].values, ['c1', 'r1', 'guest:c1', 5, '游客建议'])
+  assert.match(queryCalls[0].sql, /c.user_id IS NULL/)
+  assert(queryCalls[0].sql.includes('c.expires_at'))
+})
+
+test('guest reads fail closed on invalid credential, mismatched response and backend outage', async () => {
+  authState = { userId: null, sessionId: null }
+  const request = id => req('/v1/reviews?conversationId=' + id, { headers: { Cookie: 'xiaoan_guest=valid' } })
+  guestStatus = 503
+  assert.equal((await reviews.GET(request('c1'))).status, 503)
+  assert.equal(queryCalls.length, 0)
+  guestStatus = 200
+  assert.equal((await reviews.GET(request('other'))).status, 503)
+  assert.equal(queryCalls.length, 0)
+  queryRows = [{ responseId: 'r1', score: 5, comment: '' }]
+  assert.equal((await reviews.GET(request('c1'))).status, 200)
+  assert.deepEqual(queryCalls[0].values, ['c1', 'guest:c1'])
 })
