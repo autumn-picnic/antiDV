@@ -530,7 +530,7 @@ test('review client saves score/comment with credentials and reloads persisted r
   let call
   globalThis.fetch = async (url, init) => { call = { url, init }; return Response.json({ responseId: 'r1', score: 5, comment: '清楚' }) }
   await api.saveReview('c1', 'r1', { score: 5, comment: '清楚' })
-  assert.equal(call.url, '/api/reviews')
+  assert.equal(call.url, '/v1/reviews')
   assert.equal(call.init.credentials, 'include')
   assert.deepEqual(JSON.parse(call.init.body), { conversationId: 'c1', responseId: 'r1', score: 5, comment: '清楚' })
   globalThis.fetch = async () => Response.json({ items: [{ responseId: 'r1', score: 5, comment: '清楚' }] })
