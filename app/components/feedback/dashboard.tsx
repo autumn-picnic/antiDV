@@ -1,6 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { collectFeedbackExport, downloadFeedbackWorkbook } from './export'
 
 interface Summary { id: string, userId: string | null, turnCount: number, reviewCount: number }
 interface Turn { number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
@@ -21,6 +22,29 @@ export default function FeedbackDashboard() {
   const [contacts, setContacts] = useState<Page<Contact>>({ items: [], nextOffset: null })
   const [contactOffset, setContactOffset] = useState(0)
   const [loadingContacts, setLoadingContacts] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportStatus, setExportStatus] = useState('')
+  const exportController = useRef<AbortController | null>(null)
+  useEffect(() => () => exportController.current?.abort(), [])
+  async function download() {
+    if (exportController.current) { return }
+    const controller = new AbortController()
+    exportController.current = controller
+    setExporting(true)
+    setError('')
+    try {
+      const tables = await collectFeedbackExport(section, controller.signal, setExportStatus)
+      controller.signal.throwIfAborted()
+      setExportStatus('正在生成 Excel…')
+      await downloadFeedbackWorkbook(tables, section, controller.signal)
+      setExportStatus('Excel 已生成并开始下载')
+    }
+    catch (error) {
+      if (controller.signal.aborted) { setExportStatus('已取消导出') }
+      else { setError(error instanceof Error ? error.message : '导出失败，请重试'); setExportStatus('') }
+    }
+    finally { exportController.current = null; setExporting(false) }
+  }
   useEffect(() => {
     if (section !== 'chat') { return }
     const abort = new AbortController()
@@ -75,7 +99,10 @@ export default function FeedbackDashboard() {
       <h1 className='text-xl font-semibold'>小安 · 对话与反馈管理</h1>
       <Link href='/chat' className='underline'>回到聊天</Link>
       <button type='button' className={button} onClick={() => setVersion(v => v + 1)}>刷新</button>
+      <button type='button' disabled={exporting} className={button} onClick={() => void download()}>{exporting ? '正在导出…' : `下载${section === 'chat' ? '聊天评价' : '在线留言'} Excel（全部记录）`}</button>
+      {exporting && <button type='button' className={button} onClick={() => exportController.current?.abort()}>取消导出</button>}
     </div>
+    {exportStatus && <p role='status' className='mb-4 text-sm text-gray-700'>{exportStatus}</p>}
     <div className='mb-6 flex gap-2 border-b border-gray-200' role='group' aria-label='反馈类型'>
       <button type='button' aria-pressed={section === 'chat'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'chat' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('chat') }}>聊天评价</button>
       <button type='button' aria-pressed={section === 'contact'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'contact' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('contact') }}>在线留言</button>
