@@ -17,6 +17,7 @@
     "app/v1/reviews/route.ts",
     "app/api/contact/route.ts",
     "app/api/feedback/route.ts",
+    "app/api/feedback/failures/route.ts",
     "app/api/session/clear/route.ts",
     "app/components/account/**/*.tsx",
     "app/components/feedback/**/*.tsx",

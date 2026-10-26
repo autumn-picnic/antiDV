@@ -1,8 +1,9 @@
 import { createParser } from 'eventsource-parser'
 import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationView, GuardDiagnostic } from '../types/chatflow'
+import type { FailureInput } from '../lib/feedback/failure-validation'
 
 export class ChatApiError extends Error {
-  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic) {
+  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic, public code?: string) {
     super(message)
   }
 }
@@ -140,7 +141,8 @@ export async function readChatStream(
         completed = { ...data, debug }
         break
       case 'error':
-        throw new ChatApiError(503, '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data))
+        throw new ChatApiError(503, '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data),
+          ['storage_unavailable', 'account_disabled', 'conversation_conflict', 'service_unavailable'].includes(data.code) ? data.code : undefined)
       default:
         throw new ChatApiError(502, '回复事件顺序无效', responseId)
     }
@@ -204,4 +206,13 @@ export async function saveReview(conversationId: string, responseId: string, rev
     body: JSON.stringify({ conversationId, responseId, ...review }),
   })
   if (!response.ok) { throw new ChatApiError(response.status, response.status === 401 ? '登录已失效，请重新登录' : '评价未保存，请重试') }
+}
+
+export async function saveChatFailure(failure: FailureInput) {
+  const response = await fetch('/api/feedback/failures', {
+    method: 'POST', credentials: 'include', cache: 'no-store', keepalive: true,
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(failure),
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!response.ok) { throw new Error('失败记录暂未保存') }
 }

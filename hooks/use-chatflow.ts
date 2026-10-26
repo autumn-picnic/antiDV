@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createStreamRenderer } from '../utils/stream-renderer'
-import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview } from '../service'
+import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview, saveChatFailure } from '../service'
 import type { ConversationItem } from '../types/app'
 import type { ConversationView, DebugChatItem, GuardDiagnostic } from '../types/chatflow'
 
@@ -19,7 +19,7 @@ function errorMessage(error: unknown) {
   return error instanceof ChatApiError ? error.message : '暂时无法连接小安，请稍后重试'
 }
 
-interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic }
+interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic, attemptId?: string }
 
 export default function useChatflow({ authReady, signedIn, onCompleted }: { authReady: boolean, signedIn: boolean, onCompleted: () => void }) {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
@@ -158,6 +158,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     let id = conversationId
     let responseId: string | undefined
     let startedGeneration = false
+    const attemptId = crypto.randomUUID()
     const pendingId = `pending-${Date.now()}`
     let text = ''
     try {
@@ -203,6 +204,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         setConversationList(list => list.filter(item => item.id !== id))
       }
       setFailure({
+        attemptId,
         message: errorMessage(error),
         query: message,
         conversationId: expired ? undefined : id,
@@ -210,6 +212,22 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         needsRecovery: startedGeneration && !expired,
         guard: error instanceof ChatApiError ? error.guard : undefined,
       })
+      if (!controller.current?.signal.aborted) {
+        const status = error instanceof ChatApiError ? error.status : 0
+        const code = error instanceof ChatApiError ? error.code : undefined
+        const guard = error instanceof ChatApiError ? error.guard?.status : undefined
+        void saveChatFailure({
+          id: attemptId, conversationId: id === '-1' ? null : id,
+          responseId: responseId || (error instanceof ChatApiError ? error.responseId : undefined) || null,
+          question: message, stage: startedGeneration ? 'generate_response' : 'create_conversation',
+          status, code: code || null,
+          reason: [errorMessage(error), status ? `错误状态 ${status}` : '连接中断或网络不可用', code, guard ? `输出检查：${guard}` : null].filter(Boolean).join('；'),
+        }).catch(() => {
+          if (mounted.current) {
+            setFailure(current => current?.attemptId === attemptId ? { ...current, message: `${current.message}（失败记录暂未保存）` } : current)
+          }
+        })
+      }
     }
     finally { finish() }
   }

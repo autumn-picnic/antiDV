@@ -44,16 +44,44 @@ test('chat export follows both conversation and turn pagination, keeps unreviewe
     calls.push(url)
     if (url === '/api/feedback?offset=0') return { items: [{ id: 'c1', userId: null, createdAt: 0, turnCount: 2, reviewCount: 1 }], nextOffset: 50 }
     if (url === '/api/feedback?offset=50') return { items: [], nextOffset: null }
+    if (url.startsWith('/api/feedback/failures?')) return { items: [], nextOffset: null }
     const turn = { number: 1, responseId: 'r1', question: '问题', answer: '回答', score: 5, comment: '建议', reviewedAt: '2026-10-21T00:00:00Z' }
     return url.endsWith('offset=0') ? { items: [turn], nextOffset: 50 } : { items: [{ ...turn, responseId: 'r2', number: 2, score: null, comment: null, reviewedAt: null }], nextOffset: null }
   })
-  assert.equal(calls.length, 4)
+  assert.equal(calls.length, 5)
   assert.equal(tables[0].rows[0].创建时间, '1970-01-01T00:00:00.000Z')
   assert.equal(tables[1].rows.length, 2)
   assert.equal(tables[1].rows[1].评分, null)
   assert.equal(tables[1].rows[0].用户ID, '游客')
   await downloadFeedbackWorkbook(tables, 'chat', signal())
-  assert.deepEqual(workbook.SheetNames, ['会话汇总', '聊天评价'])
+  assert.deepEqual(workbook.SheetNames, ['会话汇总', '聊天评价', '失败记录'])
+})
+
+test('chat export includes all failed inputs even without any completed conversation', async () => {
+  const failure = { id: 'f1', conversationId: null, responseId: null, userId: null, question: '=failed input', stage: 'create_conversation', status: 503, code: null, comment: 'HTTP 503', createdAt: '2026-10-26T00:00:00Z' }
+  const calls = []
+  const tables = await collectFeedbackExport('chat', signal(), () => {}, async url => {
+    calls.push(url)
+    if (url === '/api/feedback?offset=0') return { items: [], nextOffset: null }
+    return url.endsWith('offset=0') ? { items: [failure], nextOffset: 50 } : { items: [failure, { ...failure, id: 'f2', conversationId: 'c1', stage: 'generate_response', status: 0, comment: '连接超时' }], nextOffset: null }
+  })
+  assert.deepEqual(calls, ['/api/feedback?offset=0', '/api/feedback/failures?offset=0', '/api/feedback/failures?offset=50'])
+  assert.equal(tables[2].rows.length, 2)
+  assert.equal(tables[2].rows[0].会话ID, null)
+  assert.equal(tables[2].rows[1]['评价（失败原因）'], '连接超时')
+  await downloadFeedbackWorkbook(tables, 'chat', signal())
+  const roundtrip = XLSX.read(XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }), { type: 'buffer' })
+  assert.equal(roundtrip.Sheets['失败记录'].E2.t, 's')
+  assert.equal(roundtrip.Sheets['失败记录'].E2.v, '=failed input')
+  assert.equal(roundtrip.Sheets['失败记录'].E2.f, undefined)
+})
+
+test('failed failure-record page prevents a partial chat workbook', async () => {
+  await assert.rejects(collectFeedbackExport('chat', signal(), () => {}, async url => {
+    if (url.startsWith('/api/feedback/failures')) throw new Error('失败记录读取失败')
+    return { items: [], nextOffset: null }
+  }), /失败记录读取失败/)
+  assert.equal(workbook, null)
 })
 
 test('invalid pagination, changed records and abort stop export without partial download', async () => {

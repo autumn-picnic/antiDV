@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { collectFeedbackExport, downloadFeedbackWorkbook } from './export'
+import type { ExportFailure } from './export'
 
 interface Summary { id: string, userId: string | null, turnCount: number, reviewCount: number }
 interface Turn { number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
@@ -22,6 +23,9 @@ export default function FeedbackDashboard() {
   const [contacts, setContacts] = useState<Page<Contact>>({ items: [], nextOffset: null })
   const [contactOffset, setContactOffset] = useState(0)
   const [loadingContacts, setLoadingContacts] = useState(false)
+  const [failures, setFailures] = useState<Page<ExportFailure>>({ items: [], nextOffset: null })
+  const [failureOffset, setFailureOffset] = useState(0)
+  const [loadingFailures, setLoadingFailures] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportStatus, setExportStatus] = useState('')
   const exportController = useRef<AbortController | null>(null)
@@ -93,6 +97,21 @@ export default function FeedbackDashboard() {
       .finally(() => { if (!abort.signal.aborted) { setLoadingContacts(false) } })
     return () => abort.abort()
   }, [section, contactOffset, version])
+  useEffect(() => {
+    if (section !== 'chat') { return }
+    const abort = new AbortController()
+    setLoadingFailures(true)
+    setFailures({ items: [], nextOffset: null })
+    fetch(`/api/feedback/failures?offset=${failureOffset}`, { cache: 'no-store', signal: abort.signal })
+      .then(async response => {
+        if (!response.ok) { throw new Error(response.status === 403 ? '无管理员权限' : '失败记录读取失败，请重试') }
+        const data = await response.json()
+        if (!abort.signal.aborted) { setFailures(data) }
+      })
+      .catch(error => { if (!abort.signal.aborted) { setError(error.message) } })
+      .finally(() => { if (!abort.signal.aborted) { setLoadingFailures(false) } })
+    return () => abort.abort()
+  }, [section, failureOffset, version])
   const button = 'rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40 focus-visible:outline focus-visible:outline-2'
   return <main className='min-h-screen bg-[#FBF8F4] p-6 text-gray-900'>
     <div className='mb-6 flex flex-wrap items-center gap-5'>
@@ -108,7 +127,7 @@ export default function FeedbackDashboard() {
       <button type='button' aria-pressed={section === 'contact'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'contact' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('contact') }}>在线留言</button>
     </div>
     {error && <p role='alert' className='mb-4 text-red-700'>{error}</p>}
-    {section === 'chat' && <div className='grid gap-6 md:grid-cols-[280px_1fr]'>
+    {section === 'chat' && <><div className='grid gap-6 md:grid-cols-[280px_1fr]'>
       <section aria-label='会话列表'>
         {loadingList ? <p role='status'>正在读取…</p> : !conversations.items.length && <p>暂无可查看会话</p>}
         <ul className='space-y-2'>{conversations.items.map(item => <li key={item.id}>
@@ -141,7 +160,23 @@ export default function FeedbackDashboard() {
           <button type='button' className={button} disabled={loadingTurns || turns.nextOffset === null} onClick={() => setTurnOffset(turns.nextOffset!)}>后 50 轮</button>
         </div>}
       </section>
-    </div>}
+    </div>
+    <section aria-label='失败会话记录' className='mt-8 space-y-4'>
+      <h2 className='text-lg font-semibold'>失败会话记录</h2>
+      <p className='text-sm text-gray-600'>保存未成功请求的用户输入，并将失败原因记录为评价。以下为浏览器失败报告，包含尚未建立会话的请求。</p>
+      {loadingFailures ? <p role='status'>正在读取失败记录…</p> : !failures.items.length && <p>暂无失败记录</p>}
+      {failures.items.map(item => <article key={item.id} className='rounded-lg border border-gray-200 bg-white p-4'>
+        <h3 className='font-semibold'>{item.stage === 'create_conversation' ? '建立会话失败' : '生成回答失败'}</h3>
+        <p className='mt-2 break-all text-xs text-gray-500'>{new Date(item.createdAt).toLocaleString('zh-CN')} · {item.userId || '游客'} · 会话：{item.conversationId || '尚未建立'}</p>
+        <p className='mt-3 whitespace-pre-wrap break-words'><strong>用户：</strong>{item.question}</p>
+        <p className='mt-3 whitespace-pre-wrap break-words'><strong>评价（失败原因）：</strong>{item.comment}</p>
+        <p className='mt-2 break-all text-sm text-gray-600'>错误状态：{item.status || '未取得状态'}{item.code && ` · 错误代码：${item.code}`}</p>
+      </article>)}
+      <div className='flex gap-3'>
+        <button type='button' className={button} disabled={loadingFailures || failureOffset === 0} onClick={() => setFailureOffset(n => Math.max(0, n - 50))}>上一页失败记录</button>
+        <button type='button' className={button} disabled={loadingFailures || failures.nextOffset === null} onClick={() => setFailureOffset(failures.nextOffset!)}>下一页失败记录</button>
+      </div>
+    </section></>}
     {section === 'contact' && <section aria-label='在线留言' className='space-y-4'>
       {loadingContacts ? <p role='status'>正在读取…</p> : !contacts.items.length && <p>暂无在线留言</p>}
       {contacts.items.map(contact => <article key={contact.id} className='rounded-lg border border-gray-200 bg-white p-4'>

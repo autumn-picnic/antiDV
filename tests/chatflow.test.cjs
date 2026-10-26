@@ -43,6 +43,32 @@ afterEach(() => {
     else process.env[key] = value
   }
 })
+test('failure report uses independent frontend endpoint, original input and bounded request', async () => {
+  const failure = { id: 'f1', conversationId: null, responseId: null, question: '失败输入', stage: 'create_conversation', status: 503, reason: 'HTTP 503', code: null }
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, '/api/feedback/failures')
+    assert.equal(init.credentials, 'include')
+    assert.equal(init.keepalive, true)
+    assert.ok(init.signal)
+    assert.deepEqual(JSON.parse(init.body), failure)
+    return Response.json({ success: true })
+  }
+  await api.saveChatFailure(failure)
+  globalThis.fetch = async () => new Response(null, { status: 503 })
+  await assert.rejects(api.saveChatFailure(failure), /暂未保存/)
+})
+
+test('SSE failure preserves only allowed backend codes for feedback', async () => {
+  const frame = (event, data) => `event: ${event}\ndata: ${JSON.stringify({ conversation_id: 'c1', response_id: 'r1', ...data })}\n\n`
+  for (const code of ['storage_unavailable', 'service_unavailable', 'conversation_conflict', 'account_disabled', 'secret-token']) {
+    const response = new Response(frame('start', {}) + frame('error', { code, debug: { error: { secret: 'hidden' } } }), { headers: { 'content-type': 'text/event-stream' } })
+    await assert.rejects(api.readChatStream(response, 'c1', { onDelta() {} }), error => {
+      assert.equal(error.code, code === 'secret-token' ? undefined : code)
+      assert.equal(JSON.stringify(error).includes('hidden'), false)
+      return true
+    })
+  }
+})
 function frame(event, data = {}, ids = {}) {
   return `event: ${event}\ndata: ${JSON.stringify({ conversation_id: 'c1', response_id: 'r1', ...ids, ...data })}\n\n`
 }

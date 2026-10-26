@@ -50,11 +50,59 @@ const repository = load('lib/feedback/repository.ts')
 const feedback = load('app/api/feedback/route.ts')
 const reviews = load('app/api/reviews/route.ts')
 const contact = load('app/api/contact/route.ts')
+const failures = load('app/api/feedback/failures/route.ts')
 const clear = load('app/api/session/clear/route.ts')
 const originalOrigin = process.env.FRONTEND_ORIGIN
 afterEach(() => { reset(); if (originalOrigin === undefined) delete process.env.FRONTEND_ORIGIN; else process.env.FRONTEND_ORIGIN = originalOrigin })
 const actor = { userId: 'user_alice', sessionId: 'sess_1', role: 'user', token: 'session-token' }
 function req(url, init = {}) { return new NextRequest(`https://site.example${url}`, init) }
+
+const failedInput = { id: 'f1', conversationId: null, responseId: null, question: '原始失败输入', stage: 'create_conversation', status: 503, reason: '服务不可用；HTTP 503', code: null }
+function failureRequest(body = failedInput, origin = 'https://site.example') {
+  return req('/api/feedback/failures', { method: 'POST', headers: { Origin: origin }, body: JSON.stringify(body) })
+}
+
+test('failed sends persist independently of the backend and derive account identity server-side', async () => {
+  const response = await failures.POST(failureRequest())
+  assert.equal(response.status, 200)
+  assert.equal(guestCalls.length, 0)
+  assert.deepEqual(queryCalls[0].values, ['f1', 'user_alice', null, null, failedInput.question, 'create_conversation', 503, failedInput.reason, null])
+  assert.match(queryCalls[0].sql, /ON CONFLICT \(id\) DO NOTHING/)
+})
+
+test('guest failure before conversation creation needs no backend credential or turn', async () => {
+  authState = { userId: null, sessionId: null }
+  assert.equal((await failures.POST(failureRequest())).status, 200)
+  assert.equal(queryCalls[0].values[1], null)
+  assert.equal(guestCalls.length, 0)
+})
+
+test('failure writes reject cross-origin, spoofed identity, invalid inputs and revoked sessions', async () => {
+  assert.equal((await failures.POST(failureRequest(failedInput, 'https://evil.example'))).status, 403)
+  for (const change of [{ userId: 'victim' }, { question: '' }, { question: '字'.repeat(4001) }, { status: 200 }, { status: -1 }, { stage: 'completed' }, { reason: '字'.repeat(501) }, { code: '<secret>' }, { conversationId: '../private' }]) {
+    assert.equal((await failures.POST(failureRequest({ ...failedInput, ...change }))).status, 400)
+  }
+  liveSession.status = 'revoked'
+  assert.equal((await failures.POST(failureRequest())).status, 401)
+  assert.equal(queryCalls.length, 0)
+})
+
+test('failure reads require designated verified admin before any database access', async () => {
+  assert.equal((await failures.GET(req('/api/feedback/failures'))).status, 403)
+  user.publicMetadata.role = 'admin'
+  user.emailAddresses[0].emailAddress = 'other@example.com'
+  assert.equal((await failures.GET(req('/api/feedback/failures'))).status, 403)
+  assert.equal(queryCalls.length, 0)
+  user.emailAddresses[0].emailAddress = 'autumnpicnic@proton.me'
+  queryRows = Array.from({ length: 51 }, (_, index) => ({ id: `f${index}`, question: '失败输入', comment: '失败原因' }))
+  const response = await failures.GET(req('/api/feedback/failures?offset=50'))
+  const page = await response.json()
+  assert.equal(page.items.length, 50)
+  assert.equal(page.nextOffset, 100)
+  assert.deepEqual(queryCalls[1].values, [50])
+  assert.match(queryCalls[2].sql, /xiaoan_failure_admin_access/)
+  assert.equal(queryCalls.at(-1).sql, 'COMMIT')
+})
 
 test('role is user by default; only exact server metadata admin grants access', () => {
   for (const role of [undefined, 'Admin', true, 'org:admin', 'user']) assert.equal(roleFromMetadata({ role }), 'user')
