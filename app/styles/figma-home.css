@@ -1089,6 +1089,7 @@
 
 .home-social-links {
   --social-icon-paper: #fbf7ed;
+
   display: flex;
   justify-content: center;
   gap: clamp(8px, 3vw, 20px);
@@ -1153,6 +1154,7 @@
 
 .home-social-dialog {
   --social-icon-paper: #fbf7ed;
+
   position: fixed;
   inset: 0;
   width: min(400px, calc(100% - 32px));
