@@ -33,6 +33,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
   const lock = useRef(true)
   const controller = useRef<AbortController | null>(null)
   const renderer = useRef<ReturnType<typeof createStreamRenderer> | null>(null)
+  const cancelSend = useRef<(() => void) | null>(null)
   const mounted = useRef(true)
 
   async function refreshList(signal?: AbortSignal) {
@@ -154,7 +155,20 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     }
     if (!start()) { return }
     setResponding(true)
+    const abort = controller.current!
+    const isActive = () => mounted.current && controller.current === abort && !abort.signal.aborted
+    let streamRenderer: ReturnType<typeof createStreamRenderer> | null = null
     const committed = chatList
+    cancelSend.current = () => {
+      abort.abort()
+      streamRenderer?.cancel()
+      controller.current = null
+      renderer.current = null
+      cancelSend.current = null
+      setChatList(committed)
+      setFailure(null)
+      finish()
+    }
     let id = conversationId
     let responseId: string | undefined
     let startedGeneration = false
@@ -163,27 +177,29 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     let text = ''
     try {
       if (id === '-1') {
-        const created = await createConversation(controller.current!.signal)
+        const created = await createConversation(abort.signal)
         id = created.conversation_id
-        if (!mounted.current) { return }
+        if (!isActive()) { return }
         setConversationId(id)
         setConversationList(list => [{ id, name: `对话 ${id.slice(0, 8)}`, inputs: null, introduction: '' }, ...list])
       }
       const question: DebugChatItem = { id: `question-${pendingId}`, content: message, isAnswer: false }
       setChatList([...committed, question, { id: pendingId, content: '', isAnswer: true }])
-      renderer.current = createStreamRenderer((delta) => {
+      streamRenderer = createStreamRenderer((delta) => {
         text += delta
-        if (mounted.current) { setChatList([...committed, question, { id: pendingId, content: text, isAnswer: true }]) }
+        if (isActive()) { setChatList([...committed, question, { id: pendingId, content: text, isAnswer: true }]) }
       })
+      renderer.current = streamRenderer
       startedGeneration = true
       const completed = await sendChatMessage(id, message, {
-        onStart: (value) => { responseId = value },
+        onStart: (value) => { if (isActive()) { responseId = value } },
         onDelta: (delta) => {
-          renderer.current?.push(delta)
+          if (isActive()) { streamRenderer?.push(delta) }
         },
-      }, controller.current!.signal, debugEnabled)
-      await renderer.current?.finish()
-      if (!mounted.current) { return }
+      }, abort.signal, debugEnabled)
+      if (!isActive()) { return }
+      await streamRenderer.finish()
+      if (!isActive()) { return }
       setChatList([...committed, { ...question, id: `question-${completed.response_id}` }, {
         id: completed.response_id,
         content: text,
@@ -194,8 +210,8 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
       onCompleted()
     }
     catch (error) {
-      if (!mounted.current) { return }
-      renderer.current?.cancel()
+      if (!isActive()) { return }
+      streamRenderer?.cancel()
       // Remove both pending entries: neither may be exported or treated as committed history.
       setChatList(committed)
       const expired = error instanceof ChatApiError && error.status === 404
@@ -212,7 +228,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         needsRecovery: startedGeneration && !expired,
         guard: error instanceof ChatApiError ? error.guard : undefined,
       })
-      if (!controller.current?.signal.aborted) {
+      if (!abort.signal.aborted) {
         const status = error instanceof ChatApiError ? error.status : 0
         const code = error instanceof ChatApiError ? error.code : undefined
         const guard = error instanceof ChatApiError ? error.guard?.status : undefined
@@ -229,7 +245,15 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         })
       }
     }
-    finally { finish() }
+    finally {
+      // A stopped request may settle after a new send has already started.
+      if (controller.current === abort) {
+        controller.current = null
+        renderer.current = null
+        cancelSend.current = null
+        finish()
+      }
+    }
   }
 
   async function recover() {
@@ -301,7 +325,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     selectConversation,
     recover,
     retry: () => { if (failure?.query && !failure.needsRecovery) { void send(failure.query) } },
-    stop: () => controller.current?.abort(),
+    stop: () => cancelSend.current?.(),
     remove: (id: string) => remove([id]),
     clearAll: () => remove(conversationList.map(item => item.id)),
   }

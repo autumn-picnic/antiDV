@@ -69,6 +69,7 @@ const Chat: FC<IChatProps> = ({
   const [query, setQuery] = React.useState('')
   const [showAllStarters, setShowAllStarters] = React.useState(false)
   const queryRef = useRef('')
+  const submittedQuery = useRef('')
 
   const handleContentChange = (e: any) => {
     const value = e.target.value
@@ -97,9 +98,20 @@ const Chat: FC<IChatProps> = ({
   }, [controlClearQuery])
   const handleSend = () => {
     if (disabled || isResponding || !valid() || (checkCanSend && !checkCanSend())) { return }
+    submittedQuery.current = queryRef.current
     onSend(queryRef.current)
     setQuery('')
     queryRef.current = ''
+  }
+
+  const handleStop = () => {
+    onStop?.()
+    // Preserve any next question already drafted while the answer was streaming.
+    if (!queryRef.current.trim()) {
+      setQuery(submittedQuery.current)
+      queryRef.current = submittedQuery.current
+    }
+    composerRef.current?.querySelector('textarea')?.focus()
   }
 
   const handleKeyUp = (e: any) => {
@@ -325,7 +337,7 @@ const Chat: FC<IChatProps> = ({
                       className="chat-send"
                       aria-label={isResponding ? '停止回复' : '发送消息'}
                       disabled={isResponding ? !onStop : disabled || !query.trim()}
-                      onClick={isResponding ? onStop : handleSend}
+                      onClick={isResponding ? handleStop : handleSend}
                     ><span aria-hidden="true">{isResponding
                         ? <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="2" width="14" height="14" rx="1" /></svg>
                         : <svg width="28" height="22" viewBox="0 0 28 22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11h21M16 3l8 8-8 8" /></svg>}</span></button>
