@@ -15,8 +15,6 @@ function classNames(...classes: any[]) {
   return classes.filter(Boolean).join(' ')
 }
 
-const MAX_CONVERSATION_LENTH = 20
-
 export interface ISidebarProps {
   copyRight: string
   currentId: string
@@ -101,14 +99,12 @@ const Sidebar: FC<ISidebarProps> = ({
       {!isCollapsed && <>
         {/* New chat + Clear all row */}
         <div className="flex flex-shrink-0 p-4 !pb-0 gap-2">
-          {list.length < MAX_CONVERSATION_LENTH && (
-            <Button
-              onClick={() => { onCurrentIdChange('-1') }}
-              className="group flex-1 flex-shrink-0 !justify-start !h-9 text-primary-600 items-center text-sm"
-            >
-              <PencilSquareIcon className="mr-2 h-4 w-4" /> {t('app.chat.newChat')}
-            </Button>
-          )}
+          <Button
+            onClick={() => { onCurrentIdChange('-1') }}
+            className="group flex-1 flex-shrink-0 !justify-start !h-9 text-primary-600 items-center text-sm"
+          >
+            <PencilSquareIcon className="mr-2 h-4 w-4" /> {t('app.chat.newChat')}
+          </Button>
           {list.filter(i => i.id !== '-1').length > 0 && (
             <button
               onClick={() => setConfirmClearAll(true)}
