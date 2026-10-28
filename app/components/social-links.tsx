@@ -12,9 +12,6 @@ function SocialIcon({ name }: { name: WechatChannel | 'instagram' | 'xiaohongshu
   if (name === 'xiaohongshu') {
     return <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="5" width="28" height="22" rx="6" fill="currentColor" /><text x="16" y="20" textAnchor="middle" fill="var(--social-icon-paper)" fontSize="9" fontWeight="700">小红书</text></svg>
   }
-  if (name === 'official') {
-    return <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="4" fill="currentColor" /><path d="M9.7 10.5c-.4-.2-.7 0-.7.5v6.4c0 3 1.8 4.5 5.5 6 .5.2.9 0 .9-.5v-5.7c0-3.4-2.1-5.3-5.7-6.7Zm12.6 0c.4-.2.7 0 .7.5v6.4c0 3-1.8 4.5-5.5 6-.5.2-.9 0-.9-.5v-5.7c0-3.4 2.1-5.3 5.7-6.7Z" fill="var(--social-icon-paper)" /></svg>
-  }
   return <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="currentColor" /><path d="M22.5 13.4c0 4-3.8 7.1-8.5 7.1-1 0-2-.1-2.9-.4l-3.3 1.8.8-3.2C6.7 17.4 5.5 15.5 5.5 13.4c0-4 3.8-7.1 8.5-7.1s8.5 3.1 8.5 7.1Z" fill="var(--social-icon-paper)" /><path d="M27 19.8c0 1.8-.9 3.4-2.4 4.6l.7 2.5-2.8-1.4c-.8.2-1.6.3-2.5.3-4.1 0-7.5-2.7-7.5-6s3.4-6 7.5-6 7.5 2.7 7.5 6Z" fill="var(--social-icon-paper)" stroke="currentColor" strokeWidth=".8" strokeLinejoin="round" /><g fill="currentColor"><circle cx="10.7" cy="11.7" r="1" /><circle cx="16.7" cy="11.7" r="1" /><circle cx="17.3" cy="18.5" r=".9" /><circle cx="22.5" cy="18.5" r=".9" /></g></svg>
 }
 
@@ -40,7 +37,7 @@ export default function SocialLinks() {
   return (
     <>
       <nav className="home-social-links" aria-label="小安的社交媒体">
-        {(['official', 'xiaohongshu', 'instagram', 'assistant'] as const).map((name) => {
+        {(['official', 'xiaohongshu', 'instagram'] as const).map((name) => {
           if (name === 'xiaohongshu' || name === 'instagram') {
             const label = name === 'xiaohongshu' ? '小红书' : 'Instagram'
             return <a key={name} className="home-social-icon" href={socialLinks[name]} target="_blank" rel="noopener noreferrer" aria-label={`${label}（在新标签页打开）`}><SocialIcon name={name} /><span className="home-social-tooltip" aria-hidden="true">{label}</span></a>
