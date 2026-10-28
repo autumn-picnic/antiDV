@@ -12,13 +12,10 @@ function SocialIcon({ name }: { name: WechatChannel | 'instagram' | 'xiaohongshu
   if (name === 'xiaohongshu') {
     return <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="5" width="28" height="22" rx="6" fill="currentColor" /><text x="16" y="20" textAnchor="middle" fill="var(--social-icon-paper)" fontSize="9" fontWeight="700">小红书</text></svg>
   }
-  return (
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path d="M27 14c0 6-5 10-12 10l-7 4 1-6c-4-2-6-5-6-8C3 8 8 4 15 4s12 4 12 10Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      {name === 'official' && <><circle cx="11" cy="13" r="1.5" fill="currentColor" /><circle cx="19" cy="13" r="1.5" fill="currentColor" /><path d="M12 18h6M25 21l4 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></>}
-      {name === 'assistant' && <><circle cx="15" cy="11" r="3" stroke="currentColor" strokeWidth="1.5" /><path d="M10 20c0-6 10-6 10 0m5 3h6m-3-3v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></>}
-    </svg>
-  )
+  if (name === 'official') {
+    return <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="4" fill="currentColor" /><path d="M9.7 10.5c-.4-.2-.7 0-.7.5v6.4c0 3 1.8 4.5 5.5 6 .5.2.9 0 .9-.5v-5.7c0-3.4-2.1-5.3-5.7-6.7Zm12.6 0c.4-.2.7 0 .7.5v6.4c0 3-1.8 4.5-5.5 6-.5.2-.9 0-.9-.5v-5.7c0-3.4 2.1-5.3 5.7-6.7Z" fill="var(--social-icon-paper)" /></svg>
+  }
+  return <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="currentColor" /><path d="M22.5 13.4c0 4-3.8 7.1-8.5 7.1-1 0-2-.1-2.9-.4l-3.3 1.8.8-3.2C6.7 17.4 5.5 15.5 5.5 13.4c0-4 3.8-7.1 8.5-7.1s8.5 3.1 8.5 7.1Z" fill="var(--social-icon-paper)" /><path d="M27 19.8c0 1.8-.9 3.4-2.4 4.6l.7 2.5-2.8-1.4c-.8.2-1.6.3-2.5.3-4.1 0-7.5-2.7-7.5-6s3.4-6 7.5-6 7.5 2.7 7.5 6Z" fill="var(--social-icon-paper)" stroke="currentColor" strokeWidth=".8" strokeLinejoin="round" /><g fill="currentColor"><circle cx="10.7" cy="11.7" r="1" /><circle cx="16.7" cy="11.7" r="1" /><circle cx="17.3" cy="18.5" r=".9" /><circle cx="22.5" cy="18.5" r=".9" /></g></svg>
 }
 
 export default function SocialLinks() {
