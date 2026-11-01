@@ -299,18 +299,61 @@
   border-radius: 50%;
   color: #655649;
 }
-.chat-microphone:hover:not(:disabled) { background: #f6ece2; }
-.chat-microphone[aria-pressed="true"] { background: #fae3dc; color: #9e342b; }
-.chat-microphone:disabled { opacity: .45; cursor: not-allowed; }
-.chat-microphone:focus-visible, .chat-speech-controls button:focus-visible, .chat-speech-controls select:focus-visible {
+
+.chat-microphone:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.chat-microphone[aria-pressed="true"] {
+  background: #fae3dc;
+  color: #9e342b;
+}
+
+.chat-speech-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 10px 0;
+  font-size: 12px;
+  color: #655649;
+}
+
+.chat-speech-language {
+  background: transparent;
+  padding: 5px 2px;
+  border-radius: 4px;
+}
+
+.chat-speech-cancel {
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid #dfc6b3;
+  border-radius: 16px;
+}
+
+.chat-microphone:focus-visible,
+.chat-speech-cancel:focus-visible,
+.chat-speech-language:focus-visible {
   outline: 2px solid #9b7254;
   outline-offset: 2px;
 }
-.chat-speech-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 8px 10px 0; font-size: 12px; color: #655649; }
-.chat-speech-controls select { background: transparent; padding: 5px 2px; border-radius: 4px; }
-.chat-speech-controls button { min-height: 36px; padding: 4px 10px; border: 1px solid #dfc6b3; border-radius: 16px; }
-.chat-recording-time { color: #9e342b; font-variant-numeric: tabular-nums; }
-.chat-speech-status { margin: 4px 10px 0; font-size: 12px; color: #655649; }
+
+.chat-microphone:hover:not(:disabled) {
+  background: #f6ece2;
+}
+
+.chat-recording-time {
+  color: #9e342b;
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-speech-status {
+  margin: 4px 10px 0;
+  font-size: 12px;
+  color: #655649;
+}
 
 .chat-disclaimer {
   font-size: 11px;

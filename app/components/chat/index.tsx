@@ -372,13 +372,13 @@ const Chat: FC<IChatProps> = ({
                 </div>
               </div>
               <div className="chat-speech-controls">
-                <label>语音识别：<select aria-label="语音识别语言" value={speech.language} disabled={speech.active} onChange={event => speech.setLanguage(event.target.value)}>
+                <label>语音识别：<select className="chat-speech-language" aria-label="语音识别语言" value={speech.language} disabled={speech.active} onChange={event => speech.setLanguage(event.target.value)}>
                   <option value="zh-CN">普通话</option>
                   <option value="zh-HK">粤语</option>
                   <option value="zh-CN-sichuan">四川话</option>
                 </select></label>
                 {speech.phase === 'recording' && <span className="chat-recording-time">录音中 {speech.seconds} / 55 秒</span>}
-                {speech.active && <button type="button" onClick={speech.cancel}>取消{speech.phase === 'recording' ? '录音' : '转写'}</button>}
+                {speech.active && <button type="button" className="chat-speech-cancel" onClick={speech.cancel}>取消{speech.phase === 'recording' ? '录音' : '转写'}</button>}
               </div>
               <p className="chat-speech-status" role="status" aria-live="polite">{speech.message || '点击麦克风录音，转写后核对并发送。'}</p>
               {privacyControls}
