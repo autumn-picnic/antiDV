@@ -14,7 +14,7 @@
 公開音訊：[FunAudioLLM 官方範例 zh.mp3](https://huggingface.co/FunAudioLLM/Fun-ASR-Nano-2512/resolve/main/example/zh.mp3)。副本：`evidence/public-zh-sample.mp3`；SHA-256：`0e64de19e4ff9a02e682955c9112f32d2317cfdbb5bc2f3504664044c993f195`。未使用私人錄音。
 
 | 候選 | 實際試用路徑 | 原始輸出／狀態 |
-|---|---|---|
+| --- | --- | --- |
 | Qwen3-ASR-1.7B | Qwen 官方 Hugging Face demo，非 Azure 部署 | `開放時間：早上九點至下午五點。` |
 | Fun-ASR-Nano-2512 | FunAudioLLM 官方 Hugging Face demo，非 Azure 部署 | `开饭时间早上九点至下午五点。`；服務回報處理 6.10 秒、RTF 1.0857 |
 | MAI-Transcribe-2 | 本輪建立的新加坡 Speech S0 試用資源 | HTTP 200；`开放时间早上 9 点至下午 5 点。` |
@@ -39,7 +39,7 @@ Qwen 與 MAI 的「開放時間」一致，Fun 輸出「開飯時間」，顯示
 已成功下載 Azure Retail Prices API 的公開 USD、Consumption 價格；保存在 evidence 的 JSON 是本次查核依據。下表 VM 篩選 Linux（產品名稱不含 Windows）、一般隨用隨付，排除 Spot、Low Priority、預留方案。月費按 730 開機小時估算。
 
 | 部署選項 | 資源配置 | 每開機小時 | 測試 10 小時 | 730 小時／月 |
-|---|---|---:|---:|---:|
+| --- | --- | ---: | ---: | ---: |
 | Japan East NC4as_T4_v3 Linux VM | 1 張 T4 16GB，4 vCPU、28GiB RAM | US$0.710 | US$7.10 | US$518.30 |
 | Japan East NC8as_T4_v3 Linux VM | 同為 1 張 T4 16GB，8 vCPU、56GiB RAM | US$1.015 | US$10.15 | US$740.95 |
 | Japan East Container Apps T4，按 8 vCPU＋56GiB 配置估算 | GPU＋CPU＋記憶體 active rate 合計 | US$1.6776 | US$16.776 | US$1,224.648 |
