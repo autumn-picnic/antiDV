@@ -271,12 +271,12 @@ test('hold microphone starts on primary press and transcribes on release; cancel
   let starts = 0; let finishes = 0; let cancels = 0
   h.speech.start = () => { starts++ }; h.speech.finish = () => { finishes++ }; h.speech.cancel = () => { cancels++ }
   const mic = h.render().mic
-  mic.onPointerDown({button:0,isPrimary:true,pointerId:1,preventDefault(){},currentTarget:{setPointerCapture(){}}})
-  assert.equal(starts,1)
-  mic.onPointerUp(); assert.equal(finishes,1)
-  mic.onPointerCancel(); assert.equal(cancels,1)
-  mic.onKeyDown({key:' ',repeat:false,preventDefault(){}})
-  mic.onKeyDown({key:' ',repeat:true,preventDefault(){}})
-  assert.equal(starts,2)
-  mic.onKeyUp({key:' ',preventDefault(){}});assert.equal(finishes,2)
+  mic.onPointerDown({ button: 0, isPrimary: true, pointerId: 1, preventDefault() {}, currentTarget: { setPointerCapture() {} } })
+  assert.equal(starts, 1)
+  mic.onPointerUp(); assert.equal(finishes, 1)
+  mic.onPointerCancel(); assert.equal(cancels, 1)
+  mic.onKeyDown({ key: ' ', repeat: false, preventDefault() {} })
+  mic.onKeyDown({ key: ' ', repeat: true, preventDefault() {} })
+  assert.equal(starts, 2)
+  mic.onKeyUp({ key: ' ', preventDefault() {} }); assert.equal(finishes, 2)
 })

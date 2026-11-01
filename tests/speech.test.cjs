@@ -132,7 +132,7 @@ test('cancel stops tracks, aborts transcription and discards a late result', asy
     assert.equal(resolveFetch, undefined, 'release after permission preparation cannot send')
     await speech.start()
     // Simulate more than 100ms received from the actual worklet.
-    worklet.port.onmessage({data:new Float32Array(9600)})
+    worklet.port.onmessage({ data: new Float32Array(9600) })
     const pending = speech.finish()
     await new Promise(resolve => setImmediate(resolve))
     assert.equal(stopped, true)
@@ -161,10 +161,10 @@ test('database save failure prevents a billed transcription request', async () =
 test('successful and failed transcription both retain recording status', async () => {
   configured()
   const begin = completed.length
-  globalThis.fetch = async () => Response.json({combinedPhrases:[{text:'保留原始轉寫'}], phrases:[{locale:'zh-CN'}]})
+  globalThis.fetch = async () => Response.json({ combinedPhrases: [{ text: '保留原始轉寫' }], phrases: [{ locale: 'zh-CN' }] })
   assert.equal((await route()(request())).status, 200)
   assert.deepEqual(completed[begin], ['recording-id', 'success', '保留原始轉寫', ['zh-CN'], null])
-  globalThis.fetch = async () => new Response('private diagnostics', {status:503})
+  globalThis.fetch = async () => new Response('private diagnostics', { status: 503 })
   assert.equal((await route()(request())).status, 503)
   assert.equal(completed[begin + 1][1], 'failed')
   assert.doesNotMatch(completed[begin + 1][4], /private diagnostics/)
