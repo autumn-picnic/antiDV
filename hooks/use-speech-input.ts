@@ -99,12 +99,12 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
     }
   }, [release, cancel])
 
-  const start = async () => {
+  const start = async (prepareOnly = false) => {
     if (disabled || active.current || request.current || phase !== 'idle') { return }
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext || !window.AudioWorkletNode) {
       setMessage('此浏览器暂不支持录音，请使用文字输入或更新浏览器。'); return
     }
-    const preparationOnly = !permissionReady.current
+    const preparationOnly = prepareOnly || !permissionReady.current
     held.current = true
     setPermissionDenied(false)
     const token = ++generation.current
