@@ -86,7 +86,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       if (token !== generation.current) { return }
       if (typeof result.text !== 'string' || !result.text.trim()) { throw new Error('没有听清，请重新录音') }
       callback.current(result.text)
-      setMessage('语音已转写并发送。')
+      setMessage('转写已加入输入框，请核对并修改，再点击发送。')
     }
     catch (error) {
       if (token === generation.current) {
@@ -121,7 +121,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       if (preparationOnly) {
         permissionReady.current = true
         mic.getTracks().forEach(track => track.stop())
-        cancel(); setMessage('麦克风已就绪，请重新按住说话，松开后发送。'); return
+        cancel(); setMessage('麦克风已就绪，请重新按住说话，松开后转写。'); return
       }
       if (!held.current) { mic.getTracks().forEach(track => track.stop()); cancel(); return }
       stream.current = mic
@@ -139,7 +139,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       }
       source.current.connect(recorder); recorder.connect(ctx.destination)
       mic.getTracks().forEach(track => { track.onended = () => { if (token === generation.current && active.current) { cancel(); setMessage('录音已中断，请重新录制。') } } })
-      setPhase('recording'); setSeconds(0); setMessage('正在录音，松开后自动转写并发送，最多 55 秒。')
+      setPhase('recording'); setSeconds(0); setMessage('正在录音，松开后转写，核对后手动发送，最多 55 秒。')
       const started = Date.now()
       timer.current = setInterval(() => {
         setSeconds(Math.min(SPEECH_SECONDS, Math.floor((Date.now() - started) / 1000)))
