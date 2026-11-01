@@ -410,7 +410,7 @@ const Chat: FC<IChatProps> = ({
                 <p>提交转写的录音和识别文字会保存，供指定反馈管理员查看和播放，独立于聊天保存期限，目前不自动到期；取消尚未提交的录音不会上传。</p>
                 <div className="speech-permission-actions">
                   <button type="button" className="speech-permission-button" onClick={() => permissionDialog.current?.close()}>暂不使用</button>
-                  <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { permissionDialog.current?.close(); void speech.start() }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
+                  <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { permissionDialog.current?.close(); void speech.start(true) }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
                 </div>
               </dialog>
               {privacyControls}
