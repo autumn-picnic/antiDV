@@ -1,0 +1,20 @@
+{
+  "text": "就注意把它的储备消耗得所剩无几。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 3200000,
+    "Duration": 30500000,
+    "DisplayText": "就注意把它的储备消耗得所剩无几。",
+    "NBest": [
+      {
+        "Confidence": 0.8578097,
+        "Lexical": "就 注意 把它 的 储备 消耗 得 所剩无几",
+        "ITN": "就 注意 把它 的 储备 消耗 得 所剩无几",
+        "MaskedITN": "",
+        "Display": "就注意把它的储备消耗得所剩无几。"
+      }
+    ]
+  },
+  "locale": "zh-CN-sichuan",
+  "status": "Success"
+}

@@ -1,0 +1,23 @@
+{
+  "text": "呢幾個字都表達唔到我想講嘅意思。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 10900000,
+    "Duration": 30400000,
+    "DisplayText": "呢幾個字都表達唔到我想講嘅意思。",
+    "NBest": [
+      {
+        "Confidence": 0.9326619,
+        "Lexical": "呢 幾 個 字 都 表 達 唔 到 我 想 講 嘅 意 思",
+        "ITN": "呢 幾 個 字 都 表 達 唔 到 我 想 講 嘅 意 思",
+        "MaskedITN": "",
+        "Display": "呢幾個字都表達唔到我想講嘅意思。"
+      }
+    ]
+  },
+  "locale": "zh-HK",
+  "status": "Success",
+  "sample_id": "cantonese",
+  "engine": "azure",
+  "wall_seconds": 1.239
+}

@@ -1,0 +1,23 @@
+{
+  "text": "这酒和他调水果是一个道理。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 4700000,
+    "Duration": 30400000,
+    "DisplayText": "这酒和他调水果是一个道理。",
+    "NBest": [
+      {
+        "Confidence": 0.7241558,
+        "Lexical": "这 酒 和 他 调 水 果 是 一 个 道 理",
+        "ITN": "这 酒 和 他 调 水 果 是 一 个 道 理",
+        "MaskedITN": "",
+        "Display": "这酒和他调水果是一个道理。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "zhengzhou_dialect_1",
+  "engine": "azure",
+  "wall_seconds": 1.247
+}

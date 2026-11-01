@@ -1,0 +1,20 @@
+{
+  "text": "关系到整个民族的素质和道德情操的提高。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 3200000,
+    "Duration": 37500000,
+    "DisplayText": "关系到整个民族的素质和道德情操的提高。",
+    "NBest": [
+      {
+        "Confidence": 0.92573535,
+        "Lexical": "关系到 整个 民族 的 素质 和 道德情操 的 提高",
+        "ITN": "关系到 整个 民族 的 素质 和 道德情操 的 提高",
+        "MaskedITN": "",
+        "Display": "关系到整个民族的素质和道德情操的提高。"
+      }
+    ]
+  },
+  "locale": "zh-CN-sichuan",
+  "status": "Success"
+}

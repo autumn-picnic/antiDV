@@ -1,0 +1,23 @@
+{
+  "text": "就注意把它的储备消耗得所剩无几。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 3100000,
+    "Duration": 29600000,
+    "DisplayText": "就注意把它的储备消耗得所剩无几。",
+    "NBest": [
+      {
+        "Confidence": 0.6881995,
+        "Lexical": "就 注 意 把 它 的 储 备 消 耗 得 所 剩 无 几",
+        "ITN": "就 注 意 把 它 的 储 备 消 耗 得 所 剩 无 几",
+        "MaskedITN": "",
+        "Display": "就注意把它的储备消耗得所剩无几。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "chengdu_dialect_3",
+  "engine": "azure",
+  "wall_seconds": 1.343
+}

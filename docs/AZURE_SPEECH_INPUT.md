@@ -1,3 +1,12 @@
+<!-- markdownlint-disable MD013 -->
+# 語音接入目前版本
+
+本 PR 已改為無語言選項的 Fast Transcription 自動識別，原始錄音保存至 feedback 共用 PostgreSQL。
+目前行為以 [錄音整合設計](SPEECH_RECORDING_DESIGN.md)、[價格](SPEECH_PRICING.md) 為準。
+以下保留上一版 Standard 接入與驗收紀錄，當時的「錄音不保存」及語言選擇描述已由本 PR 取代。
+
+---
+
 # 小安語音輸入接入
 
 2026-11-01：已完成語音輸入、本地瀏覽器驗收與日本東 Azure 呼叫驗證。發布狀態另見部署驗收紀錄。

@@ -1,0 +1,23 @@
+{
+  "text": "陈增新说，他打电话让对方拿回去。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 1100000,
+    "Duration": 39600000,
+    "DisplayText": "陈增新说，他打电话让对方拿回去。",
+    "NBest": [
+      {
+        "Confidence": 0.82961494,
+        "Lexical": "陈 增 新 说 他 打 电 话 让 对 方 拿 回 去",
+        "ITN": "陈 增 新 说 他 打 电 话 让 对 方 拿 回 去",
+        "MaskedITN": "",
+        "Display": "陈增新说，他打电话让对方拿回去。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "zhengzhou_mandarin_1",
+  "engine": "azure",
+  "wall_seconds": 1.451
+}

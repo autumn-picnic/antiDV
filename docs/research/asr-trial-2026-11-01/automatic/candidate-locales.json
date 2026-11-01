@@ -1,0 +1,353 @@
+[
+  {
+    "file": "zhengzhou_mandarin_1_pcm.wav",
+    "definition": {
+      "locales": [
+        "zh-CN",
+        "zh-HK",
+        "zh-CN-sichuan"
+      ],
+      "profanityFilterMode": "None"
+    },
+    "status": 200,
+    "seconds": 1.01,
+    "result": {
+      "durationMilliseconds": 4538,
+      "combinedPhrases": [
+        {
+          "text": "陈增新说，他打电话让对方拿回去。"
+        }
+      ],
+      "phrases": [
+        {
+          "offsetMilliseconds": 110,
+          "durationMilliseconds": 4040,
+          "text": "陈增新说，他打电话让对方拿回去。",
+          "words": [
+            {
+              "text": "陈",
+              "offsetMilliseconds": 110,
+              "durationMilliseconds": 400
+            },
+            {
+              "text": "增",
+              "offsetMilliseconds": 510,
+              "durationMilliseconds": 320
+            },
+            {
+              "text": "新",
+              "offsetMilliseconds": 830,
+              "durationMilliseconds": 320
+            },
+            {
+              "text": "说",
+              "offsetMilliseconds": 1150,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "，",
+              "offsetMilliseconds": 1390,
+              "durationMilliseconds": 40
+            },
+            {
+              "text": "他",
+              "offsetMilliseconds": 1430,
+              "durationMilliseconds": 280
+            },
+            {
+              "text": "打",
+              "offsetMilliseconds": 1710,
+              "durationMilliseconds": 280
+            },
+            {
+              "text": "电",
+              "offsetMilliseconds": 1990,
+              "durationMilliseconds": 200
+            },
+            {
+              "text": "话",
+              "offsetMilliseconds": 2190,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "让",
+              "offsetMilliseconds": 2430,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "对",
+              "offsetMilliseconds": 2670,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "方",
+              "offsetMilliseconds": 2910,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "拿",
+              "offsetMilliseconds": 3150,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "回",
+              "offsetMilliseconds": 3390,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "去",
+              "offsetMilliseconds": 3630,
+              "durationMilliseconds": 480
+            },
+            {
+              "text": "。",
+              "offsetMilliseconds": 4110,
+              "durationMilliseconds": 40
+            }
+          ],
+          "locale": "zh-CN",
+          "confidence": 0.895151
+        }
+      ]
+    }
+  },
+  {
+    "file": "chengdu_dialect_1_pcm.wav",
+    "definition": {
+      "locales": [
+        "zh-CN",
+        "zh-HK",
+        "zh-CN-sichuan"
+      ],
+      "profanityFilterMode": "None"
+    },
+    "status": 200,
+    "seconds": 0.72,
+    "result": {
+      "durationMilliseconds": 4149,
+      "combinedPhrases": [
+        {
+          "text": "关系到整个民族的素质和道德情操的提高。"
+        }
+      ],
+      "phrases": [
+        {
+          "offsetMilliseconds": 270,
+          "durationMilliseconds": 3800,
+          "text": "关系到整个民族的素质和道德情操的提高。",
+          "words": [
+            {
+              "text": "关",
+              "offsetMilliseconds": 270,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "系",
+              "offsetMilliseconds": 510,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "到",
+              "offsetMilliseconds": 670,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "整",
+              "offsetMilliseconds": 910,
+              "durationMilliseconds": 200
+            },
+            {
+              "text": "个",
+              "offsetMilliseconds": 1110,
+              "durationMilliseconds": 120
+            },
+            {
+              "text": "民",
+              "offsetMilliseconds": 1230,
+              "durationMilliseconds": 200
+            },
+            {
+              "text": "族",
+              "offsetMilliseconds": 1430,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "的",
+              "offsetMilliseconds": 1590,
+              "durationMilliseconds": 120
+            },
+            {
+              "text": "素",
+              "offsetMilliseconds": 1710,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "质",
+              "offsetMilliseconds": 1950,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "和",
+              "offsetMilliseconds": 2190,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "道",
+              "offsetMilliseconds": 2350,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "德",
+              "offsetMilliseconds": 2590,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "情",
+              "offsetMilliseconds": 2750,
+              "durationMilliseconds": 320
+            },
+            {
+              "text": "操",
+              "offsetMilliseconds": 3070,
+              "durationMilliseconds": 200
+            },
+            {
+              "text": "的",
+              "offsetMilliseconds": 3270,
+              "durationMilliseconds": 200
+            },
+            {
+              "text": "提",
+              "offsetMilliseconds": 3470,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "高",
+              "offsetMilliseconds": 3630,
+              "durationMilliseconds": 400
+            },
+            {
+              "text": "。",
+              "offsetMilliseconds": 4030,
+              "durationMilliseconds": 40
+            }
+          ],
+          "locale": "zh-CN",
+          "confidence": 0.9357737
+        }
+      ]
+    }
+  },
+  {
+    "file": "cantonese_pcm.wav",
+    "definition": {
+      "locales": [
+        "zh-CN",
+        "zh-HK",
+        "zh-CN-sichuan"
+      ],
+      "profanityFilterMode": "None"
+    },
+    "status": 200,
+    "seconds": 1.05,
+    "result": {
+      "durationMilliseconds": 5184,
+      "combinedPhrases": [
+        {
+          "text": "这几个字都表达不到我想说的意思。"
+        }
+      ],
+      "phrases": [
+        {
+          "offsetMilliseconds": 910,
+          "durationMilliseconds": 4240,
+          "text": "这几个字都表达不到我想说的意思。",
+          "words": [
+            {
+              "text": "这",
+              "offsetMilliseconds": 910,
+              "durationMilliseconds": 280
+            },
+            {
+              "text": "几",
+              "offsetMilliseconds": 1190,
+              "durationMilliseconds": 120
+            },
+            {
+              "text": "个",
+              "offsetMilliseconds": 1310,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "字",
+              "offsetMilliseconds": 1470,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "都",
+              "offsetMilliseconds": 1630,
+              "durationMilliseconds": 320
+            },
+            {
+              "text": "表",
+              "offsetMilliseconds": 1950,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "达",
+              "offsetMilliseconds": 2190,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "不",
+              "offsetMilliseconds": 2350,
+              "durationMilliseconds": 240
+            },
+            {
+              "text": "到",
+              "offsetMilliseconds": 2590,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "我",
+              "offsetMilliseconds": 2790,
+              "durationMilliseconds": 200
+            },
+            {
+              "text": "想",
+              "offsetMilliseconds": 2990,
+              "durationMilliseconds": 160
+            },
+            {
+              "text": "说",
+              "offsetMilliseconds": 3150,
+              "durationMilliseconds": 120
+            },
+            {
+              "text": "的",
+              "offsetMilliseconds": 3270,
+              "durationMilliseconds": 280
+            },
+            {
+              "text": "意",
+              "offsetMilliseconds": 3550,
+              "durationMilliseconds": 640
+            },
+            {
+              "text": "思",
+              "offsetMilliseconds": 4190,
+              "durationMilliseconds": 120
+            },
+            {
+              "text": "。",
+              "offsetMilliseconds": 5110,
+              "durationMilliseconds": 40
+            }
+          ],
+          "locale": "zh-CN",
+          "confidence": 0.9024745
+        }
+      ]
+    }
+  }
+]

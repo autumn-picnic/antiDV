@@ -1,0 +1,23 @@
+{
+  "text": "关系到整个民族的素质和道德情操的提高。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 2700000,
+    "Duration": 36400000,
+    "DisplayText": "关系到整个民族的素质和道德情操的提高。",
+    "NBest": [
+      {
+        "Confidence": 0.85058326,
+        "Lexical": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+        "ITN": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+        "MaskedITN": "",
+        "Display": "关系到整个民族的素质和道德情操的提高。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "chengdu_dialect_1_bandlimited",
+  "engine": "azure",
+  "wall_seconds": 1.609
+}
