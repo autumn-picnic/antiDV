@@ -1,0 +1,44 @@
+{
+  "azure/成都西南官話": {
+    "clips": 3,
+    "errors": 2,
+    "characters": 48,
+    "cer": 0.041666666666666664
+  },
+  "qwen/成都西南官話": {
+    "clips": 2,
+    "errors": 0,
+    "characters": 33,
+    "cer": 0.0
+  },
+  "azure/鄭州中原官話": {
+    "clips": 3,
+    "errors": 7,
+    "characters": 43,
+    "cer": 0.16279069767441862
+  },
+  "azure/青島膠遼官話": {
+    "clips": 3,
+    "errors": 4,
+    "characters": 48,
+    "cer": 0.08333333333333333
+  },
+  "azure/鄭州說話者普通話": {
+    "clips": 1,
+    "errors": 0,
+    "characters": 14,
+    "cer": 0.0
+  },
+  "azure/青島說話者普通話": {
+    "clips": 1,
+    "errors": 0,
+    "characters": 18,
+    "cer": 0.0
+  },
+  "azure/人工退化": {
+    "clips": 6,
+    "errors": 2,
+    "characters": 96,
+    "cer": 0.020833333333333332
+  }
+}

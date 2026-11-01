@@ -1,0 +1,23 @@
+{
+  "text": "一定要养成绿色生活的日常行为和习惯。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 8500000,
+    "Duration": 42800000,
+    "DisplayText": "一定要养成绿色生活的日常行为和习惯。",
+    "NBest": [
+      {
+        "Confidence": 0.9512993,
+        "Lexical": "一 定 要 养 成 绿 色 生 活 的 日 常 行 为 和 习 惯",
+        "ITN": "一 定 要 养 成 绿 色 生 活 的 日 常 行 为 和 习 惯",
+        "MaskedITN": "",
+        "Display": "一定要养成绿色生活的日常行为和习惯。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "qingdao_dialect_2",
+  "engine": "azure",
+  "wall_seconds": 1.668
+}

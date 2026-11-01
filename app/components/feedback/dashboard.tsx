@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import SpeechRecordings from './speech-recordings'
 import { collectFeedbackExport, downloadFeedbackWorkbook } from './export'
 import type { ExportFailure } from './export'
 
@@ -19,7 +20,7 @@ export default function FeedbackDashboard() {
   const [error, setError] = useState('')
   const [loadingList, setLoadingList] = useState(false)
   const [loadingTurns, setLoadingTurns] = useState(false)
-  const [section, setSection] = useState<'chat' | 'contact'>('chat')
+  const [section, setSection] = useState<'chat' | 'contact' | 'speech'>('chat')
   const [contacts, setContacts] = useState<Page<Contact>>({ items: [], nextOffset: null })
   const [contactOffset, setContactOffset] = useState(0)
   const [loadingContacts, setLoadingContacts] = useState(false)
@@ -31,6 +32,7 @@ export default function FeedbackDashboard() {
   const exportController = useRef<AbortController | null>(null)
   useEffect(() => () => exportController.current?.abort(), [])
   async function download() {
+    if (section === 'speech') { return }
     if (exportController.current) { return }
     const controller = new AbortController()
     exportController.current = controller
@@ -118,13 +120,14 @@ export default function FeedbackDashboard() {
       <h1 className='text-xl font-semibold'>小安 · 对话与反馈管理</h1>
       <Link href='/chat' className='underline'>回到聊天</Link>
       <button type='button' className={button} onClick={() => setVersion(v => v + 1)}>刷新</button>
-      <button type='button' disabled={exporting} className={button} onClick={() => void download()}>{exporting ? '正在导出…' : `下载${section === 'chat' ? '聊天评价' : '在线留言'} Excel（全部记录）`}</button>
+      {section !== 'speech' && <button type='button' disabled={exporting} className={button} onClick={() => void download()}>{exporting ? '正在导出…' : `下载${section === 'chat' ? '聊天评价' : '在线留言'} Excel（全部记录）`}</button>}
       {exporting && <button type='button' className={button} onClick={() => exportController.current?.abort()}>取消导出</button>}
     </div>
     {exportStatus && <p role='status' className='mb-4 text-sm text-gray-700'>{exportStatus}</p>}
     <div className='mb-6 flex gap-2 border-b border-gray-200' role='group' aria-label='反馈类型'>
       <button type='button' aria-pressed={section === 'chat'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'chat' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('chat') }}>聊天评价</button>
       <button type='button' aria-pressed={section === 'contact'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'contact' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('contact') }}>在线留言</button>
+      <button type='button' aria-pressed={section === 'speech'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'speech' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('speech') }}>语音录音</button>
     </div>
     {error && <p role='alert' className='mb-4 text-red-700'>{error}</p>}
     {section === 'chat' && <><div className='grid gap-6 md:grid-cols-[280px_1fr]'>
@@ -177,6 +180,7 @@ export default function FeedbackDashboard() {
         <button type='button' className={button} disabled={loadingFailures || failures.nextOffset === null} onClick={() => setFailureOffset(failures.nextOffset!)}>下一页失败记录</button>
       </div>
     </section></>}
+    {section === 'speech' && <SpeechRecordings version={version} />}
     {section === 'contact' && <section aria-label='在线留言' className='space-y-4'>
       {loadingContacts ? <p role='status'>正在读取…</p> : !contacts.items.length && <p>暂无在线留言</p>}
       {contacts.items.map(contact => <article key={contact.id} className='rounded-lg border border-gray-200 bg-white p-4'>

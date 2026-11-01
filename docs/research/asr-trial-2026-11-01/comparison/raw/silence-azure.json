@@ -1,0 +1,23 @@
+{
+  "text": "",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 0,
+    "Duration": 30000000,
+    "DisplayText": "",
+    "NBest": [
+      {
+        "Confidence": 0.0,
+        "Lexical": "",
+        "ITN": "",
+        "MaskedITN": "",
+        "Display": ""
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "silence",
+  "engine": "azure",
+  "wall_seconds": 0.814
+}

@@ -1,0 +1,1010 @@
+[
+  {
+    "sample": {
+      "id": "chengdu_dialect_1",
+      "group": "成都西南官話",
+      "reference": "关系到整个民族的素质和道德情操的提高",
+      "source": "https://wen2cheng.github.io/gt/chengdu_1024426/dialect/eval/1024426_0ad360fb.wav",
+      "path": "audio/chengdu_dialect_1_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "bd759dbc0a15a5d1c738d7d671810736e428fb4ff652db8e196bf7eb15db495c",
+      "duration_seconds": 4.1499375
+    },
+    "results": {
+      "azure": {
+        "text": "关系到整个民族的素质和道德情操的提高。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 2700000,
+          "Duration": 36400000,
+          "DisplayText": "关系到整个民族的素质和道德情操的提高。",
+          "NBest": [
+            {
+              "Confidence": 0.8817088,
+              "Lexical": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "ITN": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "MaskedITN": "",
+              "Display": "关系到整个民族的素质和道德情操的提高。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "chengdu_dialect_1",
+        "engine": "azure",
+        "wall_seconds": 1.424,
+        "score": {
+          "errors": 0,
+          "characters": 18,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "text": "关系到整个民族的素质和道德情操的提高。",
+        "language": "Chinese",
+        "response": [
+          "Chinese",
+          "关系到整个民族的素质和道德情操的提高。",
+          null,
+          ""
+        ],
+        "status": "success",
+        "sample_id": "chengdu_dialect_1",
+        "engine": "qwen",
+        "wall_seconds": 6.617,
+        "score": {
+          "errors": 0,
+          "characters": 18,
+          "cer": 0.0
+        }
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "chengdu_dialect_2",
+      "group": "成都西南官話",
+      "reference": "产品相关特性与剧情设定较为吻合",
+      "source": "https://wen2cheng.github.io/gt/chengdu_1024426/dialect/eval/1024426_0b4d78bd.wav",
+      "path": "audio/chengdu_dialect_2_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "d4a2493fcbd736cca5c08de3550ebe756e90ae10bc220386abd16a39209f2010",
+      "duration_seconds": 3.538625
+    },
+    "results": {
+      "azure": {
+        "text": "产品相关特性与剧情设定较为吻合。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 3100000,
+          "Duration": 31200000,
+          "DisplayText": "产品相关特性与剧情设定较为吻合。",
+          "NBest": [
+            {
+              "Confidence": 0.7669739,
+              "Lexical": "产 品 相 关 特 性 与 剧 情 设 定 较 为 吻 合",
+              "ITN": "产 品 相 关 特 性 与 剧 情 设 定 较 为 吻 合",
+              "MaskedITN": "",
+              "Display": "产品相关特性与剧情设定较为吻合。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "chengdu_dialect_2",
+        "engine": "azure",
+        "wall_seconds": 1.273,
+        "score": {
+          "errors": 0,
+          "characters": 15,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "text": "产品相关特性与剧情设定较为吻合。",
+        "language": "Chinese",
+        "response": [
+          "Chinese",
+          "产品相关特性与剧情设定较为吻合。",
+          null,
+          ""
+        ],
+        "status": "success",
+        "sample_id": "chengdu_dialect_2",
+        "engine": "qwen",
+        "wall_seconds": 6.478,
+        "score": {
+          "errors": 0,
+          "characters": 15,
+          "cer": 0.0
+        }
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "chengdu_dialect_3",
+      "group": "成都西南官話",
+      "reference": "就足以把它的储备消耗得所剩无几",
+      "source": "https://wen2cheng.github.io/gt/chengdu_1024426/dialect/eval/1024426_0d62fed3.wav",
+      "path": "audio/chengdu_dialect_3_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "bb4736418f4d60e8b80f578113876e98bf488b7f6be82250c849983a03568b15",
+      "duration_seconds": 3.8799375
+    },
+    "results": {
+      "azure": {
+        "text": "就注意把它的储备消耗得所剩无几。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 3100000,
+          "Duration": 29600000,
+          "DisplayText": "就注意把它的储备消耗得所剩无几。",
+          "NBest": [
+            {
+              "Confidence": 0.6881995,
+              "Lexical": "就 注 意 把 它 的 储 备 消 耗 得 所 剩 无 几",
+              "ITN": "就 注 意 把 它 的 储 备 消 耗 得 所 剩 无 几",
+              "MaskedITN": "",
+              "Display": "就注意把它的储备消耗得所剩无几。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "chengdu_dialect_3",
+        "engine": "azure",
+        "wall_seconds": 1.343,
+        "score": {
+          "errors": 2,
+          "characters": 15,
+          "cer": 0.13333333333333333
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "chengdu_dialect_3",
+        "engine": "qwen",
+        "wall_seconds": 3.146,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_dialect_1",
+      "group": "鄭州中原官話",
+      "reference": "这就和她挑水果是一个道理",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/dialect/eval/1017637_43dae8a6.wav",
+      "path": "audio/zhengzhou_dialect_1_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "caa998db5714d8c92987bef32f4d85a6b989c37c69ec4c5c10233793bc3e7a1f",
+      "duration_seconds": 3.958625
+    },
+    "results": {
+      "azure": {
+        "text": "这酒和他调水果是一个道理。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 4700000,
+          "Duration": 30400000,
+          "DisplayText": "这酒和他调水果是一个道理。",
+          "NBest": [
+            {
+              "Confidence": 0.7241558,
+              "Lexical": "这 酒 和 他 调 水 果 是 一 个 道 理",
+              "ITN": "这 酒 和 他 调 水 果 是 一 个 道 理",
+              "MaskedITN": "",
+              "Display": "这酒和他调水果是一个道理。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_dialect_1",
+        "engine": "azure",
+        "wall_seconds": 1.247,
+        "score": {
+          "errors": 3,
+          "characters": 12,
+          "cer": 0.25
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_dialect_1",
+        "engine": "qwen",
+        "wall_seconds": 4.772,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_dialect_2",
+      "group": "鄭州中原官話",
+      "reference": "自愿嫁给了她压根瞧不上的男人",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/dialect/eval/1017637_4dc96f26.wav",
+      "path": "audio/zhengzhou_dialect_2_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "1362bb1f76e7d3f4e16c2b622bec6e76c94f206e0c673e23fda80a7911560a41",
+      "duration_seconds": 4.298625
+    },
+    "results": {
+      "azure": {
+        "text": "自愿嫁给了他压根儿瞧不上的男人。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 8700000,
+          "Duration": 33600000,
+          "DisplayText": "自愿嫁给了他压根儿瞧不上的男人。",
+          "NBest": [
+            {
+              "Confidence": 0.77784467,
+              "Lexical": "自 愿 嫁 给 了 他 压 根 儿 瞧 不 上 的 男 人",
+              "ITN": "自 愿 嫁 给 了 他 压 根 儿 瞧 不 上 的 男 人",
+              "MaskedITN": "",
+              "Display": "自愿嫁给了他压根儿瞧不上的男人。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_dialect_2",
+        "engine": "azure",
+        "wall_seconds": 1.598,
+        "score": {
+          "errors": 2,
+          "characters": 14,
+          "cer": 0.14285714285714285
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_dialect_2",
+        "engine": "qwen",
+        "wall_seconds": 5.729,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_dialect_3",
+      "group": "鄭州中原官話",
+      "reference": "武装分子携带爆炸物和枪支袭击了酒店",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/dialect/eval/1017637_4f816f77.wav",
+      "path": "audio/zhengzhou_dialect_3_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "a1147a7bef6238408f8fdea18388529471fa96ef3033c34495ccc4081652eaf7",
+      "duration_seconds": 5.478625
+    },
+    "results": {
+      "azure": {
+        "text": "武装分子携带爆炸物和枪支袭击了九点。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 5100000,
+          "Duration": 48400000,
+          "DisplayText": "武装分子携带爆炸物和枪支袭击了九点。",
+          "NBest": [
+            {
+              "Confidence": 0.7955406,
+              "Lexical": "武 装 分 子 携 带 爆 炸 物 和 枪 支 袭 击 了 九 点",
+              "ITN": "武 装 分 子 携 带 爆 炸 物 和 枪 支 袭 击 了 九 点",
+              "MaskedITN": "",
+              "Display": "武装分子携带爆炸物和枪支袭击了九点。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_dialect_3",
+        "engine": "azure",
+        "wall_seconds": 2.025,
+        "score": {
+          "errors": 2,
+          "characters": 17,
+          "cer": 0.11764705882352941
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_dialect_3",
+        "engine": "qwen",
+        "wall_seconds": 5.227,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "qingdao_dialect_1",
+      "group": "青島膠遼官話",
+      "reference": "旋即不少游客询问几款电动车的售价",
+      "source": "https://wen2cheng.github.io/gt/qingdao_1007609/dialect/eval/1007609_135ad4d5.wav",
+      "path": "audio/qingdao_dialect_1_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "cc80a3d7575fb0e25c74402ec37ee27463bedda81c659f06bea3ecc1df3186c7",
+      "duration_seconds": 5.758625
+    },
+    "results": {
+      "azure": {
+        "text": "炫技。不少游客询问几款电动车的售价。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 6700000,
+          "Duration": 40400000,
+          "DisplayText": "炫技。不少游客询问几款电动车的售价。",
+          "NBest": [
+            {
+              "Confidence": 0.75820804,
+              "Lexical": "炫 技 不 少 游 客 询 问 几 款 电 动 车 的 售 价",
+              "ITN": "炫 技 不 少 游 客 询 问 几 款 电 动 车 的 售 价",
+              "MaskedITN": "",
+              "Display": "炫技。不少游客询问几款电动车的售价。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "qingdao_dialect_1",
+        "engine": "azure",
+        "wall_seconds": 1.641,
+        "score": {
+          "errors": 2,
+          "characters": 16,
+          "cer": 0.125
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "qingdao_dialect_1",
+        "engine": "qwen",
+        "wall_seconds": 3.972,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "qingdao_dialect_2",
+      "group": "青島膠遼官話",
+      "reference": "一定要养成绿色生活的日常行为和习惯",
+      "source": "https://wen2cheng.github.io/gt/qingdao_1007609/dialect/eval/1007609_15b3f3e8.wav",
+      "path": "audio/qingdao_dialect_2_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "52383da064951f43727b3c4af29f6800b01d32287d09e5127fddf1e42b375491",
+      "duration_seconds": 5.318625
+    },
+    "results": {
+      "azure": {
+        "text": "一定要养成绿色生活的日常行为和习惯。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 8500000,
+          "Duration": 42800000,
+          "DisplayText": "一定要养成绿色生活的日常行为和习惯。",
+          "NBest": [
+            {
+              "Confidence": 0.9512993,
+              "Lexical": "一 定 要 养 成 绿 色 生 活 的 日 常 行 为 和 习 惯",
+              "ITN": "一 定 要 养 成 绿 色 生 活 的 日 常 行 为 和 习 惯",
+              "MaskedITN": "",
+              "Display": "一定要养成绿色生活的日常行为和习惯。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "qingdao_dialect_2",
+        "engine": "azure",
+        "wall_seconds": 1.668,
+        "score": {
+          "errors": 0,
+          "characters": 17,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "qingdao_dialect_2",
+        "engine": "qwen",
+        "wall_seconds": 4.741,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "qingdao_dialect_3",
+      "group": "青島膠遼官話",
+      "reference": "在原唱者面前唱错歌词又说错歌名",
+      "source": "https://wen2cheng.github.io/gt/qingdao_1007609/dialect/eval/1007609_49dde8d8.wav",
+      "path": "audio/qingdao_dialect_3_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "26461983347a04d982d646013b005e9ca0558086b5e42a2f140c286271fd3115",
+      "duration_seconds": 5.698625
+    },
+    "results": {
+      "azure": {
+        "text": "在院长者面前唱错歌词，又说错歌名。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 6700000,
+          "Duration": 40400000,
+          "DisplayText": "在院长者面前唱错歌词，又说错歌名。",
+          "NBest": [
+            {
+              "Confidence": 0.7066041,
+              "Lexical": "在 院 长 者 面 前 唱 错 歌 词 又 说 错 歌 名",
+              "ITN": "在 院 长 者 面 前 唱 错 歌 词 又 说 错 歌 名",
+              "MaskedITN": "",
+              "Display": "在院长者面前唱错歌词，又说错歌名。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "qingdao_dialect_3",
+        "engine": "azure",
+        "wall_seconds": 1.766,
+        "score": {
+          "errors": 2,
+          "characters": 15,
+          "cer": 0.13333333333333333
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "qingdao_dialect_3",
+        "engine": "qwen",
+        "wall_seconds": 4.663,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_mandarin_1",
+      "group": "鄭州說話者普通話",
+      "reference": "陈增新说他打电话让对方拿回去",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/mandarin/eval/1017637_p2_21646b82.wav",
+      "path": "audio/zhengzhou_mandarin_1_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "86d1e9e7b8d263b96a4d4036a539310eee9cc017275919094871d9f01fe0ee28",
+      "duration_seconds": 4.538625
+    },
+    "results": {
+      "azure": {
+        "text": "陈增新说，他打电话让对方拿回去。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 1100000,
+          "Duration": 39600000,
+          "DisplayText": "陈增新说，他打电话让对方拿回去。",
+          "NBest": [
+            {
+              "Confidence": 0.82961494,
+              "Lexical": "陈 增 新 说 他 打 电 话 让 对 方 拿 回 去",
+              "ITN": "陈 增 新 说 他 打 电 话 让 对 方 拿 回 去",
+              "MaskedITN": "",
+              "Display": "陈增新说，他打电话让对方拿回去。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_mandarin_1",
+        "engine": "azure",
+        "wall_seconds": 1.451,
+        "score": {
+          "errors": 0,
+          "characters": 14,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_mandarin_1",
+        "engine": "qwen",
+        "wall_seconds": 3.129,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "qingdao_mandarin_1",
+      "group": "青島說話者普通話",
+      "reference": "这是我国目前为数不多的国家级相关研究",
+      "source": "https://wen2cheng.github.io/gt/qingdao_1007609/mandarin/eval/1007609_p2_0b0d94a1.wav",
+      "path": "audio/qingdao_mandarin_1_pcm.wav",
+      "condition": "原始錄音／16kHz PCM",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "sha256": "6279b4d433c98a88e51f6b2d3e6965eaa692c911841502f550711c3f9f3b244b",
+      "duration_seconds": 5.318625
+    },
+    "results": {
+      "azure": {
+        "text": "这是我国目前为数不多的国家级相关研究。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 9300000,
+          "Duration": 43100000,
+          "DisplayText": "这是我国目前为数不多的国家级相关研究。",
+          "NBest": [
+            {
+              "Confidence": 0.9278195,
+              "Lexical": "这 是 我 国 目 前 为 数 不 多 的 国 家 级 相 关 研 究",
+              "ITN": "这 是 我 国 目 前 为 数 不 多 的 国 家 级 相 关 研 究",
+              "MaskedITN": "",
+              "Display": "这是我国目前为数不多的国家级相关研究。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "qingdao_mandarin_1",
+        "engine": "azure",
+        "wall_seconds": 1.861,
+        "score": {
+          "errors": 0,
+          "characters": 18,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "qingdao_mandarin_1",
+        "engine": "qwen",
+        "wall_seconds": 3.155,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "cantonese",
+      "group": "粵語",
+      "reference": null,
+      "source": "https://huggingface.co/FunAudioLLM/SenseVoiceSmall/resolve/main/example/yue.mp3",
+      "path": "audio/cantonese_pcm.wav",
+      "condition": "原始公開錄音／16kHz PCM",
+      "azure_locale": "zh-HK",
+      "scored": false,
+      "sha256": "f431942d24c107eccd4b66dfa9f0ceaea063b09cba1d621426883754612936d8",
+      "duration_seconds": 5.184
+    },
+    "results": {
+      "azure": {
+        "text": "呢幾個字都表達唔到我想講嘅意思。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 10900000,
+          "Duration": 30400000,
+          "DisplayText": "呢幾個字都表達唔到我想講嘅意思。",
+          "NBest": [
+            {
+              "Confidence": 0.9326619,
+              "Lexical": "呢 幾 個 字 都 表 達 唔 到 我 想 講 嘅 意 思",
+              "ITN": "呢 幾 個 字 都 表 達 唔 到 我 想 講 嘅 意 思",
+              "MaskedITN": "",
+              "Display": "呢幾個字都表達唔到我想講嘅意思。"
+            }
+          ]
+        },
+        "locale": "zh-HK",
+        "status": "Success",
+        "sample_id": "cantonese",
+        "engine": "azure",
+        "wall_seconds": 1.239,
+        "score": null
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "cantonese",
+        "engine": "qwen",
+        "wall_seconds": 3.598,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "chengdu_dialect_1_quiet",
+      "group": "人工退化",
+      "reference": "关系到整个民族的素质和道德情操的提高",
+      "source": "https://wen2cheng.github.io/gt/chengdu_1024426/dialect/eval/1024426_0ad360fb.wav",
+      "path": "audio/chengdu_dialect_1_quiet.wav",
+      "condition": "quiet",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "parent": "chengdu_dialect_1",
+      "sha256": "1833846619a545def9c11f06b66a3ee322e5c54465e17567e244b9495639f3d7",
+      "duration_seconds": 4.1499375
+    },
+    "results": {
+      "azure": {
+        "text": "关系到整个民族的素质和道德情操的提高。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 3500000,
+          "Duration": 35600000,
+          "DisplayText": "关系到整个民族的素质和道德情操的提高。",
+          "NBest": [
+            {
+              "Confidence": 0.87291676,
+              "Lexical": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "ITN": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "MaskedITN": "",
+              "Display": "关系到整个民族的素质和道德情操的提高。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "chengdu_dialect_1_quiet",
+        "engine": "azure",
+        "wall_seconds": 1.367,
+        "score": {
+          "errors": 0,
+          "characters": 18,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "chengdu_dialect_1_quiet",
+        "engine": "qwen",
+        "wall_seconds": 4.526,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "chengdu_dialect_1_bandlimited",
+      "group": "人工退化",
+      "reference": "关系到整个民族的素质和道德情操的提高",
+      "source": "https://wen2cheng.github.io/gt/chengdu_1024426/dialect/eval/1024426_0ad360fb.wav",
+      "path": "audio/chengdu_dialect_1_bandlimited.wav",
+      "condition": "bandlimited",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "parent": "chengdu_dialect_1",
+      "sha256": "d57d3e205d00a640b6eccce51c19a4c672d85ad58c74d354a679e09e93fc5d10",
+      "duration_seconds": 4.1499375
+    },
+    "results": {
+      "azure": {
+        "text": "关系到整个民族的素质和道德情操的提高。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 2700000,
+          "Duration": 36400000,
+          "DisplayText": "关系到整个民族的素质和道德情操的提高。",
+          "NBest": [
+            {
+              "Confidence": 0.85058326,
+              "Lexical": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "ITN": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "MaskedITN": "",
+              "Display": "关系到整个民族的素质和道德情操的提高。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "chengdu_dialect_1_bandlimited",
+        "engine": "azure",
+        "wall_seconds": 1.609,
+        "score": {
+          "errors": 0,
+          "characters": 18,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "chengdu_dialect_1_bandlimited",
+        "engine": "qwen",
+        "wall_seconds": 3.402,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "chengdu_dialect_1_noise",
+      "group": "人工退化",
+      "reference": "关系到整个民族的素质和道德情操的提高",
+      "source": "https://wen2cheng.github.io/gt/chengdu_1024426/dialect/eval/1024426_0ad360fb.wav",
+      "path": "audio/chengdu_dialect_1_noise.wav",
+      "condition": "noise",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "parent": "chengdu_dialect_1",
+      "sha256": "c3beca3712d0f24f4dfca8055a32fe2da32f78fa0d70665767647f274ada894c",
+      "duration_seconds": 4.1499375
+    },
+    "results": {
+      "azure": {
+        "text": "关系到整个民族的素质和道德情操的提高。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 3500000,
+          "Duration": 35600000,
+          "DisplayText": "关系到整个民族的素质和道德情操的提高。",
+          "NBest": [
+            {
+              "Confidence": 0.8332088,
+              "Lexical": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "ITN": "关 系 到 整 个 民 族 的 素 质 和 道 德 情 操 的 提 高",
+              "MaskedITN": "",
+              "Display": "关系到整个民族的素质和道德情操的提高。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "chengdu_dialect_1_noise",
+        "engine": "azure",
+        "wall_seconds": 1.348,
+        "score": {
+          "errors": 0,
+          "characters": 18,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "chengdu_dialect_1_noise",
+        "engine": "qwen",
+        "wall_seconds": 4.65,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_mandarin_1_quiet",
+      "group": "人工退化",
+      "reference": "陈增新说他打电话让对方拿回去",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/mandarin/eval/1017637_p2_21646b82.wav",
+      "path": "audio/zhengzhou_mandarin_1_quiet.wav",
+      "condition": "quiet",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "parent": "zhengzhou_mandarin_1",
+      "sha256": "9339d35b74d71e0d5fb19ea5ea7d9a2c3a45db43ccafeb885e4e9d2d8ca2fe5a",
+      "duration_seconds": 4.538625
+    },
+    "results": {
+      "azure": {
+        "text": "陈增新说，他打电话让对方拿回去。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 1100000,
+          "Duration": 39600000,
+          "DisplayText": "陈增新说，他打电话让对方拿回去。",
+          "NBest": [
+            {
+              "Confidence": 0.8274722,
+              "Lexical": "陈 增 新 说 他 打 电 话 让 对 方 拿 回 去",
+              "ITN": "陈 增 新 说 他 打 电 话 让 对 方 拿 回 去",
+              "MaskedITN": "",
+              "Display": "陈增新说，他打电话让对方拿回去。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_mandarin_1_quiet",
+        "engine": "azure",
+        "wall_seconds": 1.525,
+        "score": {
+          "errors": 0,
+          "characters": 14,
+          "cer": 0.0
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_mandarin_1_quiet",
+        "engine": "qwen",
+        "wall_seconds": 4.831,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_mandarin_1_bandlimited",
+      "group": "人工退化",
+      "reference": "陈增新说他打电话让对方拿回去",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/mandarin/eval/1017637_p2_21646b82.wav",
+      "path": "audio/zhengzhou_mandarin_1_bandlimited.wav",
+      "condition": "bandlimited",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "parent": "zhengzhou_mandarin_1",
+      "sha256": "64773fb5884b0407f67980a821f8a0e03597e5075676394fde5d95a2d0d4ad75",
+      "duration_seconds": 4.538625
+    },
+    "results": {
+      "azure": {
+        "text": "陈增兴说，他打电话让对方拿回去。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 1100000,
+          "Duration": 39600000,
+          "DisplayText": "陈增兴说，他打电话让对方拿回去。",
+          "NBest": [
+            {
+              "Confidence": 0.82341367,
+              "Lexical": "陈 增 兴 说 他 打 电 话 让 对 方 拿 回 去",
+              "ITN": "陈 增 兴 说 他 打 电 话 让 对 方 拿 回 去",
+              "MaskedITN": "",
+              "Display": "陈增兴说，他打电话让对方拿回去。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_mandarin_1_bandlimited",
+        "engine": "azure",
+        "wall_seconds": 1.508,
+        "score": {
+          "errors": 1,
+          "characters": 14,
+          "cer": 0.07142857142857142
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_mandarin_1_bandlimited",
+        "engine": "qwen",
+        "wall_seconds": 4.162,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "zhengzhou_mandarin_1_noise",
+      "group": "人工退化",
+      "reference": "陈增新说他打电话让对方拿回去",
+      "source": "https://wen2cheng.github.io/gt/zhengzhou_1017637/mandarin/eval/1017637_p2_21646b82.wav",
+      "path": "audio/zhengzhou_mandarin_1_noise.wav",
+      "condition": "noise",
+      "azure_locale": "zh-CN",
+      "scored": true,
+      "parent": "zhengzhou_mandarin_1",
+      "sha256": "b76968793c04d718bfef25038172a7af1f7453e08aa3a56bbc29357a6c5219d5",
+      "duration_seconds": 4.538625
+    },
+    "results": {
+      "azure": {
+        "text": "陈更新说他打电话让对方拿回去。",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 1900000,
+          "Duration": 38400000,
+          "DisplayText": "陈更新说他打电话让对方拿回去。",
+          "NBest": [
+            {
+              "Confidence": 0.7659881,
+              "Lexical": "陈 更 新 说 他 打 电 话 让 对 方 拿 回 去",
+              "ITN": "陈 更 新 说 他 打 电 话 让 对 方 拿 回 去",
+              "MaskedITN": "",
+              "Display": "陈更新说他打电话让对方拿回去。"
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "zhengzhou_mandarin_1_noise",
+        "engine": "azure",
+        "wall_seconds": 1.346,
+        "score": {
+          "errors": 1,
+          "characters": 14,
+          "cer": 0.07142857142857142
+        }
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "zhengzhou_mandarin_1_noise",
+        "engine": "qwen",
+        "wall_seconds": 3.248,
+        "score": null
+      }
+    }
+  },
+  {
+    "sample": {
+      "id": "silence",
+      "group": "靜音",
+      "reference": "",
+      "source": "ffmpeg anullsrc",
+      "path": "audio/silence.wav",
+      "condition": "3 秒數位靜音",
+      "azure_locale": "zh-CN",
+      "scored": false,
+      "sha256": "45ec296d121c4f9d30789aecabf462fd1336664eb3169f181d998c99a8e7ad2d",
+      "duration_seconds": 3.0
+    },
+    "results": {
+      "azure": {
+        "text": "",
+        "response": {
+          "RecognitionStatus": "Success",
+          "Offset": 0,
+          "Duration": 30000000,
+          "DisplayText": "",
+          "NBest": [
+            {
+              "Confidence": 0.0,
+              "Lexical": "",
+              "ITN": "",
+              "MaskedITN": "",
+              "Display": ""
+            }
+          ]
+        },
+        "locale": "zh-CN",
+        "status": "Success",
+        "sample_id": "silence",
+        "engine": "azure",
+        "wall_seconds": 0.814,
+        "score": null
+      },
+      "qwen": {
+        "status": "failed",
+        "error": "No complete event: event: error\ndata: null\n\n",
+        "sample_id": "silence",
+        "engine": "qwen",
+        "wall_seconds": 3.051,
+        "score": null
+      }
+    }
+  }
+]

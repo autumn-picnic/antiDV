@@ -1,0 +1,14 @@
+{
+  "text": "关系到整个民族的素质和道德情操的提高。",
+  "language": "Chinese",
+  "response": [
+    "Chinese",
+    "关系到整个民族的素质和道德情操的提高。",
+    null,
+    ""
+  ],
+  "status": "success",
+  "sample_id": "chengdu_dialect_1",
+  "engine": "qwen",
+  "wall_seconds": 6.617
+}

@@ -6,7 +6,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   const [phase, setPhase] = useState<'idle' | 'permission' | 'recording' | 'transcribing'>('idle')
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
-  const [language, setLanguage] = useState('zh-CN')
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const generation = useRef(0)
   const active = useRef(false)
   const stream = useRef<MediaStream | null>(null)
@@ -61,9 +61,9 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
     release(); chunks.current = []; samples.current = 0
     setPhase('transcribing'); setMessage('正在转写，请稍候…')
     const abort = new AbortController(); request.current = abort
-    const deadline = setTimeout(() => abort.abort(), 30000)
+    const deadline = setTimeout(() => abort.abort(), 45000)
     try {
-      const response = await fetch(`/api/speech/transcribe?language=${language}`, {
+      const response = await fetch('/api/speech/transcribe', {
         method: 'POST', headers: { 'Content-Type': 'audio/wav' },
         body: encodeSpeechWav(audio, rate), signal: abort.signal, credentials: 'same-origin',
       })
@@ -83,13 +83,14 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       clearTimeout(deadline)
       if (token === generation.current) { request.current = null; setPhase('idle') }
     }
-  }, [language, release])
+  }, [release])
 
   const start = async () => {
     if (disabled || active.current || request.current || phase !== 'idle') { return }
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext || !window.AudioWorkletNode) {
       setMessage('此浏览器暂不支持录音，请使用文字输入或更新浏览器。'); return
     }
+    setPermissionDenied(false)
     const token = ++generation.current
     active.current = true; setPhase('permission'); setMessage('请允许麦克风权限；取消可停止本次请求。')
     try {
@@ -121,9 +122,10 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
     catch (error) {
       if (token === generation.current) {
         cancel()
+        setPermissionDenied(error instanceof DOMException && error.name === 'NotAllowedError')
         setMessage(error instanceof DOMException && error.name === 'NotAllowedError' ? '麦克风权限未开启，请在浏览器设置中允许后重试。' : '无法使用麦克风，请检查设备后重试。')
       }
     }
   }
-  return { phase, seconds, message, language, setLanguage, start, finish, cancel, active: phase !== 'idle' }
+  return { phase, seconds, message, permissionDenied, start, finish, cancel, active: phase !== 'idle' }
 }

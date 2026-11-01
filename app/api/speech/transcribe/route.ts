@@ -1,16 +1,17 @@
+import { saveSpeechRecording, completeSpeechRecording } from '@/lib/feedback/speech-repository'
 import { optionalActor } from '@/lib/auth/server'
 import { AccessError, accessResponse, assertSameOrigin } from '@/lib/auth/policy'
 import { SPEECH_MAX_BYTES, validSpeechWav } from '@/utils/speech-audio'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-const locales = new Set(['zh-CN', 'zh-HK', 'zh-CN-sichuan'])
 // Per-process backstop; deployment ingress should also enforce a shared rate limit.
 const limits = new Map<string, { start: number, count: number }>()
 let inFlight = 0
 
 export async function POST(request: Request) {
   let acquired = false
+  let recordingId: string | null = null
   try {
     assertSameOrigin(request)
     const actor = await optionalActor()
@@ -18,8 +19,6 @@ export async function POST(request: Request) {
     if (!key || process.env.AZURE_SPEECH_REGION !== 'japaneast') {
       throw new AccessError(503, '语音输入暂未开启，请使用文字输入')
     }
-    const locale = new URL(request.url).searchParams.get('language') || 'zh-CN'
-    if (!locales.has(locale)) { throw new AccessError(400, '请选择支持的识别语言') }
     if (!request.headers.get('content-type')?.startsWith('audio/wav')) { throw new AccessError(415, '录音格式不受支持，请重新录音') }
     const now = Date.now()
     for (const [id, entry] of limits) { if (now - entry.start > 60000) { limits.delete(id) } }
@@ -50,21 +49,29 @@ export async function POST(request: Request) {
     let offset = 0
     for (const chunk of chunks) { audio.set(chunk, offset); offset += chunk.length }
     if (!validSpeechWav(audio)) { throw new AccessError(400, '录音无效或太短，请重新录音') }
+    recordingId = await saveSpeechRecording(actor, audio)
     const controller = new AbortController()
     const abort = () => controller.abort()
     request.signal.addEventListener('abort', abort, { once: true })
     if (request.signal.aborted) { controller.abort() }
-    const timer = setTimeout(abort, 25000)
+    const timer = setTimeout(abort, 35000)
     try {
-      const upstream = await fetch(`https://japaneast.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${locale}&format=detailed&profanity=raw`, {
-        method: 'POST', headers: { 'Ocp-Apim-Subscription-Key': key, 'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000' },
-        body: audio, signal: controller.signal, cache: 'no-store', redirect: 'error',
+      const form = new FormData()
+      form.set('audio', new Blob([audio], { type: 'audio/wav' }), 'recording.wav')
+      // Omit locales: Azure's multilingual model detects the language itself.
+      form.set('definition', JSON.stringify({ profanityFilterMode: 'None' }))
+      const upstream = await fetch('https://japaneast.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2025-10-15', {
+        method: 'POST', headers: { 'Ocp-Apim-Subscription-Key': key },
+        body: form, signal: controller.signal, cache: 'no-store', redirect: 'error',
       })
       if (!upstream.ok) { throw new AccessError(upstream.status === 429 ? 429 : 503, '语音识别暂时不可用，请稍后重试或使用文字输入') }
       const result = await upstream.json()
-      const text = result?.RecognitionStatus === 'Success' ? result?.DisplayText : ''
+      const text = Array.isArray(result?.combinedPhrases) ? result.combinedPhrases.map((phrase: { text?: unknown }) => typeof phrase.text === 'string' ? phrase.text : '').join(' ').trim() : ''
       if (typeof text !== 'string' || !text.trim()) { throw new AccessError(422, '没有听清这段录音，请靠近麦克风重新录制') }
       if (text.length > 4000) { throw new AccessError(422, '识别文字过长，请分成短句录制') }
+      const detected = Array.isArray(result.phrases) ? [...new Set<string>(result.phrases.map((phrase: { locale?: unknown }) => typeof phrase.locale === 'string' ? phrase.locale : '').filter(Boolean))] : []
+      await completeSpeechRecording(recordingId, 'success', text.trim(), detected, null)
+      recordingId = null
       return Response.json({ text: text.trim() }, { headers: { 'Cache-Control': 'no-store' } })
     }
     catch (error) {
@@ -73,6 +80,14 @@ export async function POST(request: Request) {
     }
     finally { clearTimeout(timer); request.signal.removeEventListener('abort', abort) }
   }
-  catch (error) { return accessResponse(error) }
+  catch (error) {
+    if (recordingId) {
+      try {
+        await completeSpeechRecording(recordingId, request.signal.aborted ? 'cancelled' : 'failed', null, [], error instanceof AccessError ? error.message.slice(0, 500) : '语音服务暂时不可用')
+      }
+      catch { return accessResponse(new AccessError(503, '录音状态保存失败，请稍后重试')) }
+    }
+    return accessResponse(error)
+  }
   finally { if (acquired) { inFlight-- } }
 }

@@ -24,10 +24,13 @@ function load(file, overrides = {}) {
   }).outputText, filename)
   return mod.exports
 }
+const stored = []
+const completed = []
 const audio = load('utils/speech-audio.ts')
 const policy = load('lib/auth/policy.ts')
-function route(actor = null) {
+function route(actor = null, persistence = {}) {
   return load('app/api/speech/transcribe/route.ts', {
+    '@/lib/feedback/speech-repository': { saveSpeechRecording: async (_actor, bytes) => { stored.push(bytes); return 'recording-id' }, completeSpeechRecording: async (...args) => { completed.push(args) }, ...persistence },
     '@/lib/auth/server': { optionalActor: async () => actor },
     '@/lib/auth/policy': policy, '@/utils/speech-audio': audio,
   }).POST
@@ -54,10 +57,12 @@ test('48kHz mic audio becomes bounded 16kHz mono PCM with matching duration and 
 test('same-origin guest transcription uses only Japan East and returns text without provider metadata', async () => {
   configured()
   globalThis.fetch = async (url, init) => {
-    assert.match(url, /^https:\/\/japaneast\.stt\.speech\.microsoft\.com\//)
+    assert.match(url, /^https:\/\/japaneast\.api\.cognitive\.microsoft\.com\//)
     assert.equal(init.headers['Ocp-Apim-Subscription-Key'], 'test-secret')
-    assert.equal(audio.validSpeechWav(init.body), true)
-    return Response.json({ RecognitionStatus: 'Success', DisplayText: '我需要帮助。', NBest: [{ Confidence: 0.8 }] })
+    assert.ok(init.body instanceof FormData)
+    assert.deepEqual(JSON.parse(init.body.get('definition')), { profanityFilterMode: 'None' })
+    assert.equal(audio.validSpeechWav(new Uint8Array(await init.body.get('audio').arrayBuffer())), true)
+    return Response.json({ combinedPhrases: [{ text: '我需要帮助。' }], phrases: [{ locale: 'zh-CN' }] })
   }
   const response = await route()(request())
   assert.equal(response.status, 200)
@@ -65,12 +70,13 @@ test('same-origin guest transcription uses only Japan East and returns text with
   assert.equal(response.headers.get('cache-control'), 'no-store')
 })
 
-test('rejects cross-origin, invalid locale, wrong region, malformed and oversized WAV before calling provider', async () => {
+test('rejects cross-origin, wrong type, wrong region, malformed and oversized WAV before calling provider', async () => {
   configured(); let calls = 0
   globalThis.fetch = async () => { calls++; throw new Error('must not call') }
   const post = route()
   assert.equal((await post(request(wav(), 'https://other.test'))).status, 403)
-  assert.equal((await post(request(wav(), 'https://xiaoan.test', 'en-US'))).status, 400)
+  const wrongType = request(); wrongType.headers.set('Content-Type', 'text/plain')
+  assert.equal((await post(wrongType)).status, 415)
   assert.equal((await post(request(new Uint8Array(100)))).status, 400)
   assert.equal((await post(request(new Uint8Array(audio.SPEECH_MAX_BYTES + 1)))).status, 413)
   process.env.AZURE_SPEECH_REGION = 'southeastasia'
@@ -80,7 +86,7 @@ test('rejects cross-origin, invalid locale, wrong region, malformed and oversize
 
 test('no-match and service failures preserve useful error messages without raw provider details', async () => {
   configured(); const post = route()
-  globalThis.fetch = async () => Response.json({ RecognitionStatus: 'NoMatch' })
+  globalThis.fetch = async () => Response.json({ combinedPhrases: [] })
   assert.equal((await post(request())).status, 422)
   globalThis.fetch = async () => new Response('secret provider diagnostics', { status: 500 })
   const response = await post(request())
@@ -90,7 +96,7 @@ test('no-match and service failures preserve useful error messages without raw p
 
 test('rapid guest requests hit the per-process budget', async () => {
   configured(); const post = route()
-  globalThis.fetch = async () => Response.json({ RecognitionStatus: 'Success', DisplayText: '好。' })
+  globalThis.fetch = async () => Response.json({ combinedPhrases: [{ text: '好。' }] })
   for (let i = 0; i < 12; i++) { assert.equal((await post(request())).status, 200) }
   assert.equal((await post(request())).status, 429)
 })
@@ -133,4 +139,25 @@ test('cancel stops tracks, aborts transcription and discards a late result', asy
     if (saved.navigator) { Object.defineProperty(globalThis, 'navigator', saved.navigator) }
     else { delete globalThis.navigator }
   }
+})
+
+test('database save failure prevents a billed transcription request', async () => {
+  configured(); let called = false
+  globalThis.fetch = async () => { called = true; throw new Error('must not call') }
+  const response = await route(null, { saveSpeechRecording: async () => { throw new Error('database credential must stay private') } })(request())
+  assert.equal(response.status, 503)
+  assert.equal(called, false)
+  assert.doesNotMatch(await response.text(), /credential/)
+})
+
+test('successful and failed transcription both retain recording status', async () => {
+  configured()
+  const begin = completed.length
+  globalThis.fetch = async () => Response.json({combinedPhrases:[{text:'保留原始轉寫'}], phrases:[{locale:'zh-CN'}]})
+  assert.equal((await route()(request())).status, 200)
+  assert.deepEqual(completed[begin], ['recording-id', 'success', '保留原始轉寫', ['zh-CN'], null])
+  globalThis.fetch = async () => new Response('private diagnostics', {status:503})
+  assert.equal((await route()(request())).status, 503)
+  assert.equal(completed[begin + 1][1], 'failed')
+  assert.doesNotMatch(completed[begin + 1][4], /private diagnostics/)
 })

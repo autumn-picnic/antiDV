@@ -1,0 +1,7 @@
+{
+  "status": "failed",
+  "error": "No complete event: event: error\ndata: null\n\n",
+  "sample_id": "qingdao_mandarin_1",
+  "engine": "qwen",
+  "wall_seconds": 3.155
+}

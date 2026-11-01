@@ -1,0 +1,7 @@
+{
+  "status": "failed",
+  "error": "No complete event: event: error\ndata: null\n\n",
+  "sample_id": "zhengzhou_dialect_2",
+  "engine": "qwen",
+  "wall_seconds": 5.729
+}

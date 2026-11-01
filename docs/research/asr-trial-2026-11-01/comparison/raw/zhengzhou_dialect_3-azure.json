@@ -1,0 +1,23 @@
+{
+  "text": "武装分子携带爆炸物和枪支袭击了九点。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 5100000,
+    "Duration": 48400000,
+    "DisplayText": "武装分子携带爆炸物和枪支袭击了九点。",
+    "NBest": [
+      {
+        "Confidence": 0.7955406,
+        "Lexical": "武 装 分 子 携 带 爆 炸 物 和 枪 支 袭 击 了 九 点",
+        "ITN": "武 装 分 子 携 带 爆 炸 物 和 枪 支 袭 击 了 九 点",
+        "MaskedITN": "",
+        "Display": "武装分子携带爆炸物和枪支袭击了九点。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "zhengzhou_dialect_3",
+  "engine": "azure",
+  "wall_seconds": 2.025
+}

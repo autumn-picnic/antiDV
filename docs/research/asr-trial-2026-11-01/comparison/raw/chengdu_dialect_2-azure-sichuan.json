@@ -1,0 +1,20 @@
+{
+  "text": "产品相关特性与剧情设定较为吻合。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 3300000,
+    "Duration": 31700000,
+    "DisplayText": "产品相关特性与剧情设定较为吻合。",
+    "NBest": [
+      {
+        "Confidence": 0.8633545,
+        "Lexical": "产品 相关 特性 与 剧情 设定 较为 吻合",
+        "ITN": "产品 相关 特性 与 剧情 设定 较为 吻合",
+        "MaskedITN": "",
+        "Display": "产品相关特性与剧情设定较为吻合。"
+      }
+    ]
+  },
+  "locale": "zh-CN-sichuan",
+  "status": "Success"
+}
