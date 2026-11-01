@@ -170,6 +170,8 @@ function composerHarness() {
   const slots = []
   let cursor = 0; let first = true; let responding = false; let stops = 0
   const sent = []
+  let transcript
+  const speech = { active: false, phase: 'idle', seconds: 0, language: 'zh-CN', message: '', cancel() {}, setLanguage() {} }
   const react = {
     useState(initial) {
       const index = cursor++
@@ -194,6 +196,7 @@ function composerHarness() {
     if (name === 'react/jsx-runtime') { return originalRequire(name) }
     if (name === 'react-i18next') { return { useTranslation: () => ({ t: key => key }) } }
     if (name.endsWith('/toast')) { return { notify() {} } }
+    if (name === '@/hooks/use-speech-input') { return callback => { transcript = callback; return speech } }
     return () => null
   }
   mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
@@ -220,8 +223,29 @@ function composerHarness() {
       button: find(tree, responding ? '停止回复' : '发送消息').props,
     }
   }
-  return { render, sent, stops: () => stops }
+  return { render, sent, stops: () => stops, speech, transcribe: text => transcript(text) }
 }
+
+test('voice transcript appends to the latest typed draft and waits for explicit send', () => {
+  const h = composerHarness()
+  h.render().input.onChange({ target: { value: '刚刚打的字' } })
+  h.transcribe('我想找人帮忙。')
+  assert.equal(h.render().input.value, '刚刚打的字\n我想找人帮忙。')
+  assert.deepEqual(h.sent, [])
+  h.render().button.onClick()
+  assert.deepEqual(h.sent, ['刚刚打的字\n我想找人帮忙。'])
+})
+
+test('recording and transcription block both button and keyboard send', () => {
+  const h = composerHarness()
+  h.render().input.onChange({ target: { value: '保留这份草稿' } })
+  h.speech.active = true
+  const view = h.render()
+  assert.equal(view.button.disabled, true)
+  view.input.onKeyUp({ code: 'Enter', shiftKey: false, preventDefault() {} })
+  assert.deepEqual(h.sent, [])
+  assert.equal(h.render().input.value, '保留这份草稿')
+})
 
 for (const draft of ['', '提前输入的新问题']) {
   test(`composer restores original input or preserves a new draft after stopping: ${draft || 'empty'}`, () => {

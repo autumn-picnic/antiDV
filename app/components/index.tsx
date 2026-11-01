@@ -160,6 +160,7 @@ const Main: FC<IMainProps> = () => {
             <h1 className="sr-only">{conversationName}</h1>
             <div className='relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: composerHeight + 24 }} ref={chatListDomRef}>
               <Chat
+                speechResetKey={`${currConversationId}:${isSignedIn ? 'account' : 'guest'}`}
                 chatList={chatList}
                 debugEnabled={debugEnabled}
                 onSend={handleSend}

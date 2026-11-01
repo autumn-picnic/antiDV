@@ -11,6 +11,7 @@ import type { DebugChatItem } from '@/types/chatflow'
 import AppIcon from '@/app/components/base/app-icon'
 import Tooltip from '@/app/components/base/tooltip'
 import Toast from '@/app/components/base/toast'
+import useSpeechInput from '@/hooks/use-speech-input'
 
 export interface IChatProps {
   chatList: DebugChatItem[]
@@ -31,6 +32,7 @@ export interface IChatProps {
   onComposerResize?: (height: number) => void
   privacyControls?: React.ReactNode
   debugEnabled?: boolean
+  speechResetKey?: string
 }
 
 const Chat: FC<IChatProps> = ({
@@ -52,6 +54,7 @@ const Chat: FC<IChatProps> = ({
   debugEnabled,
   onComposerResize,
   privacyControls,
+  speechResetKey = '',
 }) => {
   const { t } = useTranslation()
   const { notify } = Toast
@@ -70,6 +73,14 @@ const Chat: FC<IChatProps> = ({
   const [showAllStarters, setShowAllStarters] = React.useState(false)
   const queryRef = useRef('')
   const submittedQuery = useRef('')
+  const speech = useSpeechInput((text) => {
+    const current = queryRef.current
+    const next = current ? `${current}\n${text}` : text
+    if (next.length > 4000) { throw new Error('输入框文字已接近上限，请先发送或整理文字，再重新录音。') }
+    queryRef.current = next
+    setQuery(next)
+    composerRef.current?.querySelector('textarea')?.focus()
+  }, speechResetKey, disabled || Boolean(isResponding) || isHideSendInput)
 
   const handleContentChange = (e: any) => {
     const value = e.target.value
@@ -97,7 +108,8 @@ const Chat: FC<IChatProps> = ({
     }
   }, [controlClearQuery])
   const handleSend = () => {
-    if (disabled || isResponding || !valid() || (checkCanSend && !checkCanSend())) { return }
+    if (disabled || isResponding || speech.active || !valid() || (checkCanSend && !checkCanSend())) { return }
+    speech.cancel()
     submittedQuery.current = queryRef.current
     onSend(queryRef.current)
     setQuery('')
@@ -133,6 +145,7 @@ const Chat: FC<IChatProps> = ({
   }
 
   const suggestionClick = (suggestion: string) => {
+    if (speech.active) { return }
     setQuery(suggestion)
     queryRef.current = suggestion
     handleSend()
@@ -174,6 +187,7 @@ const Chat: FC<IChatProps> = ({
   ]
 
   const handleQuickAction = (action: typeof quickActions[0]) => {
+    if (speech.active) { return }
     setQuery(action.message)
     queryRef.current = action.message
     handleSend()
@@ -232,7 +246,7 @@ const Chat: FC<IChatProps> = ({
                 <div className="chat-starter-section">
                   <div id="chat-starter-questions" className="chat-starters" aria-label="可以从这些话题开始">
                     {starterQuestions.slice(0, showAllStarters ? undefined : 3).map(question => (
-                      <button type="button" key={question} disabled={disabled || isResponding} onClick={() => suggestionClick(question)}>
+                      <button type="button" key={question} disabled={disabled || isResponding || speech.active} onClick={() => suggestionClick(question)}>
                         <span>{question}</span>
                       </button>
                     ))}
@@ -274,7 +288,7 @@ const Chat: FC<IChatProps> = ({
                 {quickActions.map(action => (
                   <button
                     key={action.label}
-                    disabled={disabled || isResponding}
+                    disabled={disabled || isResponding || speech.active}
                     className="quick-chip-scroll quick-chip"
                     onClick={() => handleQuickAction(action)}
                     style={{
@@ -311,7 +325,7 @@ const Chat: FC<IChatProps> = ({
               <div className='chat-composer relative p-2 max-h-[200px] overflow-y-auto'>
                 <Textarea
                   className={`
-                  block w-full bg-transparent pl-5 pr-16 py-[7px] leading-5 max-h-none text-base text-gray-700 outline-none appearance-none resize-none
+                  block w-full bg-transparent pl-5 pr-28 py-[7px] leading-5 max-h-none text-base text-gray-700 outline-none appearance-none resize-none
                 `}
                   placeholder="你可以从任何地方开始说起。"
                   aria-label="和小安说说话"
@@ -323,6 +337,19 @@ const Chat: FC<IChatProps> = ({
                   autoSize
                 />
                 <div className="absolute bottom-1 right-3 flex items-center h-11">
+                  <button
+                    type="button"
+                    className="chat-microphone"
+                    aria-label={speech.phase === 'recording' ? '停止录音并转写' : '开始语音输入'}
+                    title={speech.phase === 'recording' ? '停止录音并转写' : '语音输入，转写后可修改'}
+                    aria-pressed={speech.phase === 'recording'}
+                    disabled={disabled || isResponding || speech.phase === 'permission' || speech.phase === 'transcribing'}
+                    onClick={() => { if (speech.phase === 'recording') { void speech.finish() } else { void speech.start() } }}
+                  >
+                    {speech.phase === 'recording'
+                      ? <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect x="4" y="4" width="12" height="12" rx="2" /></svg>
+                      : <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" /></svg>}
+                  </button>
                   <Tooltip
                     selector='send-tip'
                     htmlContent={
@@ -336,7 +363,7 @@ const Chat: FC<IChatProps> = ({
                       type="button"
                       className="chat-send"
                       aria-label={isResponding ? '停止回复' : '发送消息'}
-                      disabled={isResponding ? !onStop : disabled || !query.trim()}
+                      disabled={isResponding ? !onStop : disabled || speech.active || !query.trim()}
                       onClick={isResponding ? handleStop : handleSend}
                     ><span aria-hidden="true">{isResponding
                         ? <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="2" width="14" height="14" rx="1" /></svg>
@@ -344,6 +371,16 @@ const Chat: FC<IChatProps> = ({
                   </Tooltip>
                 </div>
               </div>
+              <div className="chat-speech-controls">
+                <label>语音识别：<select aria-label="语音识别语言" value={speech.language} disabled={speech.active} onChange={event => speech.setLanguage(event.target.value)}>
+                  <option value="zh-CN">普通话</option>
+                  <option value="zh-HK">粤语</option>
+                  <option value="zh-CN-sichuan">四川话</option>
+                </select></label>
+                {speech.phase === 'recording' && <span className="chat-recording-time">录音中 {speech.seconds} / 55 秒</span>}
+                {speech.active && <button type="button" onClick={speech.cancel}>取消{speech.phase === 'recording' ? '录音' : '转写'}</button>}
+              </div>
+              <p className="chat-speech-status" role="status" aria-live="polite">{speech.message || '点击麦克风录音，转写后核对并发送。'}</p>
               {privacyControls}
               <p className="chat-disclaimer">小安是AI助手，回答可能有误。</p>
             </div>

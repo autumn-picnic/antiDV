@@ -39,8 +39,12 @@ jobs:
         run: |
           az containerapp show -n xiaoan-web -g xiaoan-pilot-rg -o json |
             jq -e '
+              .location as $location |
+              .properties.configuration.secrets as $secrets |
               .properties.configuration.ingress as $ingress |
               .properties.template.containers[0].env as $env |
+              $location == "Japan East" and
+              ([$secrets[] | select(.name == "azure-speech-key")] | length) == 1 and
               ([$env[] | select(.name == "CHATFLOW_DATABASE_URL" and
                 .secretRef == "feedback-database-url")] | length) == 1 and
               ([$env[] | select(.name == "CLERK_SECRET_KEY" and
@@ -76,6 +80,7 @@ jobs:
             --resource-group xiaoan-pilot-rg \
             --container-name web \
             --image "$IMAGE" \
+            --set-env-vars AZURE_SPEECH_KEY=secretref:azure-speech-key AZURE_SPEECH_REGION=japaneast \
             --output none
 
       - name: Verify deployed revision

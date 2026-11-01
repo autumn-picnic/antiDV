@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 export function quickEscape() {
+  window.dispatchEvent(new Event('xiaoan:quick-exit'))
   // Hide sensitive content synchronously, then use the dedicated sign-out screen.
   document.documentElement.style.visibility = 'hidden'
   try { localStorage.clear(); sessionStorage.clear() } catch {}
