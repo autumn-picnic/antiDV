@@ -220,19 +220,23 @@ function composerHarness() {
     first = false
     return {
       input: find(tree, '和小安说说话').props,
-      mic: find(tree, '按住说话，松开发送').props,
+      mic: find(tree, '按住说话，松开转写').props,
       button: find(tree, responding ? '停止回复' : '发送消息').props,
     }
   }
   return { render, sent, stops: () => stops, speech, transcribe: text => transcript(text) }
 }
 
-test('released voice transcript sends once with the latest typed draft', () => {
+test('released voice transcript appends to the latest draft and requires explicit confirmation', () => {
   const h = composerHarness()
   h.render().input.onChange({ target: { value: '刚刚打的字' } })
   h.transcribe('我想找人帮忙。')
-  assert.equal(h.render().input.value, '')
-  assert.deepEqual(h.sent, ['刚刚打的字\n我想找人帮忙。'])
+  assert.equal(h.render().input.value, '刚刚打的字\n我想找人帮忙。')
+  assert.deepEqual(h.sent, [])
+  h.render().input.onChange({ target: { value: '用户核对修改后的文字' } })
+  assert.deepEqual(h.sent, [])
+  h.render().button.onClick()
+  assert.deepEqual(h.sent, ['用户核对修改后的文字'])
 })
 
 test('recording and transcription block both button and keyboard send', () => {
