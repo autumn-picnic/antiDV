@@ -23,6 +23,14 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   const callback = useRef(onTranscript)
   callback.current = onTranscript
 
+  useEffect(() => {
+    let mounted = true
+    void navigator.permissions?.query({ name: 'microphone' as PermissionName }).then(result => {
+      if (mounted && result.state === 'granted') { permissionReady.current = true }
+    }).catch(() => {})
+    return () => { mounted = false }
+  }, [])
+
   const release = useCallback(() => {
     recording.current = false
     if (timer.current) { clearInterval(timer.current); timer.current = null }
@@ -96,6 +104,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext || !window.AudioWorkletNode) {
       setMessage('此浏览器暂不支持录音，请使用文字输入或更新浏览器。'); return
     }
+    const preparationOnly = !permissionReady.current
     held.current = true
     setPermissionDenied(false)
     const token = ++generation.current
@@ -109,7 +118,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       if (token !== generation.current) { mic.getTracks().forEach(track => track.stop()); return }
       await resumed.catch(error => { mic.getTracks().forEach(track => track.stop()); throw error })
       if (token !== generation.current) { mic.getTracks().forEach(track => track.stop()); return }
-      if (!permissionReady.current) {
+      if (preparationOnly) {
         permissionReady.current = true
         mic.getTracks().forEach(track => track.stop())
         cancel(); setMessage('麦克风已就绪，请重新按住说话，松开后发送。'); return
