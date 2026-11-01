@@ -220,19 +220,18 @@ function composerHarness() {
     first = false
     return {
       input: find(tree, '和小安说说话').props,
+      mic: find(tree, '按住说话，松开发送').props,
       button: find(tree, responding ? '停止回复' : '发送消息').props,
     }
   }
   return { render, sent, stops: () => stops, speech, transcribe: text => transcript(text) }
 }
 
-test('voice transcript appends to the latest typed draft and waits for explicit send', () => {
+test('released voice transcript sends once with the latest typed draft', () => {
   const h = composerHarness()
   h.render().input.onChange({ target: { value: '刚刚打的字' } })
   h.transcribe('我想找人帮忙。')
-  assert.equal(h.render().input.value, '刚刚打的字\n我想找人帮忙。')
-  assert.deepEqual(h.sent, [])
-  h.render().button.onClick()
+  assert.equal(h.render().input.value, '')
   assert.deepEqual(h.sent, ['刚刚打的字\n我想找人帮忙。'])
 })
 
@@ -266,3 +265,18 @@ for (const draft of ['', '提前输入的新问题']) {
     assert.deepEqual(h.sent, ['原来的问题', '修改后重新发送'])
   })
 }
+
+test('hold microphone starts on primary press and transcribes on release; cancelled gestures cancel', () => {
+  const h = composerHarness()
+  let starts = 0; let finishes = 0; let cancels = 0
+  h.speech.start = () => { starts++ }; h.speech.finish = () => { finishes++ }; h.speech.cancel = () => { cancels++ }
+  const mic = h.render().mic
+  mic.onPointerDown({button:0,isPrimary:true,pointerId:1,preventDefault(){},currentTarget:{setPointerCapture(){}}})
+  assert.equal(starts,1)
+  mic.onPointerUp(); assert.equal(finishes,1)
+  mic.onPointerCancel(); assert.equal(cancels,1)
+  mic.onKeyDown({key:' ',repeat:false,preventDefault(){}})
+  mic.onKeyDown({key:' ',repeat:true,preventDefault(){}})
+  assert.equal(starts,2)
+  mic.onKeyUp({key:' ',preventDefault(){}});assert.equal(finishes,2)
+})

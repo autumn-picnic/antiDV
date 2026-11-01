@@ -116,7 +116,8 @@ test('cancel stops tracks, aborts transcription and discards a late result', asy
     resume = async () => {}; close = async () => { this.state = 'closed' }
     createMediaStreamSource = () => ({ connect() {}, disconnect() {} })
   }
-  class Worklet { port = { onmessage: null }; connect() {} disconnect() {} }
+  let worklet
+  class Worklet { port = { onmessage: null }; constructor() { worklet = this } connect() {} disconnect() {} }
   globalThis.window = { AudioContext: Context, AudioWorkletNode: Worklet }
   globalThis.AudioContext = Context; globalThis.AudioWorkletNode = Worklet
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => [{ stop: () => { stopped = true } }] }) } } })
@@ -125,6 +126,13 @@ test('cancel stops tracks, aborts transcription and discards a late result', asy
     const hook = load('hooks/use-speech-input.ts', { react, '@/utils/speech-audio': audio }).default
     const speech = hook(text => received.push(text), 'c1', false)
     await speech.start()
+    assert.equal(stopped, true, 'permission preparation releases mic without transcription')
+    assert.equal(resolveFetch, undefined)
+    await speech.finish()
+    assert.equal(resolveFetch, undefined, 'release after permission preparation cannot send')
+    await speech.start()
+    // Simulate more than 100ms received from the actual worklet.
+    worklet.port.onmessage({data:new Float32Array(9600)})
     const pending = speech.finish()
     await new Promise(resolve => setImmediate(resolve))
     assert.equal(stopped, true)
