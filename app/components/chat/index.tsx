@@ -373,7 +373,7 @@ const Chat: FC<IChatProps> = ({
                     onKeyUp={event => {
                       if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); void speech.finish() }
                     }}
-                    onBlur={speech.cancel}
+                    onBlur={() => { if (speech.phase === 'recording') { speech.cancel() } }}
                     onClick={event => event.preventDefault()}
                   >
                     {speech.phase === 'recording'
