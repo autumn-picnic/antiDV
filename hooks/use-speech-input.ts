@@ -7,6 +7,9 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
   const [permissionDenied, setPermissionDenied] = useState(false)
+  const permissionReady = useRef(false)
+  const held = useRef(false)
+  const recording = useRef(false)
   const generation = useRef(0)
   const active = useRef(false)
   const stream = useRef<MediaStream | null>(null)
@@ -20,7 +23,16 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   const callback = useRef(onTranscript)
   callback.current = onTranscript
 
+  useEffect(() => {
+    let mounted = true
+    void navigator.permissions?.query({ name: 'microphone' as PermissionName }).then(result => {
+      if (mounted && result.state === 'granted') { permissionReady.current = true }
+    }).catch(() => {})
+    return () => { mounted = false }
+  }, [])
+
   const release = useCallback(() => {
+    recording.current = false
     if (timer.current) { clearInterval(timer.current); timer.current = null }
     if (node.current) { node.current.port.onmessage = null; node.current.disconnect(); node.current = null }
     source.current?.disconnect(); source.current = null
@@ -30,7 +42,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   }, [])
 
   const cancel = useCallback(() => {
-    generation.current++; active.current = false
+    generation.current++; active.current = false; held.current = false
     request.current?.abort(); request.current = null
     release(); chunks.current = []; samples.current = 0
     setPhase('idle'); setMessage(''); setSeconds(0)
@@ -53,7 +65,9 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   useEffect(() => { if (disabled) { cancel() } }, [disabled, cancel])
 
   const finish = useCallback(async () => {
-    if (!active.current || !context.current) { return }
+    held.current = false
+    if (!recording.current || !active.current || !context.current) { return }
+    if (samples.current < context.current.sampleRate / 10) { cancel(); setMessage('录音太短，请按住麦克风说话。'); return }
     active.current = false
     const token = generation.current
     const rate = context.current.sampleRate
@@ -72,7 +86,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       if (token !== generation.current) { return }
       if (typeof result.text !== 'string' || !result.text.trim()) { throw new Error('没有听清，请重新录音') }
       callback.current(result.text)
-      setMessage('转写已加入输入框，请核对并修改，再点击发送。')
+      setMessage('语音已转写并发送。')
     }
     catch (error) {
       if (token === generation.current) {
@@ -83,25 +97,38 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       clearTimeout(deadline)
       if (token === generation.current) { request.current = null; setPhase('idle') }
     }
-  }, [release])
+  }, [release, cancel])
 
   const start = async () => {
     if (disabled || active.current || request.current || phase !== 'idle') { return }
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext || !window.AudioWorkletNode) {
       setMessage('此浏览器暂不支持录音，请使用文字输入或更新浏览器。'); return
     }
+    const preparationOnly = !permissionReady.current
+    held.current = true
     setPermissionDenied(false)
     const token = ++generation.current
     active.current = true; setPhase('permission'); setMessage('请允许麦克风权限；取消可停止本次请求。')
     try {
       // Create/resume in the user gesture for Safari and mobile autoplay policies.
       const ctx = new AudioContext(); context.current = ctx
-      await ctx.resume()
+      const resumed = ctx.resume()
+      // Invoke directly in the press gesture to request the native browser permission.
       const mic = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }, video: false })
       if (token !== generation.current) { mic.getTracks().forEach(track => track.stop()); return }
+      await resumed.catch(error => { mic.getTracks().forEach(track => track.stop()); throw error })
+      if (token !== generation.current) { mic.getTracks().forEach(track => track.stop()); return }
+      if (preparationOnly) {
+        permissionReady.current = true
+        mic.getTracks().forEach(track => track.stop())
+        cancel(); setMessage('麦克风已就绪，请重新按住说话，松开后发送。'); return
+      }
+      if (!held.current) { mic.getTracks().forEach(track => track.stop()); cancel(); return }
       stream.current = mic
       await ctx.audioWorklet.addModule('/speech-recorder.worklet.js')
       if (token !== generation.current) { return }
+      if (!held.current) { cancel(); return }
+      recording.current = true
       const recorder = new AudioWorkletNode(ctx, 'speech-recorder')
       node.current = recorder; source.current = ctx.createMediaStreamSource(mic)
       chunks.current = []; samples.current = 0
@@ -112,7 +139,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       }
       source.current.connect(recorder); recorder.connect(ctx.destination)
       mic.getTracks().forEach(track => { track.onended = () => { if (token === generation.current && active.current) { cancel(); setMessage('录音已中断，请重新录制。') } } })
-      setPhase('recording'); setSeconds(0); setMessage('正在录音，最多 55 秒。停止后转写，不会自动发送。')
+      setPhase('recording'); setSeconds(0); setMessage('正在录音，松开后自动转写并发送，最多 55 秒。')
       const started = Date.now()
       timer.current = setInterval(() => {
         setSeconds(Math.min(SPEECH_SECONDS, Math.floor((Date.now() - started) / 1000)))
