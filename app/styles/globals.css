@@ -1,33 +1,42 @@
 /* Google Fonts are loaded via <link> tags in app/layout.tsx (non-blocking).
    The @import has been removed to eliminate render-blocking font requests. */
 
+/* stylelint-disable at-rule-no-unknown -- Tailwind directives are expanded by PostCSS. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @source "../../node_modules/streamdown/dist/index.js";
+/* stylelint-enable at-rule-no-unknown */
 
 :root {
   --max-width: 1100px;
   --border-radius: 12px;
-  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+  --font-mono: ui-monospace, "Menlo", "Monaco", "Cascadia Mono", "Segoe UI Mono",
     "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
     "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
 
   /* 小安暖色主題 */
   --color-bg: #FBF8F4;
+
   /* 米白背景 */
   --color-warm-sand: #F5E6D3;
+
   /* 暖沙（AI 消息） */
   --color-coral: #E8A87C;
+
   /* 珊瑚橘（用戶 / CTA） */
   --color-safe: #7CB9A8;
+
   /* 安全綠（提示） */
   --color-text: #4A4238;
+
   /* 主文字 */
   --color-text-muted: #8F7E6E;
+
   /* 次要文字 */
   --color-border: #E6DDD5;
+
   /* 邊框 */
 
   --foreground-rgb: 74, 66, 56;
@@ -121,25 +130,84 @@ a {
 
 .text-gradient {
   background: linear-gradient(91.58deg, #2250F2 -29.55%, #0EBCF3 75.22%);
+
+  /* stylelint-disable-next-line property-no-vendor-prefix -- Safari text clipping fallback. */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
+
 /* Shared accessibility primitives. */
 :where(button, a, summary, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid #713B20;
   outline-offset: 3px;
 }
-.quick-exit-slot { position: fixed; top: 12px; right: 16px; z-index: 9999; width: 120px; }
-.quick-exit-button { min-height: 44px; width: 100%; padding: 8px 12px; border: 1px solid #713B20; border-radius: 24px; background: #FFEBCF; color: #713B20; font-size: 14px; font-weight: 600; }
-.accessible-modal { width: min(94vw, 640px); max-height: 90dvh; overflow: auto; border-radius: 16px; background: #FBF9F6; color: #3D3028; padding: 20px; }
+
+.quick-exit-slot {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 9999;
+  width: 120px;
+}
+
+.quick-exit-button {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #713B20;
+  border-radius: 24px;
+  background: #FFEBCF;
+  color: #713B20;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.accessible-modal {
+  width: min(94vw, 640px);
+  max-height: 90dvh;
+  overflow: auto;
+  border-radius: 16px;
+  background: #FBF9F6;
+  color: #3D3028;
+  padding: 20px;
+}
+
 .accessible-modal::backdrop { background: #231c1466; }
-.crisis-dialog { position: fixed; inset: 0; margin: auto; width: min(448px, calc(100vw - 32px)); max-height: 90dvh; overflow: auto; }
-.modal-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
-:where(dialog) button { min-height: 44px; padding: 8px 12px; }
-:where(dialog) { max-height: 90dvh; overflow: auto; }
+
+.crisis-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(448px, calc(100vw - 32px));
+  max-height: 90dvh;
+  overflow: auto;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+:where(dialog) button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+:where(dialog) {
+  max-height: 90dvh;
+  overflow: auto;
+}
+
 .home-header { padding-right: 160px; }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

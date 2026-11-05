@@ -19,7 +19,7 @@
 ## 驗證結果
 
 | 檢查 | 結果 |
-|---|---|
+| --- | --- |
 | Context7 React 文件查詢 | 成功，查閱原生 dialog 與 effect cleanup |
 | ui-ux-pro-max | 已安裝並使用 keyboard focus modal 查詢及交付檢查清單 |
 | 聊天相關 TypeScript：tsconfig.chatflow.json | 通過 |
