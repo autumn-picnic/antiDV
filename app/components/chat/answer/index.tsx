@@ -64,7 +64,8 @@ const Answer: FC<IAnswerProps> = ({
   onReview,
   debugEnabled,
 }) => {
-  const { id, content, feedback, suggestedQuestions = [] } = item
+  const { id, content, feedback } = item
+  const suggestedQuestions = item.suggestedQuestions ?? ['怎样辨认控制行为', '帮我梳理一下']
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
 
@@ -228,8 +229,8 @@ const Answer: FC<IAnswerProps> = ({
               )}
             </div>
             {copyStatus && <p role="status" className="chat-copy-status">{copyStatus}</p>}
-            {suggestedQuestions.length > 0 && <div className="chat-answer-suggestions">
-              {suggestedQuestions.map((suggestion, index) => <Button key={index} className="text-sm" type="link" onClick={() => suggestionClick(suggestion)}>{suggestion}</Button>)}
+            {!isResponding && suggestedQuestions.length > 0 && <div className="chat-answer-suggestions">
+              {suggestedQuestions.map((suggestion, index) => <Button key={`${suggestion}-${index}`} className="text-sm" type="link" onClick={() => suggestionClick(suggestion)}>{suggestion}</Button>)}
             </div>}
           </div>
         </div>

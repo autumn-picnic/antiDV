@@ -66,13 +66,14 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3000'
   assert.equal(await crisis.count(), 0); results.push('failure recovery entry and no crisis prompt')
   await page.locator('main').evaluate(e => { e.scrollTop = e.scrollHeight })
   await page.getByRole('button', { name: '刷新会话记录', exact: true }).click(); await page.waitForTimeout(400)
-  await page.getByRole('button', { name: '展开左边栏', exact: true }).click()
+  if (await page.getByRole('button', { name: '展开左边栏', exact: true }).isVisible()) { await page.getByRole('button', { name: '展开左边栏', exact: true }).click() }
   const history = page.locator('nav[aria-label="历史对话"] button').filter({ hasText: '对话 history-' }).first()
   await history.click(); await page.waitForTimeout(400)
   await page.getByRole('button', { name: /删除对话：对话 history-/ }).click()
   await page.getByRole('button', { name: '确定删除', exact: true }).click(); await page.waitForTimeout(400)
   assert.equal(deleted, true); results.push('history selection and confirmed deletion')
   if (await page.getByRole('button', { name: '展开左边栏', exact: true }).isVisible()) { await page.getByRole('button', { name: '展开左边栏', exact: true }).click() }
+  await page.locator('.chat-account-menu > summary').click()
   await page.getByRole('button', { name: '隐私与保存', exact: true }).click()
   await page.getByRole('dialog', { name: '隐私与保存' }).waitFor(); await page.keyboard.press('Escape')
   results.push('privacy dialog opens and Escape closes')

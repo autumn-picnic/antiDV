@@ -52,6 +52,7 @@ export interface ConversationTurn {
   response_id?: string
   user: string
   assistant: string
+  suggested_questions?: string[]
   route_id: string
   safety_level: SafetyLevel
   debug?: ChatDebug | null
@@ -64,6 +65,7 @@ export interface ConversationView {
 }
 
 export interface CompletedResponse {
+  suggested_questions?: string[]
   conversation_id: string
   response_id: string
   safety_level: SafetyLevel

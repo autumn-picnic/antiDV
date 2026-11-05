@@ -194,7 +194,7 @@ const Sidebar: FC<ISidebarProps> = ({
           })}
         </nav>
 
-        <div className="sidebar-account">{accountControls}</div>
+        {accountControls && <div className="sidebar-account">{accountControls}</div>}
         <div className="flex flex-shrink-0 pr-4 pb-4 pl-4">
           <div className="font-normal text-xs" style={{ color: '#B5A898' }}>© {copyRight} {(new Date()).getFullYear()}</div>
         </div>

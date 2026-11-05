@@ -32,7 +32,9 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
     await page.locator('main').click({ position: { x: 5, y: 5 } })
     await page.getByRole('button', { name: '展开左边栏', exact: true }).waitFor()
     await page.getByRole('button', { name: '展开左边栏', exact: true }).click()
+    await page.locator('.chat-account-menu > summary').click()
     await page.getByRole('button', { name: '隐私与保存', exact: true }).waitFor()
+    await page.keyboard.press('Escape')
     await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/desktop.png' })
     for (const [width, height] of [[390, 844], [320, 480]]) {
       await page.setViewportSize({ width, height }); await page.waitForTimeout(400)
@@ -55,6 +57,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
       if (width === 390) await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/mobile.png' })
     }
     await page.setViewportSize({ width: 1440, height: 900 })
+    if (await page.getByRole('button', { name: '展开左边栏', exact: true }).isVisible()) { await page.getByRole('button', { name: '展开左边栏', exact: true }).click() }
     await page.locator('.history-select').filter({ hasText: '对话 history-' }).click()
     await page.locator('#answer-old-answer').waitFor()
     assert.equal(await page.locator('.chat-answer-author').innerText(), '小安\n第 1 条回答')
@@ -62,8 +65,12 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
       const style = getComputedStyle(element)
       return { ratio: parseFloat(style.lineHeight) / parseFloat(style.fontSize), top: parseFloat(style.marginTop) }
     }))
+    assert.equal(await page.locator('.chat-composer-inner .quick-chip').count(), 0)
+    assert.equal(await page.locator('#answer-old-answer .chat-answer-suggestions button').count(), 2)
+    await page.getByRole('button', { name: '帮我梳理一下', exact: true }).click()
+    assert.equal(await page.locator('#chat-input').inputValue(), '帮我梳理一下')
     assert.equal(metrics.length, 2)
-    assert.ok(metrics.every(metric => Math.abs(metric.ratio - 1.6) < 0.01))
+    assert.ok(metrics.every(metric => Math.abs(metric.ratio - 1.4) < 0.01))
     assert.ok(metrics[1].top <= 10)
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
     await page.getByRole('button', { name: '复制小安第 1 条回答', exact: true }).click()
@@ -74,9 +81,10 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
     await page.keyboard.press('Escape')
     await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/desktop-conversation.png' })
     await page.setViewportSize({ width: 390, height: 844 })
+    await page.waitForTimeout(400)
     await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/mobile-conversation.png' })
     assert.deepEqual(errors, [])
-    console.log('Desktop/mobile layout, toolbar history/backdrop, 320px reflow, 58px composer, existing conversation layout, 1.6 line height, copy and review: PASS')
+    console.log('Desktop/mobile layout, toolbar history/backdrop, 320px reflow, 58px composer, existing conversation layout, 1.4 line height, copy and review: PASS')
   }
   finally { await browser.close() }
 })().catch(error => { console.error(error); process.exit(1) })

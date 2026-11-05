@@ -177,29 +177,6 @@ const Chat: FC<IChatProps> = ({
     { label: '支持资源', message: '' },
   ]
 
-  /* ── Quick-action chips ──────────────────────────────── */
-  const quickActions = [
-    {
-      label: '报警要怎么说',
-      message: '我想报警，但不知道该怎么跟警察说，能帮我准备一下吗？',
-    },
-    {
-      label: '如何收集证据',
-      message: '我该如何收集家暴的证据？需要保留哪些东西？',
-    },
-    {
-      label: '帮我总结案情',
-      message: '请帮我总结一下目前的情况，整理成可以用于报警或法律咨询的描述。',
-    },
-  ]
-
-  const handleQuickAction = (action: typeof quickActions[0]) => {
-    if (speech.active) { return }
-    setQuery(action.message)
-    queryRef.current = action.message
-    composerRef.current?.querySelector('textarea')?.focus()
-  }
-
   const composer = (
 
           <div
@@ -209,61 +186,9 @@ const Chat: FC<IChatProps> = ({
           >
             <div className="chat-composer-inner">
               {isWelcome && <div className="chat-starters" aria-label="可以从这些话题开始">
-                {starterQuestions.map(question => <button type="button" key={question.label} disabled={disabled || isResponding || speech.active}
+                {starterQuestions.map(question => <button type="button" key={question.label} data-resource-trigger={!question.message || undefined} disabled={disabled || isResponding || speech.active}
                   onClick={() => question.message ? suggestionClick(question.message) : onShowResources?.()}>{question.label}</button>)}
               </div>}
-              {/* Quick-action chips */}
-              <div
-                style={{
-                  display: isWelcome ? 'none' : 'flex',
-                  gap: 8,
-                  marginBottom: 8,
-                  overflowX: 'auto',
-                  scrollbarWidth: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  msOverflowStyle: 'none',
-                  paddingBottom: 2,
-                }}
-              >
-                <style dangerouslySetInnerHTML={{
-                  __html: `
-                .quick-chip-scroll::-webkit-scrollbar { display: none; }
-                .quick-chip:hover { background-color: #F5E6D3 !important; border-color: #E8A87C !important; }
-                .quick-chip:active { transform: scale(0.97); }
-              `,
-                }} />
-                {quickActions.map(action => (
-                  <button
-                    key={action.label}
-                    disabled={disabled || isResponding || speech.active}
-                    className="quick-chip-scroll quick-chip"
-                    onClick={() => handleQuickAction(action)}
-                    style={{
-                      flexShrink: 0,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '6px 14px',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: '#5C4D3E',
-                      backgroundColor: 'rgba(255,255,255,0.85)',
-                      border: '1px solid #E6DDD5',
-                      borderRadius: 20,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      transition: 'background-color 150ms, border-color 150ms, transform 100ms',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {action.label}
-
-                  </button>
-                ))}
-              </div>
-
               <div className='chat-composer relative p-2 max-h-[200px] overflow-y-auto'>
                 <Textarea
                   id="chat-input"

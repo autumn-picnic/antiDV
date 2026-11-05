@@ -5,12 +5,16 @@ import { ChatApiError, createConversation, deleteConversation, fetchConversation
 import type { ConversationItem } from '../types/app'
 import type { ConversationView, DebugChatItem, GuardDiagnostic } from '../types/chatflow'
 
+function suggestedQuestions(value: unknown): string[] | undefined {
+  return Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())).map(item => item.trim()))] : undefined
+}
+
 function chatItems(view: ConversationView): DebugChatItem[] {
   return view.turns.flatMap((turn, index) => {
     const id = turn.response_id || `${view.conversation_id}-${turn.number ?? index}`
     return [
       { id: `question-${id}`, content: turn.user, isAnswer: false },
-      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level, debug: turn.debug },
+      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level, suggestedQuestions: suggestedQuestions(turn.suggested_questions), debug: turn.debug },
     ]
   })
 }
@@ -214,6 +218,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         content: text,
         isAnswer: true,
         safetyLevel: completed.safety_level,
+        suggestedQuestions: suggestedQuestions(completed.suggested_questions),
         debug: completed.debug,
       }])
       setOperation({ id: attemptId, conversationId: id, kind: 'completed', content: text, responseId: completed.response_id, safetyLevel: completed.safety_level })
