@@ -10,7 +10,8 @@ export default function Modal({ title, onClose, children, className = '' }: {
   const dialog = useRef<HTMLDialogElement>(null)
   useModalDialog(dialog)
   return <dialog ref={dialog} aria-label={title} className={`accessible-modal ${className}`}
-    onCancel={event => { event.preventDefault(); onClose() }}>
+    onCancel={event => { event.preventDefault(); onClose() }}
+    onClick={event => { if (event.target === event.currentTarget) { const box = event.currentTarget.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) { onClose() } } }}>
     <div className="modal-actions">
       <button type="button" onClick={onClose} autoFocus>关闭{title}</button>
       <button type="button" onClick={quickEscape}>快速离开</button>

@@ -25,6 +25,7 @@ import { GuardSummary } from '@/app/components/chat/debug-panel'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
 import '@/app/styles/figma-chat.css'
+import '@/app/styles/chat-redesign.css'
 
 export interface IMainProps { params?: unknown }
 
@@ -38,9 +39,10 @@ const Main: FC<IMainProps> = () => {
   const [isShowSidebar, { setTrue: showSidebar, setFalse: hideSidebar }] = useBoolean(false)
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse }] = useBoolean(true)
-  const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
+  const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(false)
+  const [speechInfoKey, setSpeechInfoKey] = useState(0)
   const [privacyOpen, setPrivacyOpen] = useState(false)
-  const [composerHeight, setComposerHeight] = useState(220)
+  const [composerTarget, setComposerTarget] = useState<HTMLDivElement | null>(null)
   const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
   const crisisPrompt = useCrisisPrompt(currConversationId, operation)
@@ -85,7 +87,7 @@ const Main: FC<IMainProps> = () => {
     if (!element || !chatList.some(item => !item.isOpeningStatement)) { return }
     if (followLatest.current) { element.scrollTop = element.scrollHeight }
     else if (isResponding || operation?.kind === 'completed') { setHasNewReply(true) }
-  }, [chatList, composerHeight, isResponding, operation])
+  }, [chatList, isResponding, operation])
 
   useEffect(() => {
     if (!operation) { setFullAnnouncement(''); return }
@@ -155,6 +157,7 @@ const Main: FC<IMainProps> = () => {
   const renderSidebar = () => {
     return (
       <Sidebar
+        accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
         list={conversationList}
         onCurrentIdChange={handleConversationIdChange}
         currentId={currConversationId}
@@ -172,12 +175,6 @@ const Main: FC<IMainProps> = () => {
       />
     )
   }
-
-  // Compute input bar edges to fit between sidebar and resource panel
-  const panelWidth = isDesktop && hasSetInputs ? (isPanelCollapsed ? 48 : 300) : 0
-  const sidebarWidth = !isMobile ? (isSidebarCollapsed ? 48 : 244) : 0
-  const inputLeft = sidebarWidth
-  const inputRight = panelWidth
 
   return (
     <div className='figma-chat-shell'>
@@ -198,6 +195,7 @@ const Main: FC<IMainProps> = () => {
           <summary aria-label="对话设置"><AdjustmentsHorizontalIcon /></summary>
           <div className="chat-settings-menu">
             <IncognitoNotice />
+            <button type="button" onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setSpeechInfoKey(key => key + 1) }}>语音使用与保存说明</button>
             <label className="auto-read-option"><input type="checkbox" checked={autoRead} onChange={event => { setAutoRead(event.target.checked); setFullAnnouncement('') }} />回复完成后自动通知全文</label>
             <p className="chat-speech-status">通过你的读屏软件播报，仅本分页面有效；刷新后关闭。</p>
             <button type="button" disabled={busy || !chatList.some(item => !item.isOpeningStatement)} onClick={() => void handleExport()}>导出聊天记录 (.xlsx)</button>
@@ -216,6 +214,8 @@ const Main: FC<IMainProps> = () => {
         )}
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
+          <div className="chat-center-column">
+          <div className="chat-thread-toolbar"><button type="button" onClick={isMobile ? showSidebar : toggleSidebarCollapse} aria-expanded={isMobile ? isShowSidebar : !isSidebarCollapsed}>历史</button><span>{conversationName}</span><button type="button" onClick={isDesktop ? togglePanelCollapse : showResourcePanel}>支持资源</button></div>
           <main ref={scrollRef} className='chat-scroll-area flex min-w-0 flex-1 flex-col overflow-y-auto'
             onScroll={event => {
               const element = event.currentTarget
@@ -225,11 +225,15 @@ const Main: FC<IMainProps> = () => {
             onFocusCapture={event => {
               if ((event.target as HTMLElement).closest('#chat-content article')) { followLatest.current = false }
             }}
-            style={{ scrollPaddingBottom: composerHeight + 24 }}>
+            onPointerDown={event => { if (!isMobile && event.currentTarget.contains(event.target as Node)) { collapseSidebar() } }}
+            style={{ scrollPaddingBottom: 24 }}>
 
             <h1 id="conversation-title" tabIndex={-1} className="sr-only">{conversationName}</h1>
-            <div className='chat-content-container relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: chatList.some(item => !item.isOpeningStatement) ? composerHeight + 24 : 24 }} ref={chatListDomRef}>
+            <div className='chat-content-container relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: 24 }} ref={chatListDomRef}>
               <Chat
+                speechInfoKey={speechInfoKey}
+                composerTarget={composerTarget}
+                onShowResources={isDesktop ? togglePanelCollapse : showResourcePanel}
                 speechResetKey={`${currConversationId}:${isSignedIn ? 'account' : 'guest'}`}
                 chatList={chatList}
                 debugEnabled={debugEnabled}
@@ -239,9 +243,6 @@ const Main: FC<IMainProps> = () => {
                 onStop={stop}
                 disabled={busy || Boolean(failure?.needsRecovery)}
                 checkCanSend={checkCanSend}
-                inputLeft={inputLeft}
-                inputRight={inputRight}
-                onComposerResize={setComposerHeight}
                 privacyControls={<PrivacyControls
                   key={isSignedIn ? 'account' : 'guest'}
                   open={privacyOpen}
@@ -261,7 +262,7 @@ const Main: FC<IMainProps> = () => {
                 </article>
               )}
               {(chatList.some(item => item.isAnswer) || operation?.content) && <button type="button" className="read-latest" onClick={readLatest}>{hasNewReply ? '有新回复，阅读最新回答' : '阅读最新回答'}</button>}
-              <a href="/safety-pack" className="safety-pack-entry">查看安全包</a>
+
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
                   <p>{failure.message}</p>
@@ -274,8 +275,10 @@ const Main: FC<IMainProps> = () => {
               {reviewError && <p role='alert' className='my-3 text-sm text-amber-800'>{reviewError}</p>}
             </div>
           </main>
+          <div className="chat-composer-slot" ref={setComposerTarget} />
+          </div>
           {/* Desktop resource panel */}
-          {isDesktop && hasSetInputs && (
+          {isDesktop && hasSetInputs && !isPanelCollapsed && (
             <ResourcePanel
               accumulatedAIText={accumulatedAIText}
               isCollapsed={isPanelCollapsed}

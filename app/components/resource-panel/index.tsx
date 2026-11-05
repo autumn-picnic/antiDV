@@ -18,6 +18,14 @@ interface ResourceItem {
 
 const ALL_RESOURCES: ResourceItem[] = [
     {
+        id: 'safety-pack',
+        title: '生存安全包',
+        desc: '为自己的安全多做一点准备。查看不会清除聊天或浏览记录。',
+        href: '/safety-pack',
+        tags: ['安全', '准备'],
+        keywords: ['安全', '危险', '准备'],
+    },
+    {
         id: 'stories',
         title: '受害者故事',
         desc: '阅读走出困境的真实故事，她们也曾和你一样。',
@@ -104,6 +112,7 @@ const IconClose = () => (
 )
 
 const resourceIcons: Record<string, React.ReactNode> = {
+    'safety-pack': <IconMapPin />,
     stories: <IconBook />,
     'docs-toolkit': <IconDoc />,
     resources: <IconMapPin />,

@@ -228,8 +228,8 @@ function composerHarness() {
     first = false
     return {
       input: find(tree, '和小安说说话').props,
-      mic: find(tree, speech.phase === 'recording' ? '结束录音并转写' : '开始录音')?.props || find(tree, '按住说话，松开转写')?.props,
-      mode: findByTag(tree, 'select').props,
+      mic: find(tree, speech.phase === 'recording' ? '松开转写' : '按住说话，松开转写')?.props || find(tree, '按住说话，松开转写')?.props,
+      mode: findByTag(tree, 'select')?.props,
       permission: findByTag(tree, 'dialog').props,
       button: find(tree, responding ? '停止回复' : '发送消息').props,
     }
@@ -280,42 +280,31 @@ for (const draft of ['', '提前输入的新问题']) {
   })
 }
 
-test('tap recording is the default and native click starts/finishes exactly once', () => {
+test('hold recording prepares permission separately; pointer release transcribes without sending', () => {
   const h = composerHarness()
-  let starts = 0; let finishes = 0
-  h.speech.start = () => { starts++ }; h.speech.finish = () => { finishes++ }
-  let view = h.render()
-  assert.equal(view.mode.value, 'toggle')
-  view.mic.onClick() // first opens information, not the microphone
-  view = h.render()
-  // Confirm first-use information via its native action.
-  const children = [view.permission.children].flat(Infinity)
-  const actions = children.find(node => node?.props?.className === 'speech-permission-actions')
+  const calls = []; let finishes = 0
+  h.speech.start = (...args) => { calls.push(args) }; h.speech.finish = () => { finishes++ }
+  const press = () => h.render().mic.onPointerDown({ button: 0, isPrimary: true, pointerId: 1, preventDefault() {}, currentTarget: { setPointerCapture() {} } })
+  press()
+  assert.equal(calls.length, 0)
+  const actions = [h.render().permission.children].flat(Infinity).find(node => node?.props?.className === 'speech-permission-actions')
   actions.props.children[1].props.onClick()
-  assert.equal(starts, 1) // prepareOnly
-  view = h.render()
-  view.mic.onPointerDown({ button: 0, isPrimary: true })
-  view.mic.onClick()
-  assert.equal(starts, 2)
-  h.speech.phase = 'recording'; h.speech.active = true
-  h.render().mic.onClick()
+  assert.deepEqual(calls, [[true, 'hold']])
+  press(); h.render().mic.onPointerUp()
+  assert.deepEqual(calls[1], [false, 'hold'])
   assert.equal(finishes, 1)
+  assert.equal(h.render().mode, undefined)
   assert.deepEqual(h.sent, [])
 })
 
-test('hold mode remains available without click starting a second recording', () => {
+test('keyboard hold release finishes, pointer cancellation cancels', () => {
   const h = composerHarness()
-  let starts = 0; let finishes = 0
-  h.speech.start = () => { starts++ }; h.speech.finish = () => { finishes++ }
-  h.render().mic.onClick()
-  const actions = [h.render().permission.children].flat(Infinity).find(node => node?.props?.className === 'speech-permission-actions')
-  actions.props.children[1].props.onClick()
-  h.render().mode.onChange({ target: { value: 'hold' } })
-  const mic = h.render().mic
-  mic.onPointerDown({ button: 0, isPrimary: true, pointerId: 1, preventDefault() {}, currentTarget: { setPointerCapture() {} } })
-  mic.onPointerUp(); mic.onClick()
-  assert.equal(starts, 2)
-  assert.equal(finishes, 1)
+  let finishes = 0; let cancels = 0
+  h.speech.finish = () => { finishes++ }; h.speech.cancel = () => { cancels++ }
+  h.render().mic.onKeyDown({ key: ' ', repeat: false, preventDefault() {} })
+  h.render().mic.onKeyUp({ key: ' ', preventDefault() {} })
+  h.render().mic.onPointerCancel()
+  assert.equal(finishes, 1); assert.equal(cancels, 1); assert.deepEqual(h.sent, [])
 })
 
 test('operation notifications distinguish completion, cancellation and late settlement', async () => {
