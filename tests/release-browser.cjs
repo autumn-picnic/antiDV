@@ -12,7 +12,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3000'
   page.on('pageerror', e => errors.push(e.message))
   let level = 'normal'; let delay = 0; let fail = false; let serial = 0; let deleted = false
   const policy = { mode: 'rolling', retention_days: 30, expiry_basis: 'last_completed_turn', expires_at: null, policy_version: 0, idle_timeout_seconds: null }
-  await page.route('**/v1/**', async route => {
+  await page.route(base + '/v1/**', async route => {
     const u = new URL(route.request().url()); const path = u.pathname
     const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
     if (path.endsWith('/responses/stream')) {
@@ -30,7 +30,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3000'
     if (route.request().method() === 'DELETE') { deleted = true; return route.fulfill({ status: 204 }) }
     return json({ conversation_id: path.split('/')[3], turns: [], next_after: null })
   })
-  await page.goto(base + '/chat')
+  await page.goto(base + '/chat', { waitUntil: 'domcontentloaded', timeout: 60000 })
   const send = page.getByRole('button', { name: '发送消息', exact: true })
   await send.waitFor(); await page.waitForTimeout(1200)
   async function message(text) {
@@ -43,7 +43,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3000'
   assert.equal(await crisis.count(), 0); results.push('normal reply and status notice')
   level = 'self_harm'; delay = 700
   await message('危機標記樣例')
-  await page.locator('details.chat-settings summary').click()
+  await page.locator('.chat-toolbar > summary').click()
   await page.waitForTimeout(1600)
   assert.equal(await crisis.count(), 0)
   await page.keyboard.press('Escape'); await crisis.waitFor()
@@ -72,6 +72,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3000'
   await page.getByRole('button', { name: /删除对话：对话 history-/ }).click()
   await page.getByRole('button', { name: '确定删除', exact: true }).click(); await page.waitForTimeout(400)
   assert.equal(deleted, true); results.push('history selection and confirmed deletion')
+  if (await page.getByRole('button', { name: '展开左边栏', exact: true }).isVisible()) { await page.getByRole('button', { name: '展开左边栏', exact: true }).click() }
   await page.getByRole('button', { name: '隐私与保存', exact: true }).click()
   await page.getByRole('dialog', { name: '隐私与保存' }).waitFor(); await page.keyboard.press('Escape')
   results.push('privacy dialog opens and Escape closes')

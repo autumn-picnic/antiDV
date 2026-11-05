@@ -14,7 +14,7 @@ export default function useCrisisPrompt(conversationId: string, operation: ChatO
     const check = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        if (exiting.current || document.querySelector('dialog[open], [role="dialog"], [data-escape-layer="true"], details.chat-settings[open]')) { return }
+        if (exiting.current || document.querySelector('dialog[open], [role="dialog"], [data-escape-layer="true"], details.chat-settings[open], details.chat-toolbar[open]')) { return }
         if (policy.current.show()) { setVisibleFor(conversationId) }
       })
     }
