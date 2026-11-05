@@ -9,11 +9,18 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
     page.on('pageerror', error => errors.push(error.message))
     await page.route(base + '/v1/**', route => {
       const path = new URL(route.request().url()).pathname
-      return route.fulfill({ status: path.endsWith('/current') ? 404 : 200, contentType: 'application/json', body: JSON.stringify(path === '/v1/conversations' ? { items: [], next_offset: null } : { fields: [], default_allowed: false, default_retention_days: 30, max_retention_days: 90, provinces: {}, city_codes: [] }) })
+      const body = path === '/v1/conversations' ? { items: [{ id: 'history-one' }], next_offset: null }
+        : path === '/v1/conversations/history-one' ? { conversation_id: 'history-one', turns: [{ response_id: 'old-answer', user: '过去的对话', assistant: '过去的回答也使用新版排版。\n\n第二段用于检查段落间距。', safety_level: 'normal' }], next_after: null }
+          : path.endsWith('/reviews') ? { items: [] }
+            : { fields: [], default_allowed: false, default_retention_days: 30, max_retention_days: 90, provinces: {}, city_codes: [] }
+      return route.fulfill({ status: path.endsWith('/current') ? 404 : 200, contentType: 'application/json', body: JSON.stringify(body) })
     })
     await page.goto(base + '/chat', { waitUntil: 'domcontentloaded', timeout: 60000 })
     await page.getByRole('button', { name: '按住说话，松开转写', exact: true }).waitFor()
     await page.waitForFunction(() => !document.querySelector('.chat-microphone').disabled)
+    assert.equal(await page.locator('.chat-thread-toolbar').count(), 0)
+    await page.locator('#history-new-chat').click()
+    await page.locator('.chat-starters').waitFor()
     assert.equal(await page.locator('.chat-starters button').count(), 4)
     await page.getByRole('button', { name: '算家暴吗？', exact: true }).click()
     assert.equal(await page.locator('#chat-input').inputValue(), '我遇到的这些，算家暴吗？')
@@ -24,7 +31,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
     await page.keyboard.press('Escape')
     await page.locator('main').click({ position: { x: 5, y: 5 } })
     await page.getByRole('button', { name: '展开左边栏', exact: true }).waitFor()
-    await page.getByRole('button', { name: '历史', exact: true }).click()
+    await page.getByRole('button', { name: '展开左边栏', exact: true }).click()
     await page.getByRole('button', { name: '隐私与保存', exact: true }).waitFor()
     await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/desktop.png' })
     for (const [width, height] of [[390, 844], [320, 480]]) {
@@ -38,7 +45,8 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
       const composer = await page.locator('.chat-composer').boundingBox()
       assert.ok(composer.height <= 60 && composer.y + composer.height <= height)
-      await page.getByRole('button', { name: '历史', exact: true }).click()
+      if (!await page.locator('.chat-toolbar').evaluate(element => element.open)) { await page.locator('.chat-toolbar > summary').click() }
+      await page.getByRole('button', { name: '打开历史对话', exact: true }).click()
       await page.getByRole('dialog', { name: '历史对话' }).waitFor()
       // The native dialog backdrop exposes the underlying chat as a dismissal target.
       await page.mouse.click(width - 5, height / 2)
@@ -46,8 +54,29 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3001'
       assert.ok(page.url().endsWith('/chat'))
       if (width === 390) await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/mobile.png' })
     }
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.locator('.history-select').filter({ hasText: '对话 history-' }).click()
+    await page.locator('#answer-old-answer').waitFor()
+    assert.equal(await page.locator('.chat-answer-author').innerText(), '小安\n第 1 条回答')
+    const metrics = await page.locator('#answer-old-answer .streamdown-markdown p').evaluateAll(elements => elements.map(element => {
+      const style = getComputedStyle(element)
+      return { ratio: parseFloat(style.lineHeight) / parseFloat(style.fontSize), top: parseFloat(style.marginTop) }
+    }))
+    assert.equal(metrics.length, 2)
+    assert.ok(metrics.every(metric => Math.abs(metric.ratio - 1.6) < 0.01))
+    assert.ok(metrics[1].top <= 10)
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+    await page.getByRole('button', { name: '复制小安第 1 条回答', exact: true }).click()
+    await page.getByText('已复制', { exact: true }).waitFor()
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), '过去的回答也使用新版排版。\n\n第二段用于检查段落间距。')
+    await page.getByRole('button', { name: '评分与反馈：小安第 1 条回答', exact: true }).click()
+    await page.getByRole('dialog').waitFor()
+    await page.keyboard.press('Escape')
+    await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/desktop-conversation.png' })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: 'docs/design/shadcn-chat-v1/implementation/mobile-conversation.png' })
     assert.deepEqual(errors, [])
-    console.log('Desktop/mobile layout, draft chips, toolbar, history toggle/backdrop, 320px reflow and 58px composer: PASS')
+    console.log('Desktop/mobile layout, toolbar history/backdrop, 320px reflow, 58px composer, existing conversation layout, 1.6 line height, copy and review: PASS')
   }
   finally { await browser.close() }
 })().catch(error => { console.error(error); process.exit(1) })

@@ -186,7 +186,7 @@ const Main: FC<IMainProps> = () => {
       <Header
         title={APP_INFO.title}
         isMobile={isMobile}
-        onShowSideBar={showSidebar}
+        onShowSideBar={isMobile ? showSidebar : toggleSidebarCollapse}
         onCreateNewChat={() => handleConversationIdChange('-1')}
         onShowResourcePanel={isDesktop ? togglePanelCollapse : showResourcePanel}
         hasSetInputs={hasSetInputs}
@@ -215,7 +215,6 @@ const Main: FC<IMainProps> = () => {
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
           <div className="chat-center-column">
-          <div className="chat-thread-toolbar"><button type="button" onClick={isMobile ? showSidebar : toggleSidebarCollapse} aria-expanded={isMobile ? isShowSidebar : !isSidebarCollapsed}>历史</button><span>{conversationName}</span><button type="button" onClick={isDesktop ? togglePanelCollapse : showResourcePanel}>支持资源</button></div>
           <main ref={scrollRef} className='chat-scroll-area flex min-w-0 flex-1 flex-col overflow-y-auto'
             onScroll={event => {
               const element = event.currentTarget
@@ -225,7 +224,10 @@ const Main: FC<IMainProps> = () => {
             onFocusCapture={event => {
               if ((event.target as HTMLElement).closest('#chat-content article')) { followLatest.current = false }
             }}
-            onPointerDown={event => { if (!isMobile && event.currentTarget.contains(event.target as Node)) { collapseSidebar() } }}
+            onPointerDown={event => {
+              const target = event.target as Element
+              if (!isMobile && event.currentTarget.contains(target) && !target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) { collapseSidebar() }
+            }}
             style={{ scrollPaddingBottom: 24 }}>
 
             <h1 id="conversation-title" tabIndex={-1} className="sr-only">{conversationName}</h1>

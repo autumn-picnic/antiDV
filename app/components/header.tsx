@@ -32,7 +32,7 @@ const Header: FC<IHeaderProps> = ({ title, isMobile, onShowSideBar, onShowResour
     }}>
       <summary aria-label="显示或隐藏对话工具">工具</summary>
       <nav aria-label="对话操作" className="chat-topbar-actions">
-      {isMobile && <button type="button" onClick={onShowSideBar} aria-label="打开历史对话"><Bars3Icon /></button>}
+      <button type="button" onClick={onShowSideBar} aria-label="打开历史对话"><Bars3Icon /></button>
       <Link href="/" aria-label="返回首页"><HomeIcon /></Link>
       {hasSetInputs && <button type="button" onClick={onShowResourcePanel} aria-label="打开支持资源"><BookOpenIcon /></button>}
 
