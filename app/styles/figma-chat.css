@@ -551,6 +551,7 @@
 }
 
 /* stylelint-disable no-duplicate-selectors, no-descending-specificity -- Intentional final accessibility overrides preserve the existing responsive cascade. */
+
 /* Accessible chat: reserve exit space; allow text and controls to reflow. */
 .figma-chat-shell { height: 100dvh; }
 
