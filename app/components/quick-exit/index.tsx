@@ -18,7 +18,7 @@ export default function QuickExit() {
       if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) { return }
       // Native dialog cancellation and local menu handlers own this key first.
       if (document.querySelector('dialog[open], [data-escape-layer="true"]')) { return }
-      const settings = document.querySelector<HTMLDetailsElement>('details.chat-settings[open], details.chat-toolbar[open], details.composer-details[open]')
+      const settings = document.querySelector<HTMLDetailsElement>('details.chat-account-menu[open], details.chat-settings[open], details.chat-toolbar[open], details.composer-details[open]')
       if (settings) {
         settings.open = false
         settings.querySelector('summary')?.focus()

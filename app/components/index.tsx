@@ -38,7 +38,7 @@ const Main: FC<IMainProps> = () => {
   const hasSetInputs = true
   const [isShowSidebar, { setTrue: showSidebar, setFalse: hideSidebar }] = useBoolean(false)
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
-  const [isPanelCollapsed, { toggle: togglePanelCollapse }] = useBoolean(true)
+  const [isPanelCollapsed, { toggle: togglePanelCollapse, setTrue: collapsePanel }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(false)
   const [speechInfoKey, setSpeechInfoKey] = useState(0)
   const [privacyOpen, setPrivacyOpen] = useState(false)
@@ -49,7 +49,6 @@ const Main: FC<IMainProps> = () => {
   const chatListDomRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLElement>(null)
   const followLatest = useRef(true)
-  const [hasNewReply, setHasNewReply] = useState(false)
   const [autoRead, setAutoRead] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   const [fullAnnouncement, setFullAnnouncement] = useState('')
@@ -57,9 +56,16 @@ const Main: FC<IMainProps> = () => {
   const settingsRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
-    const closeSettings = (event: PointerEvent) => {
-      const settings = settingsRef.current
-      if (settings && !settings.contains(event.target as Node)) { settings.open = false }
+    const closeOutside = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) { return }
+      document.querySelectorAll<HTMLDetailsElement>('.chat-toolbar[open], .chat-settings[open], .chat-account-menu[open]').forEach(menu => {
+        if (!menu.contains(target)) { menu.open = false }
+      })
+      // Dialog actions belong to the active overlay; keep their owners mounted.
+      if (target.closest('dialog[open]')) { return }
+      if (!target.closest('#history-content, [aria-label="打开历史对话"]')) { collapseSidebar() }
+      if (!target.closest('.resource-panel-slide, [data-resource-trigger], [aria-label="打开支持资源"]')) { collapsePanel() }
     }
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !event.isComposing && !document.querySelector('dialog[open]') && settingsRef.current?.open) {
@@ -69,13 +75,13 @@ const Main: FC<IMainProps> = () => {
         settingsRef.current.querySelector('summary')?.focus()
       }
     }
-    document.addEventListener('pointerdown', closeSettings, true)
+    document.addEventListener('click', closeOutside)
     document.addEventListener('keydown', handleEscape)
     return () => {
-      document.removeEventListener('pointerdown', closeSettings, true)
+      document.removeEventListener('click', closeOutside)
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [])
+  }, [collapsePanel, collapseSidebar])
 
   useEffect(() => {
     document.title = APP_INFO.title
@@ -86,7 +92,6 @@ const Main: FC<IMainProps> = () => {
     const element = scrollRef.current
     if (!element || !chatList.some(item => !item.isOpeningStatement)) { return }
     if (followLatest.current) { element.scrollTop = element.scrollHeight }
-    else if (isResponding || operation?.kind === 'completed') { setHasNewReply(true) }
   }, [chatList, isResponding, operation])
 
   useEffect(() => {
@@ -99,21 +104,13 @@ const Main: FC<IMainProps> = () => {
       setAnnouncement('消息已发送，小安正在回复。')
     }
     if (operation.kind === 'completed') {
-      setAnnouncement('小安已回复。可选择“阅读最新回答”。')
+      setAnnouncement('小安已回复。')
       setFullAnnouncement(autoRead ? operation.content || '' : '')
     }
     if (operation.kind === 'stopped') { setAnnouncement('已停止回复，已生成的内容仍可阅读。') }
     // Failures already have a persistent alert; do not announce them twice.
     if (operation.kind === 'failed') { setAnnouncement(''); setFullAnnouncement('') }
   }, [operation, autoRead])
-
-  const readLatest = () => {
-    const answers = document.querySelectorAll<HTMLElement>('#chat-content article[id^="answer-"]')
-    const last = document.getElementById('interrupted-answer') || answers[answers.length - 1]
-    if (last) { last.focus({ preventScroll: true }); last.scrollIntoView({ block: 'start' }) }
-    followLatest.current = true
-    setHasNewReply(false)
-  }
 
   useEffect(() => { setPrivacyOpen(false) }, [isSignedIn])
 
@@ -130,7 +127,6 @@ const Main: FC<IMainProps> = () => {
     if (!selected) { return }
     hideSidebar()
     followLatest.current = true
-    setHasNewReply(false)
     setFullAnnouncement('')
     setAnnouncement(id === '-1' ? '已建立新对话。' : `已切换到${conversationList.find(item => item.id === id)?.name || '历史对话'}。`)
     requestAnimationFrame(() => {
@@ -157,7 +153,6 @@ const Main: FC<IMainProps> = () => {
   const renderSidebar = () => {
     return (
       <Sidebar
-        accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
         list={conversationList}
         onCurrentIdChange={handleConversationIdChange}
         currentId={currConversationId}
@@ -219,14 +214,9 @@ const Main: FC<IMainProps> = () => {
             onScroll={event => {
               const element = event.currentTarget
               followLatest.current = element.scrollHeight - element.scrollTop - element.clientHeight <= 80
-              if (followLatest.current) { setHasNewReply(false) }
             }}
             onFocusCapture={event => {
               if ((event.target as HTMLElement).closest('#chat-content article')) { followLatest.current = false }
-            }}
-            onPointerDown={event => {
-              const target = event.target as Element
-              if (!isMobile && event.currentTarget.contains(target) && !target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) { collapseSidebar() }
             }}
             style={{ scrollPaddingBottom: 24 }}>
 
@@ -263,7 +253,6 @@ const Main: FC<IMainProps> = () => {
                   <p>此回答未完成，仅供核对。</p>
                 </article>
               )}
-              {(chatList.some(item => item.isAnswer) || operation?.content) && <button type="button" className="read-latest" onClick={readLatest}>{hasNewReply ? '有新回复，阅读最新回答' : '阅读最新回答'}</button>}
 
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>

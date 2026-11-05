@@ -22,6 +22,7 @@ const Header: FC<IHeaderProps> = ({ title, isMobile, onShowSideBar, onShowResour
       <Link href="/" className="chat-topbar-brand"><AppIcon size="small" rounded /><span>{title}</span></Link>
 
     </div>
+    {accountControls}
     <details className="chat-toolbar" onKeyDown={(event) => {
       if (event.key !== 'Escape' || event.nativeEvent.isComposing || event.defaultPrevented) { return }
       const layer = event.currentTarget.querySelector<HTMLDetailsElement>('details[open]') || event.currentTarget
