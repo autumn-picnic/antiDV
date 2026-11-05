@@ -36,6 +36,7 @@ const service = {
   fetchCurrentConversation: async () => null,
   fetchReviews: async () => { throw new Error('Guests must not fetch account reviews') },
   createConversation: async () => ({ conversation_id: 'c1' }),
+  saveChatFailure: async () => {},
   sendChatMessage: async (_, __, callbacks) => {
     if (failSend) throw new Error('Interrupted response')
     callbacks.onDelta('小安的回复')

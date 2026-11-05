@@ -5,6 +5,10 @@ import { useUser } from '@clerk/nextjs'
 import useGuestLoginPrompt from '@/hooks/use-guest-login-prompt'
 import GuestLoginPrompt from '@/app/components/account/guest-login-prompt'
 import { useBoolean } from 'ahooks'
+import Modal from '@/app/components/base/modal'
+import CrisisDialog from '@/app/components/crisis-dialog'
+import useCrisisPrompt from '@/hooks/use-crisis-prompt'
+import StreamdownMarkdown from '@/app/components/base/streamdown-markdown'
 import Sidebar from '@/app/components/sidebar'
 import Header from '@/app/components/header'
 import Chat from '@/app/components/chat'
@@ -37,9 +41,17 @@ const Main: FC<IMainProps> = () => {
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse }] = useBoolean(true)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerHeight, setComposerHeight] = useState(220)
-  const { prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
+  const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
+  const crisisPrompt = useCrisisPrompt(currConversationId, operation)
   const chatListDomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLElement>(null)
+  const followLatest = useRef(true)
+  const [hasNewReply, setHasNewReply] = useState(false)
+  const [autoRead, setAutoRead] = useState(false)
+  const [announcement, setAnnouncement] = useState('')
+  const [fullAnnouncement, setFullAnnouncement] = useState('')
+  const notified = useRef('')
   const settingsRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
@@ -48,7 +60,9 @@ const Main: FC<IMainProps> = () => {
       if (settings && !settings.contains(event.target as Node)) { settings.open = false }
     }
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && settingsRef.current?.open) {
+      if (event.key === 'Escape' && !event.isComposing && !document.querySelector('dialog[open]') && settingsRef.current?.open) {
+        event.preventDefault()
+        event.stopPropagation()
         settingsRef.current.open = false
         settingsRef.current.querySelector('summary')?.focus()
       }
@@ -67,9 +81,37 @@ const Main: FC<IMainProps> = () => {
   }, [])
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => chatListDomRef.current?.scrollIntoView({ block: 'end' }))
-    return () => cancelAnimationFrame(frame)
-  }, [chatList, currConversationId])
+    const element = scrollRef.current
+    if (!element || !chatList.some(item => !item.isOpeningStatement)) { return }
+    if (followLatest.current) { element.scrollTop = element.scrollHeight }
+    else if (isResponding || operation?.kind === 'completed') { setHasNewReply(true) }
+  }, [chatList, composerHeight, isResponding, operation])
+
+  useEffect(() => {
+    if (!operation) { setFullAnnouncement(''); return }
+    const key = `${operation.id}:${operation.kind}`
+    if (notified.current === key) { return }
+    notified.current = key
+    if (operation.kind === 'sending') {
+      setFullAnnouncement('')
+      setAnnouncement('消息已发送，小安正在回复。')
+    }
+    if (operation.kind === 'completed') {
+      setAnnouncement('小安已回复。可选择“阅读最新回答”。')
+      setFullAnnouncement(autoRead ? operation.content || '' : '')
+    }
+    if (operation.kind === 'stopped') { setAnnouncement('已停止回复，已生成的内容仍可阅读。') }
+    // Failures already have a persistent alert; do not announce them twice.
+    if (operation.kind === 'failed') { setAnnouncement(''); setFullAnnouncement('') }
+  }, [operation, autoRead])
+
+  const readLatest = () => {
+    const answers = document.querySelectorAll<HTMLElement>('#chat-content article[id^="answer-"]')
+    const last = document.getElementById('interrupted-answer') || answers[answers.length - 1]
+    if (last) { last.focus({ preventScroll: true }); last.scrollIntoView({ block: 'start' }) }
+    followLatest.current = true
+    setHasNewReply(false)
+  }
 
   useEffect(() => { setPrivacyOpen(false) }, [isSignedIn])
 
@@ -79,11 +121,19 @@ const Main: FC<IMainProps> = () => {
     setPrivacyOpen(true)
   }
 
-  const handleConversationIdChange = (id: string) => {
+  const handleConversationIdChange = async (id: string) => {
     if (busy) { return }
     setPrivacyOpen(false)
-    void selectConversation(id)
+    const selected = await selectConversation(id)
+    if (!selected) { return }
     hideSidebar()
+    followLatest.current = true
+    setHasNewReply(false)
+    setFullAnnouncement('')
+    setAnnouncement(id === '-1' ? '已建立新对话。' : `已切换到${conversationList.find(item => item.id === id)?.name || '历史对话'}。`)
+    requestAnimationFrame(() => {
+      document.getElementById(id === '-1' ? 'chat-input' : 'conversation-title')?.focus()
+    })
   }
   const checkCanSend = () => !busy && !failure?.needsRecovery
   const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer).map(item => item.content).join(' '), [chatList])
@@ -109,7 +159,13 @@ const Main: FC<IMainProps> = () => {
         onCurrentIdChange={handleConversationIdChange}
         currentId={currConversationId}
         copyRight={APP_INFO.copyright || APP_INFO.title}
-        onDeleteConversation={handleDeleteConversation}
+        onDeleteConversation={async id => {
+          await handleDeleteConversation(id)
+          requestAnimationFrame(() => {
+            const target = document.querySelector<HTMLElement>('.history-select') || document.getElementById('history-new-chat')
+            target?.focus()
+          })
+        }}
         onClearAll={handleClearAll}
         isCollapsed={isMobile ? false : isSidebarCollapsed}
         onToggleCollapse={isMobile ? hideSidebar : toggleSidebarCollapse}
@@ -125,7 +181,11 @@ const Main: FC<IMainProps> = () => {
 
   return (
     <div className='figma-chat-shell'>
+      <div className="chat-skip-links"><a href="#chat-content">跳到对话内容</a><a href="#chat-input">跳到输入框</a></div>
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only"><span key={`${operation?.id}:${operation?.kind}:${announcement}`}>{announcement}</span></div>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">{fullAnnouncement}</div>
       <BackExitGuard />
+      {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
         isMobile={isMobile}
@@ -136,8 +196,10 @@ const Main: FC<IMainProps> = () => {
         accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
         settings={<details ref={settingsRef} className="chat-settings">
           <summary aria-label="对话设置"><AdjustmentsHorizontalIcon /></summary>
-          <div className="chat-settings-menu" onClick={() => { if (settingsRef.current) { settingsRef.current.open = false } }}>
+          <div className="chat-settings-menu">
             <IncognitoNotice />
+            <label className="auto-read-option"><input type="checkbox" checked={autoRead} onChange={event => { setAutoRead(event.target.checked); setFullAnnouncement('') }} />回复完成后自动通知全文</label>
+            <p className="chat-speech-status">通过你的读屏软件播报，仅本分页面有效；刷新后关闭。</p>
             <button type="button" disabled={busy || !chatList.some(item => !item.isOpeningStatement)} onClick={() => void handleExport()}>导出聊天记录 (.xlsx)</button>
             <button type="button" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)}>调试信息：{debugEnabled ? '开启' : '关闭'}</button>
           </div>
@@ -148,17 +210,25 @@ const Main: FC<IMainProps> = () => {
         {/* sidebar */}
         {!isMobile && renderSidebar()}
         {isMobile && isShowSidebar && (
-          <div className='fixed inset-0 z-50' style={{ backgroundColor: 'rgba(35, 56, 118, 0.2)' }} onClick={hideSidebar} >
-            <div className='inline-block' onClick={e => e.stopPropagation()}>
-              {renderSidebar()}
-            </div>
-          </div>
+          <Modal title="历史对话" onClose={hideSidebar} className="history-modal">
+            {renderSidebar()}
+          </Modal>
         )}
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
-          <div className='flex min-w-0 flex-1 flex-col overflow-y-auto'>
-            <h1 className="sr-only">{conversationName}</h1>
-            <div className='relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: composerHeight + 24 }} ref={chatListDomRef}>
+          <main ref={scrollRef} className='chat-scroll-area flex min-w-0 flex-1 flex-col overflow-y-auto'
+            onScroll={event => {
+              const element = event.currentTarget
+              followLatest.current = element.scrollHeight - element.scrollTop - element.clientHeight <= 80
+              if (followLatest.current) { setHasNewReply(false) }
+            }}
+            onFocusCapture={event => {
+              if ((event.target as HTMLElement).closest('#chat-content article')) { followLatest.current = false }
+            }}
+            style={{ scrollPaddingBottom: composerHeight + 24 }}>
+
+            <h1 id="conversation-title" tabIndex={-1} className="sr-only">{conversationName}</h1>
+            <div className='chat-content-container relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: chatList.some(item => !item.isOpeningStatement) ? composerHeight + 24 : 24 }} ref={chatListDomRef}>
               <Chat
                 speechResetKey={`${currConversationId}:${isSignedIn ? 'account' : 'guest'}`}
                 chatList={chatList}
@@ -181,9 +251,17 @@ const Main: FC<IMainProps> = () => {
                   authReady={isLoaded}
                   busy={busy || Boolean(failure?.needsRecovery)}
                   completedId={chatList.filter(item => item.isAnswer).at(-1)?.id}
-                  refreshConversation={() => selectConversation(currConversationId)}
+                  refreshConversation={async () => { await selectConversation(currConversationId) }}
                 />}
               />
+              {(operation?.kind === 'stopped' || operation?.kind === 'failed') && operation.content && (
+                <article id="interrupted-answer" tabIndex={-1} aria-label="小安未完成的回答" className="chat-answer-bubble p-4">
+                  <h2>小安未完成的回答</h2><StreamdownMarkdown content={operation.content} />
+                  <p>此回答未完成，仅供核对。</p>
+                </article>
+              )}
+              {(chatList.some(item => item.isAnswer) || operation?.content) && <button type="button" className="read-latest" onClick={readLatest}>{hasNewReply ? '有新回复，阅读最新回答' : '阅读最新回答'}</button>}
+              <a href="/safety-pack" className="safety-pack-entry">查看安全包</a>
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
                   <p>{failure.message}</p>
@@ -195,25 +273,25 @@ const Main: FC<IMainProps> = () => {
               )}
               {reviewError && <p role='alert' className='my-3 text-sm text-amber-800'>{reviewError}</p>}
             </div>
-          </div>
+          </main>
           {/* Desktop resource panel */}
           {isDesktop && hasSetInputs && (
             <ResourcePanel
               accumulatedAIText={accumulatedAIText}
               isCollapsed={isPanelCollapsed}
-              onToggleCollapse={togglePanelCollapse}
+              onToggleCollapse={() => {
+                togglePanelCollapse()
+                requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-label="打开支持资源"]')?.focus())
+              }}
             />
           )}
         </div>
       </div>
       {/* Mobile resource panel overlay */}
-      {!isDesktop && (
-        <ResourcePanel
-          accumulatedAIText={accumulatedAIText}
-          isMobileOverlay
-          isVisible={isShowResourcePanel}
-          onClose={hideResourcePanel}
-        />
+      {!isDesktop && isShowResourcePanel && (
+        <Modal title="支持资源" onClose={hideResourcePanel}>
+          <ResourcePanel accumulatedAIText={accumulatedAIText} />
+        </Modal>
       )}
     </div>
   )

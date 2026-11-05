@@ -20,6 +20,7 @@ for (const count of [0, 19, 20, 21, 100]) {
       if (name === 'react-i18next') {
         return { useTranslation: () => ({ t: () => '新对话' }) }
       }
+      if (name === '@/app/components/base/modal') { return () => null }
       if (name === '@/app/components/base/button') {
         return function Button(props) {
           newChatProps = props
@@ -38,6 +39,8 @@ for (const count of [0, 19, 20, 21, 100]) {
       onDeleteConversation() {}, onClearAll() {},
     }))
     assert.ok(html.includes('新对话'))
+    assert.equal((html.match(/class="history-select"/g) || []).length, count)
+    if (count) { assert.match(html, /<button[^>]*aria-current="true"/) }
     assert.ok(newChatProps)
     assert.ok(!newChatProps.disabled)
     newChatProps.onClick()

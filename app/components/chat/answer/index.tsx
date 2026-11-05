@@ -16,15 +16,15 @@ import { randomString } from '@/utils/string'
 import LoadingAnim from '../loading-anim'
 import s from '../style.module.css'
 
-function OperationBtn({ innerContent, onClick, className }: { innerContent: React.ReactNode, onClick?: () => void, className?: string }) {
+function OperationBtn({ innerContent, onClick, className, label }: { innerContent: React.ReactNode, onClick?: () => void, className?: string, label: string }) {
   return (
-    <div
+    <button type="button" aria-label={label}
       className={`relative box-border flex items-center justify-center h-7 w-7 p-0.5 rounded-lg bg-white cursor-pointer text-gray-500 hover:text-gray-800 ${className ?? ''}`}
       style={{ boxShadow: '0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.05)' }}
       onClick={onClick && onClick}
     >
       {innerContent}
-    </div>
+    </button>
   )
 }
 
@@ -41,6 +41,7 @@ const IconWrapper: FC<{ children: React.ReactNode | string }> = ({ children }) =
 }
 
 interface IAnswerProps {
+  number?: number
   item: DebugChatItem
   feedbackDisabled: boolean
   onFeedback?: FeedbackFunc
@@ -54,6 +55,7 @@ interface IAnswerProps {
 // The component needs to maintain its own state to control whether to display input component
 const Answer: FC<IAnswerProps> = ({
   item,
+  number = 1,
   feedbackDisabled = false,
   onFeedback,
   isResponding,
@@ -85,7 +87,7 @@ const Answer: FC<IAnswerProps> = ({
         selector={`user-feedback-${randomString(16)}`}
         content={isLike ? '取消赞同' : '取消反对'}
       >
-        <div
+        <button type="button" aria-label={`取消小安第 ${number} 条回答的评价`}
           className="relative box-border flex items-center justify-center h-7 w-7 p-0.5 rounded-lg bg-white cursor-pointer text-gray-500 hover:text-gray-800"
           style={{ boxShadow: '0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.05)' }}
           onClick={async () => {
@@ -95,7 +97,7 @@ const Answer: FC<IAnswerProps> = ({
           <div className={`${ratingIconClassname} rounded-lg h-6 w-6 flex items-center justify-center`}>
             <RatingIcon isLike={isLike} />
           </div>
-        </div>
+        </button>
       </Tooltip>
     )
   }
@@ -111,10 +113,10 @@ const Answer: FC<IAnswerProps> = ({
         : (
           <div className="flex gap-1">
             <Tooltip selector={`user-feedback-${randomString(16)}`} content={t('common.operation.like') as string}>
-              {OperationBtn({ innerContent: <IconWrapper><RatingIcon isLike={true} /></IconWrapper>, onClick: () => onFeedback?.(id, { rating: 'like' }) })}
+              {OperationBtn({ label: `赞同小安第 ${number} 条回答`, innerContent: <IconWrapper><RatingIcon isLike={true} /></IconWrapper>, onClick: () => onFeedback?.(id, { rating: 'like' }) })}
             </Tooltip>
             <Tooltip selector={`user-feedback-${randomString(16)}`} content={t('common.operation.dislike') as string}>
-              {OperationBtn({ innerContent: <IconWrapper><RatingIcon isLike={false} /></IconWrapper>, onClick: () => onFeedback?.(id, { rating: 'dislike' }) })}
+              {OperationBtn({ label: `反对小安第 ${number} 条回答`, innerContent: <IconWrapper><RatingIcon isLike={false} /></IconWrapper>, onClick: () => onFeedback?.(id, { rating: 'dislike' }) })}
             </Tooltip>
           </div>
         )
@@ -124,7 +126,7 @@ const Answer: FC<IAnswerProps> = ({
       if (isResponding || !onReview) { return null }
       return (
         <Tooltip selector={`review-${randomString(16)}`} content={item.userReview ? '修改评价' : '评价此回复'}>
-          <button type="button" aria-label={item.userReview ? '修改评分与反馈' : '评分与反馈'} onClick={() => setShowReviewModal(true)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm hover:text-orange-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-800">
+          <button type="button" aria-label={`${item.userReview ? '修改评分与反馈' : '评分与反馈'}：小安第 ${number} 条回答`} onClick={() => setShowReviewModal(true)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm hover:text-orange-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-800">
               <IconWrapper>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill={item.userReview ? '#FBBF24' : 'none'} stroke={item.userReview ? '#FBBF24' : 'currentColor'} strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
@@ -144,7 +146,8 @@ const Answer: FC<IAnswerProps> = ({
   }
 
   return (
-    <div key={id}>
+    <article id={`answer-${id}`} tabIndex={-1} aria-labelledby={`answer-title-${id}`} key={id}>
+      <h2 id={`answer-title-${id}`} className="sr-only">小安第 {number} 条回答</h2>
       {showReviewModal && (
         <ReviewModal
           messageId={id}
@@ -181,13 +184,14 @@ const Answer: FC<IAnswerProps> = ({
               )}
               {item.userReview && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 border-t border-gray-200 pt-2">
-                  <span className="flex shrink-0">
+                  <span className="flex shrink-0" aria-hidden="true">
                     {Array.from({ length: 5 }, (_, i) => (
                       <svg key={i} className={`w-3.5 h-3.5 ${i < item.userReview!.score ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 24 24">
                         <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                       </svg>
                     ))}
                   </span>
+                  <span>评分 {item.userReview.score} / 5</span>
                   {item.userReview.comment && (
                     <span className="truncate max-w-[200px]">{item.userReview.comment}</span>
                   )}
@@ -195,13 +199,14 @@ const Answer: FC<IAnswerProps> = ({
               )}
             </div>
             {debugEnabled && !isResponding && <DebugPanel debug={item.debug} />}
-            <div className="absolute top-[-14px] right-[-14px] flex flex-row justify-end gap-1">
+            <div className="mt-3 flex flex-row justify-end gap-2">
               {!feedbackDisabled && !item.feedbackDisabled && renderItemOperation()}
               {/* User feedback must be displayed */}
               {!feedbackDisabled && renderFeedbackRating(feedback?.rating)}
               {onDelete && !isResponding && (
                 <Tooltip selector={`delete-answer-${id}`} content="刪除此回覆">
                   {OperationBtn({
+                    label: `删除小安第 ${number} 条回答`,
                     innerContent: (
                       <IconWrapper>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -220,7 +225,7 @@ const Answer: FC<IAnswerProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 export default React.memo(Answer)

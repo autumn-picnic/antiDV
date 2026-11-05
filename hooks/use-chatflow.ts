@@ -19,6 +19,8 @@ function errorMessage(error: unknown) {
   return error instanceof ChatApiError ? error.message : '暂时无法连接小安，请稍后重试'
 }
 
+export interface ChatOperation { id: string, conversationId: string, kind: 'sending' | 'completed' | 'stopped' | 'failed', content?: string, responseId?: string, safetyLevel?: import('../types/chatflow').SafetyLevel }
+
 interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic, attemptId?: string }
 
 export default function useChatflow({ authReady, signedIn, onCompleted }: { authReady: boolean, signedIn: boolean, onCompleted: () => void }) {
@@ -29,6 +31,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
   const [isResponding, setResponding] = useState(false)
   const [debugEnabled, setDebugEnabled] = useState(false)
   const [reviewError, setReviewError] = useState('')
+  const [operation, setOperation] = useState<ChatOperation | null>(null)
   const [failure, setFailure] = useState<Failure | null>(null)
   const lock = useRef(true)
   const controller = useRef<AbortController | null>(null)
@@ -58,6 +61,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     setConversationList([])
     setConversationId('-1')
     setChatList([])
+    setOperation(null)
     setFailure(null)
     const abort = new AbortController()
     controller.current = abort
@@ -113,11 +117,13 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
   }
 
   async function selectConversation(id: string) {
-    if (!start()) { return }
+    if (!start()) { return false }
+    setOperation(null)
     try {
-      if (id === '-1') { setConversationId('-1'); setChatList([]); return }
+      if (id === '-1') { setConversationId('-1'); setChatList([]); return true }
       const view = await fetchConversation(id, controller.current!.signal)
       if (mounted.current) { setConversationId(id); setChatList(chatItems(view)) }
+      return true
     }
     catch (error) {
       if (mounted.current) {
@@ -127,6 +133,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         }
         setFailure({ message: errorMessage(error) })
       }
+      return false
     }
     finally { finish() }
   }
@@ -159,6 +166,9 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     const isActive = () => mounted.current && controller.current === abort && !abort.signal.aborted
     let streamRenderer: ReturnType<typeof createStreamRenderer> | null = null
     const committed = chatList
+    const attemptId = crypto.randomUUID()
+    let text = ''
+    setOperation({ id: attemptId, conversationId, kind: 'sending' })
     cancelSend.current = () => {
       abort.abort()
       streamRenderer?.cancel()
@@ -166,15 +176,14 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
       renderer.current = null
       cancelSend.current = null
       setChatList(committed)
+      setOperation({ id: attemptId, conversationId, kind: 'stopped', content: text })
       setFailure(null)
       finish()
     }
     let id = conversationId
     let responseId: string | undefined
     let startedGeneration = false
-    const attemptId = crypto.randomUUID()
     const pendingId = `pending-${Date.now()}`
-    let text = ''
     try {
       if (id === '-1') {
         const created = await createConversation(abort.signal)
@@ -207,6 +216,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         safetyLevel: completed.safety_level,
         debug: completed.debug,
       }])
+      setOperation({ id: attemptId, conversationId: id, kind: 'completed', content: text, responseId: completed.response_id, safetyLevel: completed.safety_level })
       onCompleted()
     }
     catch (error) {
@@ -214,6 +224,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
       streamRenderer?.cancel()
       // Remove both pending entries: neither may be exported or treated as committed history.
       setChatList(committed)
+      setOperation({ id: attemptId, conversationId: id, kind: 'failed', content: text })
       const expired = error instanceof ChatApiError && error.status === 404
       if (expired) {
         setConversationId('-1'); setChatList([])
@@ -303,13 +314,14 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     finally {
       if (mounted.current) {
         setConversationList(list => list.filter(item => !removed.has(item.id)))
-        if (removed.has(conversationId)) { setConversationId('-1'); setChatList([]) }
+        if (removed.has(conversationId)) { setConversationId('-1'); setChatList([]); setOperation(null) }
       }
       finish()
     }
   }
 
   return {
+    operation,
     prepareConversation,
     debugEnabled,
     setDebugEnabled,

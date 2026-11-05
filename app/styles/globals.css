@@ -126,3 +126,20 @@ a {
   background-clip: text;
   text-fill-color: transparent;
 }
+/* Shared accessibility primitives. */
+:where(button, a, summary, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #713B20;
+  outline-offset: 3px;
+}
+.quick-exit-slot { position: fixed; top: 12px; right: 16px; z-index: 9999; width: 120px; }
+.quick-exit-button { min-height: 44px; width: 100%; padding: 8px 12px; border: 1px solid #713B20; border-radius: 24px; background: #FFEBCF; color: #713B20; font-size: 14px; font-weight: 600; }
+.accessible-modal { width: min(94vw, 640px); max-height: 90dvh; overflow: auto; border-radius: 16px; background: #FBF9F6; color: #3D3028; padding: 20px; }
+.accessible-modal::backdrop { background: #231c1466; }
+.crisis-dialog { position: fixed; inset: 0; margin: auto; width: min(448px, calc(100vw - 32px)); max-height: 90dvh; overflow: auto; }
+.modal-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+:where(dialog) button { min-height: 44px; padding: 8px 12px; }
+:where(dialog) { max-height: 90dvh; overflow: auto; }
+.home-header { padding-right: 160px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -1,4 +1,5 @@
 'use client'
+import useModalDialog from '@/hooks/use-modal-dialog'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChatApiError } from '@/service'
@@ -133,7 +134,7 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
 
 function PrivacyDialog({ children, onClose, saving }: { children: React.ReactNode, onClose: () => void, saving: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null)
-  useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close() }, [])
+  useModalDialog(dialog)
   return <dialog ref={dialog} aria-labelledby='privacy-title' onCancel={(event) => { event.preventDefault(); if (!saving) { onClose() } }} className='max-h-[90dvh] w-[min(94vw,640px)] overflow-y-auto rounded-2xl bg-[#FBF9F6] p-5 text-left text-[#3D3028] shadow-xl backdrop:bg-black/30 sm:p-6'>
     <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
       <h2 id='privacy-title' className='text-lg font-semibold'>隐私与保存</h2>
@@ -142,6 +143,7 @@ function PrivacyDialog({ children, onClose, saving }: { children: React.ReactNod
         <button type='button' onClick={onClose} disabled={saving} className={buttonClass}>关闭</button>
       </div>
     </div>
+    {saving && <p role='status'>正在保存，请稍候</p>}
     {children}
   </dialog>
 }
