@@ -11,6 +11,8 @@ import type { DebugChatItem } from '@/types/chatflow'
 import AppIcon from '@/app/components/base/app-icon'
 import Tooltip from '@/app/components/base/tooltip'
 import Toast from '@/app/components/base/toast'
+import useModalDialog from '@/hooks/use-modal-dialog'
+import { quickEscape } from '@/app/components/quick-exit'
 import useSpeechInput from '@/hooks/use-speech-input'
 
 export interface IChatProps {
@@ -74,21 +76,34 @@ const Chat: FC<IChatProps> = ({
   const queryRef = useRef('')
   const submittedQuery = useRef('')
   const permissionDialog = useRef<HTMLDialogElement>(null)
+  const [recordingMode, setRecordingMode] = React.useState<'toggle' | 'hold'>('toggle')
+  const [speechInfoOpen, setSpeechInfoOpen] = React.useState(false)
+  const speechInformed = useRef(false)
   const speech = useSpeechInput((text) => {
     const current = queryRef.current
     const next = current ? `${current}\n${text}` : text
     if (next.length > 4000) { throw new Error('输入框文字已接近上限，请先发送或整理文字，再重新录音。') }
     queryRef.current = next
     setQuery(next)
-    composerRef.current?.querySelector('textarea')?.focus()
+    if (composerRef.current?.contains(document.activeElement)) { composerRef.current.querySelector('textarea')?.focus() }
   }, speechResetKey, disabled || Boolean(isResponding) || isHideSendInput)
 
   useEffect(() => {
-    if (speech.permissionDenied) { permissionDialog.current?.showModal() }
+    if (speech.permissionDenied) { setSpeechInfoOpen(true) }
   }, [speech.permissionDenied])
   useEffect(() => {
-    permissionDialog.current?.close()
+    setSpeechInfoOpen(false)
   }, [speechResetKey, disabled, isResponding])
+
+  useModalDialog(permissionDialog, speechInfoOpen)
+  const beginRecording = () => {
+    if (!speechInformed.current) { setSpeechInfoOpen(true); return }
+    void speech.start(false, recordingMode)
+  }
+  const microphoneLabel = speech.phase === 'permission' ? '等待麦克风授权'
+    : speech.phase === 'transcribing' ? '正在转写'
+      : speech.phase === 'recording' ? (recordingMode === 'toggle' ? '结束录音并转写' : '松开转写')
+        : recordingMode === 'toggle' ? '开始录音' : '按住说话，松开转写'
 
   const handleContentChange = (e: any) => {
     const value = e.target.value
@@ -134,21 +149,10 @@ const Chat: FC<IChatProps> = ({
     composerRef.current?.querySelector('textarea')?.focus()
   }
 
-  const handleKeyUp = (e: any) => {
-    if (e.code === 'Enter') {
-      e.preventDefault()
-      // prevent send message when using input method enter
-      if (!e.shiftKey && !isUseInputMethod.current) { handleSend() }
-    }
-  }
-
-  const handleKeyDown = (e: any) => {
-    isUseInputMethod.current = e.nativeEvent.isComposing
-    if (e.code === 'Enter' && !e.shiftKey) {
-      const result = query.replace(/\n$/, '')
-      setQuery(result)
-      queryRef.current = result
-      e.preventDefault()
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !isUseInputMethod.current && event.keyCode !== 229) {
+      event.preventDefault()
+      if (!event.repeat) { handleSend() }
     }
   }
 
@@ -209,18 +213,19 @@ const Chat: FC<IChatProps> = ({
       {isWelcome && (
         <section className="chat-welcome" aria-labelledby="chat-welcome-title">
           <AppIcon size="hero" rounded className="chat-welcome-avatar" />
-          <h1 id="chat-welcome-title">这里是一个安全的空间</h1>
+          <h2 id="chat-welcome-title">这里是一个安全的空间</h2>
           <p>你可以按照自己的节奏，告诉我任何你想说的</p>
         </section>
       )}
       {/* Chat List */}
-      <div className="space-y-9 chat-messages">
-        {chatList.filter(item => !item.isOpeningStatement).map((item) => {
+      <div id="chat-content" role="region" aria-label="对话内容" tabIndex={-1} className="space-y-9 chat-messages">
+        {chatList.filter(item => !item.isOpeningStatement).map((item, index) => {
           if (item.isAnswer) {
             const isLast = item.id === chatList[chatList.length - 1].id
             return <Answer
               key={item.id}
               item={item}
+              number={Math.floor(index / 2) + 1}
               feedbackDisabled={feedbackDisabled}
               onFeedback={onFeedback}
               isResponding={isResponding && isLast}
@@ -234,6 +239,7 @@ const Chat: FC<IChatProps> = ({
             <Question
               key={item.id}
               id={item.id}
+              number={Math.floor(index / 2) + 1}
               content={item.content}
               useCurrentUserAvatar={useCurrentUserAvatar}
               imgSrcs={(item.message_files && item.message_files?.length > 0) ? item.message_files.map(item => item.url) : []}
@@ -330,8 +336,13 @@ const Chat: FC<IChatProps> = ({
                   </button>
                 ))}
               </div>
+              <label htmlFor="chat-input" className="composer-label">和小安说说话</label>
               <div className='chat-composer relative p-2 max-h-[200px] overflow-y-auto'>
                 <Textarea
+                  id="chat-input"
+                  aria-describedby="chat-input-help"
+                  onCompositionStart={() => { isUseInputMethod.current = true }}
+                  onCompositionEnd={() => { isUseInputMethod.current = false }}
                   className={`
                   block w-full bg-transparent pl-5 pr-28 py-[7px] leading-5 max-h-none text-base text-gray-700 outline-none appearance-none resize-none
                 `}
@@ -340,7 +351,6 @@ const Chat: FC<IChatProps> = ({
                   value={query}
                   maxLength={4000}
                   onChange={handleContentChange}
-                  onKeyUp={handleKeyUp}
                   onKeyDown={handleKeyDown}
                   autoSize
                 />
@@ -348,29 +358,32 @@ const Chat: FC<IChatProps> = ({
                   <button
                     type="button"
                     className="chat-microphone"
-                    aria-label={speech.phase === 'recording' ? '松开转写' : '按住说话，松开转写'}
-                    title={'按住说话，松开后转写到输入框，确认后手动发送'}
-                    aria-pressed={speech.phase === 'recording'}
-                    disabled={disabled || isResponding}
-                    aria-busy={speech.phase === 'transcribing'}
+                    aria-label={microphoneLabel}
+                    title={microphoneLabel}
+                    disabled={disabled || isResponding || speech.phase === 'permission' || speech.phase === 'transcribing'}
                     onPointerDown={event => {
-                      if (event.button !== 0 || !event.isPrimary) { return }
+                      if (recordingMode !== 'hold' || event.button !== 0 || !event.isPrimary) { return }
                       event.preventDefault()
                       event.currentTarget.setPointerCapture(event.pointerId)
-                      void speech.start()
+                      beginRecording()
                     }}
-                    onPointerUp={() => { void speech.finish() }}
-                    onPointerCancel={speech.cancel}
-                    onLostPointerCapture={() => { void speech.finish() }}
-                    onContextMenu={event => event.preventDefault()}
+                    onPointerUp={() => { if (recordingMode === 'hold') { void speech.finish() } }}
+                    onPointerCancel={() => { if (recordingMode === 'hold') { speech.cancel() } }}
+                    onLostPointerCapture={() => { if (recordingMode === 'hold') { void speech.finish() } }}
                     onKeyDown={event => {
-                      if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); if (!event.repeat) { void speech.start() } }
+                      if (recordingMode === 'hold' && (event.key === ' ' || event.key === 'Enter')) {
+                        event.preventDefault(); if (!event.repeat) { beginRecording() }
+                      }
                     }}
                     onKeyUp={event => {
-                      if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); void speech.finish() }
+                      if (recordingMode === 'hold' && (event.key === ' ' || event.key === 'Enter')) { event.preventDefault(); void speech.finish() }
                     }}
-                    onBlur={() => { if (speech.phase === 'recording') { speech.cancel() } }}
-                    onClick={event => event.preventDefault()}
+                    onBlur={() => { if (recordingMode === 'hold' && speech.phase === 'recording') { speech.cancel() } }}
+                    onClick={() => {
+                      if (recordingMode !== 'toggle') { return }
+                      if (speech.phase === 'recording') { void speech.finish() }
+                      else { beginRecording() }
+                    }}
                   >
                     {speech.phase === 'recording'
                       ? <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect x="4" y="4" width="12" height="12" rx="2" /></svg>
@@ -397,20 +410,29 @@ const Chat: FC<IChatProps> = ({
                   </Tooltip>
                 </div>
               </div>
-              <p className="chat-speech-status">按住说话，松开转写，核对后点击发送；提交的录音会保存供反馈管理员核对。</p>
+              <div className="speech-options">
+                <label>录音操作方式 <select value={recordingMode} disabled={speech.active}
+                  onChange={event => setRecordingMode(event.target.value as 'toggle' | 'hold')}>
+                  <option value="toggle">点按开始和结束</option><option value="hold">按住说话</option>
+                </select></label>
+                <button type="button" onClick={() => setSpeechInfoOpen(true)}>语音使用与保存说明</button>
+              </div>
+              <p id="chat-input-help" className="chat-speech-status">Enter 发送，Shift+Enter 换行。语音转写后，请核对文字再发送。</p>
+              <p className="chat-speech-status">提交转写的录音会保存供指定反馈管理员核对，独立于聊天保存期限，目前不自动到期。</p>
               {speech.active && <div className="chat-speech-controls">
                 {speech.phase === 'recording' && <span className="chat-recording-time">录音中 {speech.seconds} / 55 秒</span>}
-                <button type="button" className="chat-speech-cancel" onClick={speech.cancel}>取消{speech.phase === 'recording' ? '录音' : '转写'}</button>
+                <button type="button" className="chat-speech-cancel" onClick={() => { speech.cancel() }}>取消{speech.phase === 'recording' ? '录音' : '转写'}</button>
               </div>}
-              {speech.message && <p className="chat-speech-status" role="status" aria-live="polite">{speech.message}</p>}
-              <dialog onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation() } }} ref={permissionDialog} className="speech-permission-dialog" aria-labelledby="speech-permission-title" aria-describedby="speech-permission-description">
+              <p className="chat-speech-status" role="status" aria-live="polite" aria-atomic="true">{speech.message}</p>
+              <dialog onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation() } }} onCancel={event => { event.preventDefault(); setSpeechInfoOpen(false) }} ref={permissionDialog} className="speech-permission-dialog" aria-labelledby="speech-permission-title" aria-describedby="speech-permission-description">
+                <button type="button" onClick={quickEscape}>快速离开</button>
                 <h2 id="speech-permission-title">{speech.permissionDenied ? '开启麦克风权限' : '使用语音输入'}</h2>
-                <p id="speech-permission-description">按住麦克风说话，松开后转写到输入框，确认后手动发送。首次会直接请求浏览器麦克风权限，授权完成后请重新按住录音。</p>
+                <p id="speech-permission-description">可点按开始和结束录音，或切换为按住说话。转写到输入框后，请核对文字再手动发送。首次授权只准备设备，授权完成后请再次开始录音。</p>
                 {speech.permissionDenied && <p>如果之前已拒绝，请点击地址栏旁的网站设置或权限图标，将「麦克风」改为「允许」；手机上也可在浏览器的系统设置中开启麦克风，再回来重试。网页无法代替你修改已封锁的权限。</p>}
                 <p>提交转写的录音和识别文字会保存，供指定反馈管理员查看和播放，独立于聊天保存期限，目前不自动到期；取消尚未提交的录音不会上传。</p>
                 <div className="speech-permission-actions">
-                  <button type="button" className="speech-permission-button" onClick={() => permissionDialog.current?.close()}>暂不使用</button>
-                  <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { permissionDialog.current?.close(); void speech.start(true) }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
+                  <button type="button" className="speech-permission-button" autoFocus onClick={() => setSpeechInfoOpen(false)}>暂不使用</button>
+                  <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { speechInformed.current = true; setSpeechInfoOpen(false); void speech.start(true, recordingMode) }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
                 </div>
               </dialog>
               {privacyControls}

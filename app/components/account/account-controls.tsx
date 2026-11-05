@@ -25,6 +25,7 @@ export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () =
     return <div className='chat-account-controls chat-account-guest'>
       <span className="chat-account-status">正在以游客身份聊天</span>
       <div className='flex shrink-0 items-center gap-3'>
+        <button type='button' onClick={onOpenPrivacy} className='min-h-11 px-2 underline'>隐私与保存</button>
         <Link href='/sign-in' className='flex min-h-11 items-center px-2 underline'>登录</Link>
         <Link href='/sign-up' className='flex min-h-11 items-center rounded-lg border border-[#95684D] bg-white px-4 font-medium text-[#80583F] hover:bg-[#FFF1E5]'>注册</Link>
       </div>

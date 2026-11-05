@@ -28,15 +28,16 @@ const render = props => renderToStaticMarkup(React.createElement(Answer, { item:
 
 test('completed answers expose a persistent native review button without a hover-only wrapper', () => {
   const html = render({})
-  assert.match(html, /<button[^>]*aria-label="评分与反馈"/)
+  assert.match(html, /<button[^>]*aria-label="评分与反馈：小安第 1 条回答"/)
   assert(!html.includes('itemOperation'))
-  assert(html.includes('absolute top-[-14px] right-[-14px]'))
+  assert(!html.includes('absolute top-[-14px] right-[-14px]'))
+  assert.match(html, /<article[^>]*tabindex="-1"/)
 })
 test('streaming answers hide the review button', () => {
-  assert(!render({ isResponding: true }).includes('aria-label="评分与反馈"'))
+  assert(!render({ isResponding: true }).includes('aria-label="评分与反馈：小安第 1 条回答"'))
 })
 test('saved reviews expose edit action and keep their score', () => {
   const html = render({ item: { id: 'r1', content: '回答', isAnswer: true, userReview: { score: 4, comment: '建议' } } })
-  assert.match(html, /aria-label="修改评分与反馈"/)
+  assert.match(html, /aria-label="修改评分与反馈：小安第 1 条回答"/)
   assert(html.includes('建议'))
 })

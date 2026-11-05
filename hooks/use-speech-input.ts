@@ -67,7 +67,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
   const finish = useCallback(async () => {
     held.current = false
     if (!recording.current || !active.current || !context.current) { return }
-    if (samples.current < context.current.sampleRate / 10) { cancel(); setMessage('录音太短，请按住麦克风说话。'); return }
+    if (samples.current < context.current.sampleRate / 10) { cancel(); setMessage('录音太短，请重新录音。'); return }
     active.current = false
     const token = generation.current
     const rate = context.current.sampleRate
@@ -99,7 +99,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
     }
   }, [release, cancel])
 
-  const start = async (prepareOnly = false) => {
+  const start = async (prepareOnly = false, mode: 'hold' | 'toggle' = 'hold') => {
     if (disabled || active.current || request.current || phase !== 'idle') { return }
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext || !window.AudioWorkletNode) {
       setMessage('此浏览器暂不支持录音，请使用文字输入或更新浏览器。'); return
@@ -121,7 +121,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       if (preparationOnly) {
         permissionReady.current = true
         mic.getTracks().forEach(track => track.stop())
-        cancel(); setMessage('麦克风已就绪，请重新按住说话，松开后转写。'); return
+        cancel(); setMessage(mode === 'toggle' ? '麦克风已就绪，请选择开始录音。' : '麦克风已就绪，请重新按住说话，松开后转写。'); return
       }
       if (!held.current) { mic.getTracks().forEach(track => track.stop()); cancel(); return }
       stream.current = mic
@@ -139,10 +139,12 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
       }
       source.current.connect(recorder); recorder.connect(ctx.destination)
       mic.getTracks().forEach(track => { track.onended = () => { if (token === generation.current && active.current) { cancel(); setMessage('录音已中断，请重新录制。') } } })
-      setPhase('recording'); setSeconds(0); setMessage('正在录音，松开后转写，核对后手动发送，最多 55 秒。')
+      setPhase('recording'); setSeconds(0); setMessage(mode === 'toggle' ? '正在录音，选择结束录音并转写，核对后手动发送，最多 55 秒。' : '正在录音，松开后转写，核对后手动发送，最多 55 秒。')
       const started = Date.now()
+      let warned = false
       timer.current = setInterval(() => {
         setSeconds(Math.min(SPEECH_SECONDS, Math.floor((Date.now() - started) / 1000)))
+        if (!warned && Date.now() - started >= (SPEECH_SECONDS - 10) * 1000) { warned = true; setMessage('录音将在 10 秒后结束并转写。') }
         if (Date.now() - started >= SPEECH_SECONDS * 1000) { void finish() }
       }, 250)
     }

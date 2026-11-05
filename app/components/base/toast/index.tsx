@@ -31,11 +31,12 @@ const Toast = ({
   duration,
   message,
   children,
+  onClose,
 }: IToastProps) => {
   // sometimes message is react node array. Not handle it.
   if (typeof message !== 'string') { return null }
 
-  return <div className={classNames(
+  return <div role={type === 'error' ? 'alert' : 'status'} aria-atomic="true" className={classNames(
     'fixed rounded-md p-4 my-4 mx-8 z-50',
     'top-0',
     'right-0',
@@ -44,6 +45,7 @@ const Toast = ({
     type === 'warning' ? 'bg-yellow-50' : '',
     type === 'info' ? 'bg-blue-50' : '',
   )}>
+    <button type="button" aria-label="关闭提示" onClick={onClose} className="float-right ml-4 min-h-11 min-w-11">关闭</button>
     <div className="flex">
       <div className="flex-shrink-0">
         {type === 'success' && <CheckCircleIcon className="w-5 h-5 text-green-400" aria-hidden="true" />}
@@ -93,12 +95,10 @@ export const ToastProvider = ({
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (mounted) {
-      setTimeout(() => {
-        setMounted(false)
-      }, params.duration || defaultDuring)
-    }
-  }, [mounted])
+    if (!mounted || params.type === 'error') { return }
+    const timer = setTimeout(() => setMounted(false), params.duration || defaultDuring)
+    return () => clearTimeout(timer)
+  }, [mounted, params])
 
   return <ToastContext.Provider value={{
     notify: (props) => {
@@ -106,7 +106,7 @@ export const ToastProvider = ({
       setParams(props)
     },
   }}>
-    {mounted && <Toast {...params} />}
+    {mounted && <Toast {...params} onClose={() => setMounted(false)} />}
     {children}
   </ToastContext.Provider>
 }
@@ -120,11 +120,10 @@ Toast.notify = ({
     const holder = document.createElement('div')
     const root = createRoot(holder)
 
-    root.render(<Toast type={type} message={message} duration={duration} />)
+    const close = () => { root.unmount(); holder.remove() }
     document.body.appendChild(holder)
-    setTimeout(() => {
-      if (holder) { holder.remove() }
-    }, duration || defaultDuring)
+    root.render(<Toast type={type} message={message} duration={duration} onClose={close} />)
+    if (type !== 'error') { setTimeout(close, duration || defaultDuring) }
   }
 }
 

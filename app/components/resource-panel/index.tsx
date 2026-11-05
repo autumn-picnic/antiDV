@@ -54,7 +54,7 @@ const ALL_RESOURCES: ResourceItem[] = [
 /* ─── Dynamic Matching Engine ───────────────────────────── */
 
 function matchResources(chatMessage: string): ResourceItem[] {
-    if (!chatMessage || chatMessage.trim() === '') return ALL_RESOURCES
+    if (!chatMessage || chatMessage.trim() === '') { return ALL_RESOURCES }
 
     const text = chatMessage.toLowerCase()
 
@@ -137,11 +137,11 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
     isCollapsed = false,
     onToggleCollapse,
 }) => {
-    const orderedResources = useMemo(() => matchResources(accumulatedAIText), [accumulatedAIText])
+    const orderedResources = ALL_RESOURCES
 
     // Determine which resources are "highlighted" (matched keywords)
     const matchedIds = useMemo(() => {
-        if (!accumulatedAIText || accumulatedAIText.trim() === '') return new Set<string>()
+        if (!accumulatedAIText || accumulatedAIText.trim() === '') { return new Set<string>() }
         const text = accumulatedAIText.toLowerCase()
         return new Set(
             ALL_RESOURCES
@@ -189,10 +189,11 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
                     <button
                         onClick={onToggleCollapse}
                         aria-label="展开资源面板"
+                        aria-expanded="false"
                         title="展开"
                         style={{
-                            width: 24,
-                            height: 24,
+                            width: 44,
+                            height: 44,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -274,8 +275,8 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
                                 aria-label="收起资源面板"
                                 title="收起"
                                 style={{
-                                    width: 24,
-                                    height: 24,
+                                    width: 44,
+                                    height: 44,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -445,6 +446,7 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
                     })}
                 </div>
 
+                {!isMobileOverlay && <a href="#chat-input" style={{ padding: 12, color: '#713B20' }}>返回聊天输入框</a>}
                 {/* Footer */}
                 <div
                     style={{

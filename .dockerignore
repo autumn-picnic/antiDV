@@ -18,3 +18,6 @@ load-test
 
 # Research evidence is versioned for review, not served in the runtime image.
 docs/research
+
+# Isolated local backend database and runtime artifacts
+.local-backend/

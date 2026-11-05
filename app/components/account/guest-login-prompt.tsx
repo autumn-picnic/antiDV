@@ -1,15 +1,12 @@
 'use client'
+import useModalDialog from '@/hooks/use-modal-dialog'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { quickEscape } from '@/app/components/quick-exit'
 
 export default function GuestLoginPrompt({ onContinue }: { onContinue: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
-  useEffect(() => {
-    const element = dialog.current
-    element?.showModal()
-    return () => element?.close()
-  }, [])
+  useModalDialog(dialog)
   return <dialog ref={dialog} aria-labelledby='guest-login-title' aria-describedby='guest-login-description' onCancel={(event) => { event.preventDefault(); onContinue() }} className='max-h-[90dvh] w-[min(92vw,440px)] overflow-y-auto rounded-2xl bg-[#FBF9F6] p-5 text-[#3D3028] shadow-xl backdrop:bg-black/30 sm:p-6'>
     <div className='flex items-start justify-between gap-3'>
       <h2 id='guest-login-title' className='pt-2 text-lg font-semibold'>邀请你注册小安</h2>

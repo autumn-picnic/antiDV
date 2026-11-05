@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - 'app/**'
-      - 'hooks/use-speech-input.ts'
+      - 'hooks/**'
+      - 'utils/crisis-prompt.ts'
+      - 'tests/**'
       - 'lib/feedback/speech-repository.ts'
       - 'tests/speech*.cjs'
       - 'tests/chat-stop.test.cjs'
@@ -28,8 +30,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Focused regression and type checks
         run: |
-          node --test tests/speech*.test.cjs tests/chat-stop.test.cjs \
-            tests/access.test.cjs tests/chatflow.test.cjs
+          node --test tests/*.test.cjs
           pnpm check:chatflow
       - name: Production build
         env:
