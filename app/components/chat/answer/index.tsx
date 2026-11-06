@@ -11,6 +11,7 @@ import ReviewModal from './review-modal'
 import DebugPanel from '../debug-panel'
 import Button from '@/app/components/base/button'
 import StreamdownMarkdown from '@/app/components/base/streamdown-markdown'
+import FailureSupport from '@/app/components/chat/failure-support'
 import Tooltip from '@/app/components/base/tooltip'
 import { randomString } from '@/utils/string'
 import LoadingAnim from '../loading-anim'
@@ -65,13 +66,13 @@ const Answer: FC<IAnswerProps> = ({
   debugEnabled,
 }) => {
   const { id, content, feedback } = item
-  const suggestedQuestions = item.suggestedQuestions ?? ['怎样辨认控制行为', '帮我梳理一下']
+  const suggestedQuestions = item.fallback ? [] : item.suggestedQuestions ?? ['怎样辨认控制行为', '帮我梳理一下']
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
 
   const copyAnswer = async () => {
     try {
-      await navigator.clipboard.writeText(content)
+      await navigator.clipboard.writeText(item.fallback?.details || content)
       setCopyStatus('已复制')
     }
     catch { setCopyStatus('复制未完成，请选中文字复制。') }
@@ -133,7 +134,7 @@ const Answer: FC<IAnswerProps> = ({
     }
 
     const reviewOperation = () => {
-      if (isResponding || !onReview) { return null }
+      if (item.fallback || isResponding || !onReview) { return null }
       return (
         <Tooltip selector={`review-${randomString(16)}`} content={item.userReview ? '修改评价' : '评价此回复'}>
           <button type="button" aria-label={`${item.userReview ? '修改评分与反馈' : '评分与反馈'}：小安第 ${number} 条回答`} onClick={() => setShowReviewModal(true)} className="chat-answer-action">
@@ -176,7 +177,7 @@ const Answer: FC<IAnswerProps> = ({
               </div>
             )}
         </div>
-        <span>小安</span><span className="chat-answer-number">第 {number} 条回答</span>
+        <span>小安</span><span className="chat-answer-number">{item.fallback ? '固定支持信息' : <>第 {number} 条回答</>}</span>
       </div>
       <div>
         <div className={`${s.answerWrap} min-w-0`}>
@@ -184,7 +185,7 @@ const Answer: FC<IAnswerProps> = ({
             <div className="chat-answer-bubble overflow-x-auto">
               {isResponding && !content
                 ? <div className="flex items-center justify-center w-6 h-5"><LoadingAnim type="text" /></div>
-                : <StreamdownMarkdown content={content} />}
+                : item.fallback ? <FailureSupport fallback={item.fallback} /> : <StreamdownMarkdown content={content} />}
               {item.userReview && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 border-t border-gray-200 pt-2">
                   <span className="flex shrink-0" aria-hidden="true">

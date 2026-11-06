@@ -22,7 +22,6 @@ import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
 import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 import { GuardSummary } from '@/app/components/chat/debug-panel'
-import FailureSupport from '@/app/components/chat/failure-support'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
 import '@/app/styles/figma-chat.css'
@@ -98,7 +97,7 @@ const Main: FC<IMainProps> = () => {
   useEffect(() => {
     if (!operation) { setFullAnnouncement(''); return }
     const key = `${operation.id}:${operation.kind}`
-    if (notified.current === key) { return }
+    if (notified.current === key && operation.kind !== 'failed') { return }
     notified.current = key
     if (operation.kind === 'sending') {
       setFullAnnouncement('')
@@ -109,9 +108,11 @@ const Main: FC<IMainProps> = () => {
       setFullAnnouncement(autoRead ? operation.content || '' : '')
     }
     if (operation.kind === 'stopped') { setAnnouncement('已停止回复，已生成的内容仍可阅读。') }
-    // Failures already have a persistent alert; do not announce them twice.
-    if (operation.kind === 'failed') { setAnnouncement(''); setFullAnnouncement('') }
-  }, [operation, autoRead])
+    if (operation.kind === 'failed') {
+      setAnnouncement(failure?.fallback ? '小安暂时无法完成回复，已显示固定支持信息和三个求助资源。' : '')
+      setFullAnnouncement('')
+    }
+  }, [operation, autoRead, failure?.fallback])
 
   useEffect(() => { setPrivacyOpen(false) }, [isSignedIn])
 
@@ -135,13 +136,13 @@ const Main: FC<IMainProps> = () => {
     })
   }
   const checkCanSend = () => !busy && !failure?.needsRecovery
-  const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer).map(item => item.content).join(' '), [chatList])
+  const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer && !item.fallback).map(item => item.content).join(' '), [chatList])
 
   const handleExport = async () => {
     if (busy || !chatList.length) { return }
     try {
       const XLSX = await import('xlsx')
-      const rows = chatList.map((item, index) => ({ 序号: index + 1, 角色: item.isAnswer ? '小安' : '用户', 内容: item.content }))
+      const rows = chatList.map((item, index) => ({ 序号: index + 1, 角色: item.fallback ? '小安（固定支持）' : item.isAnswer ? '小安' : '用户', 内容: item.content }))
       const sheet = XLSX.utils.json_to_sheet(rows)
       sheet['!cols'] = [{ wch: 6 }, { wch: 8 }, { wch: 70 }]
       const workbook = XLSX.utils.book_new()
@@ -244,20 +245,20 @@ const Main: FC<IMainProps> = () => {
                   signedIn={Boolean(isSignedIn)}
                   authReady={isLoaded}
                   busy={busy || Boolean(failure?.needsRecovery)}
-                  completedId={chatList.filter(item => item.isAnswer).at(-1)?.id}
+                  completedId={chatList.filter(item => item.isAnswer && !item.fallback).at(-1)?.id}
                   refreshConversation={async () => { await selectConversation(currConversationId) }}
                 />}
               />
-              {(operation?.kind === 'stopped' || operation?.kind === 'failed') && operation.content && (
+              {(operation?.kind === 'stopped' || (operation?.kind === 'failed' && !failure?.fallback)) && operation.content && (
                 <article id="interrupted-answer" tabIndex={-1} aria-label="小安未完成的回答" className="chat-answer-bubble p-4">
                   <h2>小安未完成的回答</h2><StreamdownMarkdown content={operation.content} />
                   <p>此回答未完成，仅供核对。</p>
                 </article>
               )}
 
-              {failure && (
+              {failure && (!failure.fallback || failure.needsRecovery) && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
-                  <FailureSupport fallback={failure.fallback} message={failure.message} query={failure.query} />
+                  <p>{failure.fallback ? '请先刷新会话记录，确认这次回复是否已保存。' : failure.message}</p>
                   {debugEnabled && failure.guard && <p className="mt-2"><GuardSummary guard={failure.guard} /></p>}
                   <button type='button' disabled={busy} onClick={() => void recover()} className='mr-4 mt-2 underline'>刷新会话记录</button>
                   {failure.query && !failure.needsRecovery && <button type='button' disabled={busy} onClick={retry} className='mt-2 underline'>重试这条消息</button>}

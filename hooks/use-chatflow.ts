@@ -14,7 +14,7 @@ function chatItems(view: ConversationView): DebugChatItem[] {
     const id = turn.response_id || `${view.conversation_id}-${turn.number ?? index}`
     return [
       { id: `question-${id}`, content: turn.user, isAnswer: false },
-      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level, suggestedQuestions: suggestedQuestions(turn.suggested_questions), debug: turn.debug },
+      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level || undefined, suggestedQuestions: suggestedQuestions(turn.suggested_questions), debug: turn.debug, fallback: turn.status === 'failed' ? turn.fallback : undefined },
     ]
   })
 }
@@ -101,7 +101,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
   }, [conversationId, isResponding, busy, signedIn, authReady])
 
   async function review(responseId: string, value: { score: number, comment: string }) {
-    if (lock.current || !chatList.some(item => item.isAnswer && item.id === responseId)) { throw new Error('请等待回答完成后再评价') }
+    if (lock.current || !chatList.some(item => item.isAnswer && !item.fallback && item.id === responseId)) { throw new Error('请等待回答完成后再评价') }
     const id = conversationId
     await saveReview(id, responseId, value)
     if (mounted.current) { setChatList(list => list.map(item => item.id === responseId ? { ...item, userReview: value } : item)) }
@@ -227,10 +227,16 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     catch (error) {
       if (!isActive()) { return }
       streamRenderer?.cancel()
-      // Remove both pending entries: neither may be exported or treated as committed history.
-      setChatList(committed)
-      setOperation({ id: attemptId, conversationId: id, kind: 'failed', content: text })
       const expired = error instanceof ChatApiError && error.status === 404
+      const fixedFallback = error instanceof ChatApiError ? error.fallback : undefined
+      const failedId = responseId || (error instanceof ChatApiError ? error.responseId : undefined) || attemptId
+      const failedItems: DebugChatItem[] = startedGeneration && !expired
+        ? [...committed, { id: `question-${failedId}`, content: message, isAnswer: false },
+          ...(fixedFallback ? [{ id: failedId, content: fixedFallback.details || fixedFallback.message,
+            isAnswer: true, fallback: fixedFallback, feedbackDisabled: true }] : [])]
+        : committed
+      setChatList(failedItems)
+      setOperation({ id: attemptId, conversationId: id, kind: 'failed', content: text })
       if (expired) {
         setConversationId('-1'); setChatList([])
         setConversationList(list => list.filter(item => item.id !== id))
