@@ -8,7 +8,7 @@ export class ChatApiError extends Error {
   }
 }
 
-interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string, variant?: 'neutral' | 'general' | 'self_harm' | 'medical', details?: string }
+interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string, variant?: 'neutral' | 'general' | 'self_harm' | 'medical', details?: string, can_continue?: boolean }
 
 function fixedFallback(value: unknown): FixedFallback | undefined {
   const fallback = (value as { fallback?: Partial<FixedFallback> } | null)?.fallback
@@ -17,6 +17,7 @@ function fixedFallback(value: unknown): FixedFallback | undefined {
     || fallback.resource_url !== 'https://xiaoan.app/resources') { return undefined }
   if (fallback.variant !== undefined && !['neutral', 'general', 'self_harm', 'medical'].includes(fallback.variant)) { return undefined }
   if (fallback.details !== undefined && typeof fallback.details !== 'string') { return undefined }
+  if (fallback.can_continue !== undefined && typeof fallback.can_continue !== 'boolean') { return undefined }
   return fallback as FixedFallback
 }
 
