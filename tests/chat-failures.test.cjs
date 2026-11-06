@@ -12,7 +12,7 @@ class ChatApiError extends Error {
   }
 }
 
-async function chatHarness({ createError, sendError, reportError, stop = false } = {}) {
+async function chatHarness({ createError, sendError, reportError, currentView, stop = false } = {}) {
   const states = []
   const effects = []
   const reports = []
@@ -30,7 +30,7 @@ async function chatHarness({ createError, sendError, reportError, stop = false }
   const api = {
     ChatApiError,
     fetchConversations: async () => [],
-    fetchCurrentConversation: async () => null,
+    fetchCurrentConversation: async () => currentView || null,
     createConversation: async () => {
       if (createError) { throw createError }
       return { conversation_id: 'c1' }
@@ -60,7 +60,7 @@ async function chatHarness({ createError, sendError, reportError, stop = false }
   hook = mod.exports.default({ authReady: true, signedIn: false, onCompleted() {} })
   for (const effect of effects) { effect() }
   await new Promise(resolve => setImmediate(resolve))
-  return { hook, reports, failure: () => states.find(value => value && typeof value === 'object' && 'query' in value && 'message' in value) }
+  return { hook, reports, chatList: () => states[2], failure: () => states.find(value => value && typeof value === 'object' && 'query' in value && 'message' in value) }
 }
 
 test('creation failure saves original input with no conversation or response', async () => {
@@ -114,13 +114,29 @@ test('report persistence failure is visible while preserving the original retry 
 })
 
 test('confirmed service fallback unlocks next input while preserving failed query', async () => {
-  const error = new ChatApiError(503, '固定支持', 'r1', undefined, 'upstream_content_filtered', { can_continue: true })
+  const fallback = { kind: 'fixed_support', version: 'approved-test', message: '暂时无法完成回复', details: '完整固定支持文案', can_continue: true, resource_url: 'https://xiaoan.app/resources' }
+  const error = new ChatApiError(503, '固定支持', 'r1', undefined, 'upstream_content_filtered', fallback)
   const harness = await chatHarness({ sendError: error })
   await harness.hook.send('原问题')
   assert.equal(harness.failure().needsRecovery, false)
   assert.equal(harness.failure().query, '原问题')
+  assert.deepEqual(harness.chatList().map(item => [item.isAnswer, item.content]), [[false, '原问题'], [true, '完整固定支持文案']])
+  assert.deepEqual(harness.chatList()[1].fallback, fallback)
   await harness.hook.send('我现在只需要了解支持渠道')
   assert.equal(harness.reports.length, 2)
+})
+
+test('restored failed history shows original user bubble and fixed support before later replies', async () => {
+  const fallback = { kind: 'fixed_support', version: 'approved-test', message: '固定支持', can_continue: true, resource_url: 'https://xiaoan.app/resources' }
+  const harness = await chatHarness({ currentView: { conversation_id: 'c1', turns: [
+    { number: 1, response_id: 'r1', user: '原求助', assistant: '固定支持', status: 'failed', safety_level: null, fallback },
+    { number: 2, response_id: 'r2', user: '下一段话', assistant: '正常回答', safety_level: 'normal' },
+  ] } })
+  assert.deepEqual(harness.chatList().map(item => [item.isAnswer, item.content]), [
+    [false, '原求助'], [true, '固定支持'], [false, '下一段话'], [true, '正常回答'],
+  ])
+  assert.deepEqual(harness.chatList()[1].fallback, fallback)
+  assert.equal(harness.chatList()[3].fallback, undefined)
 })
 
 test('lost connection or unconfirmed fallback still requires record reconciliation', async () => {
@@ -128,5 +144,6 @@ test('lost connection or unconfirmed fallback still requires record reconciliati
     const harness = await chatHarness({ sendError: error })
     await harness.hook.send('原问题')
     assert.equal(harness.failure().needsRecovery, true)
+    assert.equal(harness.chatList()[0].content, '原问题')
   }
 })

@@ -8,7 +8,7 @@ export class ChatApiError extends Error {
   }
 }
 
-interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string, variant?: 'neutral' | 'general' | 'self_harm' | 'medical', details?: string, can_continue?: boolean }
+export interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string, variant?: 'neutral' | 'general' | 'self_harm' | 'medical', details?: string, can_continue?: boolean }
 
 function fixedFallback(value: unknown): FixedFallback | undefined {
   const fallback = (value as { fallback?: Partial<FixedFallback> } | null)?.fallback

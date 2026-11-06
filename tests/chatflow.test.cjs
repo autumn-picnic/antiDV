@@ -200,6 +200,17 @@ test('history retains per-turn debug metadata for restored chat', async () => {
   assert.deepEqual(view.turns[0].debug, debug)
 })
 
+test('history keeps failed turn status and fixed fallback for chat restoration', async () => {
+  const fallback = { kind: 'fixed_support', version: 'approved-test', message: '固定支持', resource_url: 'https://xiaoan.app/resources' }
+  globalThis.fetch = async () => Response.json({ conversation_id: 'c1', turns: [
+    { number: 1, response_id: 'r1', status: 'failed', user: '原求助', assistant: '固定支持', safety_level: null, fallback },
+  ], next_after: null })
+  const view = await api.fetchConversation('c1')
+  assert.equal(view.turns[0].status, 'failed')
+  assert.equal(view.turns[0].user, '原求助')
+  assert.deepEqual(view.turns[0].fallback, fallback)
+})
+
 test('invalid pagination cursor fails rather than looping', async () => {
   globalThis.fetch = async () => Response.json({ items: [], next_offset: 0 })
   await assert.rejects(api.fetchConversations(), /分页/)
@@ -574,21 +585,19 @@ test('HTTP failure accepts only the typed fixed fallback', async () => {
   await assert.rejects(api.sendChatMessage('c1', '合成问题', { onDelta() {} }, new AbortController().signal), error => error.message === fallback.message && error.status === 503 && Boolean(error.fallback))
 })
 
-test('neutral fallback keeps support content and original query in closed disclosures', () => {
+test('fixed support renders its full reply and three resource cards without repeating user input', () => {
   const React = require('react')
   const { renderToStaticMarkup } = require('react-dom/server')
   const FailureSupport = load('app/components/chat/failure-support.tsx').default
   const html = renderToStaticMarkup(React.createElement(FailureSupport, {
-    message: 'generic', query: '合成敏感原消息',
     fallback: { kind: 'fixed_support', version: 'v1', variant: 'neutral', message: '这次暂时无法完成回复。', details: '求助热线12338', resource_url: 'https://xiaoan.app/resources' },
   }))
-  const disclosures = [...html.matchAll(/<details\b([^>]*)>(.*?)<\/details>/gs)]
-  assert.equal(disclosures.length, 2)
-  assert.ok(disclosures.every(match => !/\bopen\b/.test(match[1])))
-  assert.ok(disclosures[0][2].includes('求助热线12338'))
-  assert.ok(disclosures[0][2].includes('/resources#lgbtq'))
-  assert.ok(disclosures[1][2].includes('合成敏感原消息'))
-  assert.ok(!html.slice(0, html.indexOf('<details')).includes('12338'))
+  assert.match(html, /求助热线12338/)
+  assert.match(html, /aria-label="求助资源包"/)
+  assert.equal((html.match(/<a /g) || []).length, 3)
+  assert.match(html, /\/resources#lgbtq/)
+  assert.match(html, /rayincare.org\/assistance/)
+  assert.doesNotMatch(html, /合成敏感原消息|<details/)
 })
 
 test('unknown fallback variants cannot select a visible support mode', async () => {

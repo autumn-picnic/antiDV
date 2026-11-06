@@ -38,7 +38,7 @@ export interface ChatDebug {
   timings?: Record<string, number | null>
 }
 
-export type DebugChatItem = import('./app').ChatItem & { debug?: ChatDebug | null }
+export type DebugChatItem = import('./app').ChatItem & { debug?: ChatDebug | null, fallback?: import('../service').FixedFallback }
 
 export interface ConversationSummary {
   id: string
@@ -54,7 +54,9 @@ export interface ConversationTurn {
   assistant: string
   suggested_questions?: string[]
   route_id: string
-  safety_level: SafetyLevel
+  safety_level: SafetyLevel | null
+  status?: 'completed' | 'failed'
+  fallback?: import('../service').FixedFallback
   debug?: ChatDebug | null
 }
 
