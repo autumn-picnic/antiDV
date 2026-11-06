@@ -19,6 +19,7 @@ mod.require = name => {
   if (name === '@/utils/string') return { randomString: () => 'test' }
   if (name === '@/app/components/base/tooltip') return { __esModule: true, default: ({ children }) => React.createElement('span', null, children) }
   if (name === '@/app/components/base/streamdown-markdown') return { __esModule: true, default: ({ content }) => React.createElement('p', null, content) }
+  if (name === '@/app/components/chat/failure-support') return { __esModule: true, default: ({ fallback }) => React.createElement('p', null, fallback.message) }
   if (name === '@/app/components/base/button' || name === './review-modal' || name === '../debug-panel' || name === '../loading-anim') return { __esModule: true, default: () => null }
   return originalRequire(name)
 }
@@ -40,4 +41,11 @@ test('saved reviews expose edit action and keep their score', () => {
   const html = render({ item: { id: 'r1', content: '回答', isAnswer: true, userReview: { score: 4, comment: '建议' } } })
   assert.match(html, /aria-label="修改评分与反馈：小安第 1 条回答"/)
   assert(html.includes('建议'))
+})
+test('fixed support is identified as such and cannot be reviewed as a completed answer', () => {
+  const html = render({ item: { id: 'r1', content: '固定支持', isAnswer: true,
+    fallback: { kind: 'fixed_support', message: '固定支持', version: 'v1', resource_url: 'https://xiaoan.app/resources' } } })
+  assert.match(html, /固定支持信息/)
+  assert(!html.includes('评分与反馈'))
+  assert(!html.includes('怎样辨认控制行为'))
 })
