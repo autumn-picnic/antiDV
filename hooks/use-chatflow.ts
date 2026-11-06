@@ -27,13 +27,13 @@ export interface ChatOperation { id: string, conversationId: string, kind: 'send
 
 interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic, attemptId?: string, fallback?: ChatApiError['fallback'] }
 
-export default function useChatflow({ authReady, signedIn, onCompleted }: { authReady: boolean, signedIn: boolean, onCompleted: () => void }) {
+export default function useChatflow({ authReady, signedIn, debug = false, onCompleted }: { authReady: boolean, signedIn: boolean, debug?: boolean, onCompleted: () => void }) {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
   const [conversationId, setConversationId] = useState('-1')
   const [chatList, setChatList] = useState<DebugChatItem[]>([])
   const [busy, setBusy] = useState(true)
   const [isResponding, setResponding] = useState(false)
-  const [debugEnabled, setDebugEnabled] = useState(false)
+  const debugEnabled = debug
   const [reviewError, setReviewError] = useState('')
   const [operation, setOperation] = useState<ChatOperation | null>(null)
   const [failure, setFailure] = useState<Failure | null>(null)
@@ -337,7 +337,6 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
     operation,
     prepareConversation,
     debugEnabled,
-    setDebugEnabled,
     review,
     reviewError,
     conversationList,

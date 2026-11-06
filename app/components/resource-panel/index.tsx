@@ -192,7 +192,7 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
 
     if (!isMobileOverlay && isCollapsed) {
         return (
-            <div style={panelStyle}>
+            <div className="resource-panel-slide" style={panelStyle}>
                 {/* Header — h-12 (48px) to match chat area header */}
                 <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid #E6DDD5', flexShrink: 0 }}>
                     <button

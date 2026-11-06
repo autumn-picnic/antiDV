@@ -20,9 +20,10 @@
 .chat-center-column {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
+  height: 100%;
 }
 
 .figma-chat-shell .chat-scroll-area {
@@ -66,6 +67,8 @@
 }
 
 .chat-composer-slot {
+  align-self: end;
+  min-width: 0;
   flex-shrink: 0;
   padding: 12px 24px 16px;
   max-height: 50dvh;
@@ -86,8 +89,8 @@
 }
 
 .figma-chat-shell .chat-starters {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
   margin: 0 0 12px;
 }
@@ -101,7 +104,7 @@
   border: 1px solid #e6ddd5;
   border-radius: 14px;
   background: #fffefd;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .figma-chat-shell .chat-composer {
@@ -324,12 +327,6 @@
 
   .chat-composer-slot {
     padding: 8px 16px 10px;
-  }
-
-  .figma-chat-shell .chat-starters {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
   }
 
   .figma-chat-shell .chat-starters button {
@@ -581,4 +578,11 @@
 .figma-chat-shell .chat-content-container > [role="alert"] {
   flex-shrink: 0;
   overflow-wrap: anywhere;
+}
+
+@media (width <= 768px) {
+  .figma-chat-shell .chat-starters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
 }
