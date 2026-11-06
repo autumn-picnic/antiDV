@@ -365,9 +365,9 @@
 }
 
 .chat-answer-bubble {
-  border: 1px solid #f5e7dc;
-  border-radius: 18px;
-  background: linear-gradient(145deg, #fffdfb, #f3f1f0);
+  border: none;
+  border-radius: 0;
+  background: transparent;
   overflow-wrap: anywhere;
 }
 
