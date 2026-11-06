@@ -14,13 +14,11 @@ import Header from '@/app/components/header'
 import Chat from '@/app/components/chat'
 import ResourcePanel from '@/app/components/resource-panel'
 import BackExitGuard from '@/app/components/back-exit-guard'
-import IncognitoNotice from '@/app/components/incognito-notice'
-import Toast from '@/app/components/base/toast'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import useChatflow from '@/hooks/use-chatflow'
 import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
-import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
+import { isFeedbackAdminEmail } from '@/lib/auth/policy'
 import { GuardSummary } from '@/app/components/chat/debug-panel'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
@@ -30,30 +28,28 @@ import '@/app/styles/chat-redesign.css'
 export interface IMainProps { params?: unknown }
 
 const Main: FC<IMainProps> = () => {
-  const { isLoaded, isSignedIn } = useUser()
+  const { user, isLoaded, isSignedIn } = useUser()
+  const automaticDebug = Boolean(isSignedIn && isFeedbackAdminEmail(user?.primaryEmailAddress?.emailAddress, user?.primaryEmailAddress?.verification?.status === 'verified'))
   const guestPrompt = useGuestLoginPrompt(Boolean(isSignedIn))
   const media = useBreakpoints()
   const isMobile = media === MediaType.mobile
   const isDesktop = media === MediaType.pc
   const hasSetInputs = true
-  const [isShowSidebar, { setTrue: showSidebar, setFalse: hideSidebar }] = useBoolean(false)
+  const [isShowSidebar, { setFalse: hideSidebar }] = useBoolean(false)
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse, setTrue: collapsePanel }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(false)
-  const [speechInfoKey, setSpeechInfoKey] = useState(0)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerTarget, setComposerTarget] = useState<HTMLDivElement | null>(null)
-  const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled, setDebugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), onCompleted: guestPrompt.completed })
+  const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), debug: automaticDebug, onCompleted: guestPrompt.completed })
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
   const crisisPrompt = useCrisisPrompt(currConversationId, operation)
   const chatListDomRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLElement>(null)
   const followLatest = useRef(true)
-  const [autoRead, setAutoRead] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   const [fullAnnouncement, setFullAnnouncement] = useState('')
   const notified = useRef('')
-  const settingsRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
     const closeOutside = (event: MouseEvent) => {
@@ -67,19 +63,9 @@ const Main: FC<IMainProps> = () => {
       if (!target.closest('#history-content, [aria-label="打开历史对话"]')) { collapseSidebar() }
       if (!target.closest('.resource-panel-slide, [data-resource-trigger], [aria-label="打开支持资源"]')) { collapsePanel() }
     }
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.isComposing && !document.querySelector('dialog[open]') && settingsRef.current?.open) {
-        event.preventDefault()
-        event.stopPropagation()
-        settingsRef.current.open = false
-        settingsRef.current.querySelector('summary')?.focus()
-      }
-    }
     document.addEventListener('click', closeOutside)
-    document.addEventListener('keydown', handleEscape)
     return () => {
       document.removeEventListener('click', closeOutside)
-      document.removeEventListener('keydown', handleEscape)
     }
   }, [collapsePanel, collapseSidebar])
 
@@ -105,14 +91,14 @@ const Main: FC<IMainProps> = () => {
     }
     if (operation.kind === 'completed') {
       setAnnouncement('小安已回复。')
-      setFullAnnouncement(autoRead ? operation.content || '' : '')
+      setFullAnnouncement('')
     }
     if (operation.kind === 'stopped') { setAnnouncement('已停止回复，已生成的内容仍可阅读。') }
     if (operation.kind === 'failed') {
       setAnnouncement(failure?.fallback ? '小安暂时无法完成回复，已显示固定支持信息和三个求助资源。' : '')
       setFullAnnouncement('')
     }
-  }, [operation, autoRead, failure?.fallback])
+  }, [operation, failure?.fallback])
 
   useEffect(() => { setPrivacyOpen(false) }, [isSignedIn])
 
@@ -137,20 +123,6 @@ const Main: FC<IMainProps> = () => {
   }
   const checkCanSend = () => !busy && !failure?.needsRecovery
   const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer && !item.fallback).map(item => item.content).join(' '), [chatList])
-
-  const handleExport = async () => {
-    if (busy || !chatList.length) { return }
-    try {
-      const XLSX = await import('xlsx')
-      const rows = chatList.map((item, index) => ({ 序号: index + 1, 角色: item.fallback ? '小安（固定支持）' : item.isAnswer ? '小安' : '用户', 内容: item.content }))
-      const sheet = XLSX.utils.json_to_sheet(rows)
-      sheet['!cols'] = [{ wch: 6 }, { wch: 8 }, { wch: 70 }]
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, sheet, '聊天记录')
-      XLSX.writeFile(workbook, `小安聊天记录_${new Date().toISOString().slice(0, 10)}.xlsx`)
-    }
-    catch { Toast.notify({ type: 'error', message: '导出失败，请重试' }) }
-  }
 
   const renderSidebar = () => {
     return (
@@ -182,23 +154,8 @@ const Main: FC<IMainProps> = () => {
       {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
-        isMobile={isMobile}
-        onShowSideBar={isMobile ? showSidebar : toggleSidebarCollapse}
-        onCreateNewChat={() => handleConversationIdChange('-1')}
-        onShowResourcePanel={isDesktop ? togglePanelCollapse : showResourcePanel}
-        hasSetInputs={hasSetInputs}
         accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
-        settings={<details ref={settingsRef} className="chat-settings">
-          <summary aria-label="对话设置"><AdjustmentsHorizontalIcon /></summary>
-          <div className="chat-settings-menu">
-            <IncognitoNotice />
-            <button type="button" onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setSpeechInfoKey(key => key + 1) }}>语音使用与保存说明</button>
-            <label className="auto-read-option"><input type="checkbox" checked={autoRead} onChange={event => { setAutoRead(event.target.checked); setFullAnnouncement('') }} />回复完成后自动通知全文</label>
-            <p className="chat-speech-status">通过你的读屏软件播报，仅本分页面有效；刷新后关闭。</p>
-            <button type="button" disabled={busy || !chatList.some(item => !item.isOpeningStatement)} onClick={() => void handleExport()}>导出聊天记录 (.xlsx)</button>
-            <button type="button" aria-pressed={debugEnabled} onClick={() => setDebugEnabled(!debugEnabled)}>调试信息：{debugEnabled ? '开启' : '关闭'}</button>
-          </div>
-        </details>}
+
       />
       {guestPrompt.visible && isLoaded && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -225,9 +182,7 @@ const Main: FC<IMainProps> = () => {
             <h1 id="conversation-title" tabIndex={-1} className="sr-only">{conversationName}</h1>
             <div className='chat-content-container relative grow w-full max-w-[900px] px-4 pt-8 mx-auto mb-3.5' style={{ paddingBottom: 24 }} ref={chatListDomRef}>
               <Chat
-                speechInfoKey={speechInfoKey}
                 composerTarget={composerTarget}
-                onShowResources={isDesktop ? togglePanelCollapse : showResourcePanel}
                 speechResetKey={`${currConversationId}:${isSignedIn ? 'account' : 'guest'}`}
                 chatList={chatList}
                 debugEnabled={debugEnabled}
@@ -270,13 +225,14 @@ const Main: FC<IMainProps> = () => {
           <div className="chat-composer-slot" ref={setComposerTarget} />
           </div>
           {/* Desktop resource panel */}
-          {isDesktop && hasSetInputs && !isPanelCollapsed && (
+          {hasSetInputs && (
             <ResourcePanel
               accumulatedAIText={accumulatedAIText}
-              isCollapsed={isPanelCollapsed}
+              isCollapsed={!isDesktop || isPanelCollapsed}
               onToggleCollapse={() => {
+                if (!isDesktop) { showResourcePanel(); return }
                 togglePanelCollapse()
-                requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-label="打开支持资源"]')?.focus())
+                requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-label="展开资源面板"]')?.focus())
               }}
             />
           )}

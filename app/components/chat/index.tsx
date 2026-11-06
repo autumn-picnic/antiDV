@@ -37,7 +37,6 @@ export interface IChatProps {
   debugEnabled?: boolean
   speechInfoKey?: number
   composerTarget?: HTMLElement | null
-  onShowResources?: () => void
   speechResetKey?: string
 }
 
@@ -62,7 +61,6 @@ const Chat: FC<IChatProps> = ({
   privacyControls,
   speechInfoKey = 0,
   composerTarget,
-  onShowResources,
   speechResetKey = '',
 }) => {
   const { t } = useTranslation()
@@ -171,10 +169,12 @@ const Chat: FC<IChatProps> = ({
 
   const isWelcome = !chatList.some(item => !item.isOpeningStatement)
   const starterQuestions = [
-    { label: '算家暴吗？', message: '我遇到的这些，算家暴吗？' },
-    { label: '梳理经历', message: '我想梳理一下自己的经历，可以帮我吗？' },
-    { label: '报警保护令', message: '报警、保护令，具体怎么办？' },
-    { label: '支持资源', message: '' },
+    '我遇到的这些，算家暴吗？',
+    '怎么让我现在安全一点？',
+    '报警、保护令，具体怎么办？',
+    '我该留下哪些证据？',
+    '我还没想离开，但我很难受',
+    '如果我离开了之后怎么办？',
   ]
 
   const composer = (
@@ -186,8 +186,8 @@ const Chat: FC<IChatProps> = ({
           >
             <div className="chat-composer-inner">
               {isWelcome && <div className="chat-starters" aria-label="可以从这些话题开始">
-                {starterQuestions.map(question => <button type="button" key={question.label} data-resource-trigger={!question.message || undefined} disabled={disabled || isResponding || speech.active}
-                  onClick={() => question.message ? suggestionClick(question.message) : onShowResources?.()}>{question.label}</button>)}
+                {starterQuestions.map(question => <button type="button" key={question} disabled={disabled || isResponding || speech.active}
+                  onClick={() => suggestionClick(question)}>{question}</button>)}
               </div>}
               <div className='chat-composer relative p-2 max-h-[200px] overflow-y-auto'>
                 <Textarea
