@@ -19,7 +19,7 @@ function errorMessage(error: unknown) {
   return error instanceof ChatApiError ? error.message : '暂时无法连接小安，请稍后重试'
 }
 
-interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic }
+interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic, fallback?: ChatApiError['fallback'] }
 
 export default function useChatflow({ authReady, signedIn, onCompleted }: { authReady: boolean, signedIn: boolean, onCompleted: () => void }) {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
@@ -209,6 +209,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         responseId: responseId || (error instanceof ChatApiError ? error.responseId : undefined),
         needsRecovery: startedGeneration && !expired,
         guard: error instanceof ChatApiError ? error.guard : undefined,
+        fallback: error instanceof ChatApiError ? error.fallback : undefined,
       })
     }
     finally { finish() }
@@ -228,7 +229,7 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
       setChatList(view ? chatItems(view) : [])
       const committed = failed.responseId && view?.turns.some(turn => turn.response_id === failed.responseId)
       if (failed.query && !committed) {
-        setFailure({ ...failed, message: '已刷新记录。请核对是否已有回复，再决定是否重试。', needsRecovery: false })
+        setFailure({ ...failed, message: failed.fallback?.message || '已刷新记录。请核对是否已有回复，再决定是否重试。', needsRecovery: false })
       }
     }
     catch (error) {

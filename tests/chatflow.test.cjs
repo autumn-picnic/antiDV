@@ -525,3 +525,25 @@ test('debug panel explains missing diagnostics and handles empty payloads', () =
   assert.ok(render(null).includes('本轮无诊断数据'))
   assert.ok(render({ safety: {}, capsule_issues: [] }).includes('{}'))
 })
+
+test('fixed support fallback remains an error and preserves the resource entry', async () => {
+  const fallback = { kind: 'fixed_support', version: 'test-only', message: '合成测试文案', resource_url: 'https://xiaoan.app/resources' }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => {
+    assert.equal(error.status, 503)
+    assert.equal(error.message, fallback.message)
+    assert.equal(error.responseId, 'r1')
+    assert.equal(error.fallback.resource_url, fallback.resource_url)
+    return true
+  })
+})
+
+test('untrusted fallback URL cannot become a support message', async () => {
+  const fallback = { kind: 'fixed_support', version: 'test-only', message: 'not approved', resource_url: 'https://example.com' }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => !error.fallback && !error.message.includes('not approved'))
+})
+
+test('HTTP failure accepts only the typed fixed fallback', async () => {
+  const fallback = { kind: 'fixed_support', version: 'test-only', message: '合成测试文案', resource_url: 'https://xiaoan.app/resources' }
+  globalThis.fetch = async () => new Response(JSON.stringify({ detail: { fallback, message: 'private upstream details' } }), { status: 503, headers: { 'Content-Type': 'application/json' } })
+  await assert.rejects(api.sendChatMessage('c1', '合成问题', { onDelta() {} }, new AbortController().signal), error => error.message === fallback.message && error.status === 503 && Boolean(error.fallback))
+})

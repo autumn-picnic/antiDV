@@ -2,9 +2,19 @@ import { createParser } from 'eventsource-parser'
 import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationView, GuardDiagnostic } from '../types/chatflow'
 
 export class ChatApiError extends Error {
-  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic) {
+  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic, public fallback?: FixedFallback) {
     super(message)
   }
+}
+
+interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string }
+
+function fixedFallback(value: unknown): FixedFallback | undefined {
+  const fallback = (value as { fallback?: Partial<FixedFallback> } | null)?.fallback
+  if (fallback?.kind !== 'fixed_support' || typeof fallback.version !== 'string'
+    || typeof fallback.message !== 'string' || !fallback.message.trim()
+    || fallback.resource_url !== 'https://xiaoan.app/resources') { return undefined }
+  return fallback as FixedFallback
 }
 
 function httpMessage(status: number) {
@@ -20,6 +30,11 @@ function httpMessage(status: number) {
 async function request(path: string, init: RequestInit = {}) {
   const response = await fetch(`/v1${path}`, { ...init, credentials: 'include', cache: 'no-store' })
   if (!response.ok || response.status === 202) {
+    if (response.status === 503 && response.headers.get('content-type')?.includes('application/json')) {
+      const body = await response.json().catch(() => null)
+      const fallback = fixedFallback(body?.detail ?? body)
+      if (fallback) { throw new ChatApiError(response.status, fallback.message, undefined, undefined, fallback) }
+    }
     await response.body?.cancel()
     throw new ChatApiError(response.status, httpMessage(response.status))
   }
@@ -140,7 +155,7 @@ export async function readChatStream(
         completed = { ...data, debug }
         break
       case 'error':
-        throw new ChatApiError(503, '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data))
+        throw new ChatApiError(503, fixedFallback(data)?.message || '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data), fixedFallback(data))
       default:
         throw new ChatApiError(502, '回复事件顺序无效', responseId)
     }
