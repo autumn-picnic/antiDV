@@ -552,6 +552,50 @@ test('debug panel explains missing diagnostics and handles empty payloads', () =
   assert.ok(render({ safety: {}, capsule_issues: [] }).includes('{}'))
 })
 
+test('fixed support fallback remains an error and preserves the resource entry', async () => {
+  const fallback = { kind: 'fixed_support', version: 'test-only', message: '合成测试文案', resource_url: 'https://xiaoan.app/resources' }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => {
+    assert.equal(error.status, 503)
+    assert.equal(error.message, fallback.message)
+    assert.equal(error.responseId, 'r1')
+    assert.equal(error.fallback.resource_url, fallback.resource_url)
+    return true
+  })
+})
+
+test('untrusted fallback URL cannot become a support message', async () => {
+  const fallback = { kind: 'fixed_support', version: 'test-only', message: 'not approved', resource_url: 'https://example.com' }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => !error.fallback && !error.message.includes('not approved'))
+})
+
+test('HTTP failure accepts only the typed fixed fallback', async () => {
+  const fallback = { kind: 'fixed_support', version: 'test-only', message: '合成测试文案', resource_url: 'https://xiaoan.app/resources' }
+  globalThis.fetch = async () => new Response(JSON.stringify({ detail: { fallback, message: 'private upstream details' } }), { status: 503, headers: { 'Content-Type': 'application/json' } })
+  await assert.rejects(api.sendChatMessage('c1', '合成问题', { onDelta() {} }, new AbortController().signal), error => error.message === fallback.message && error.status === 503 && Boolean(error.fallback))
+})
+
+test('neutral fallback keeps support content and original query in closed disclosures', () => {
+  const React = require('react')
+  const { renderToStaticMarkup } = require('react-dom/server')
+  const FailureSupport = load('app/components/chat/failure-support.tsx').default
+  const html = renderToStaticMarkup(React.createElement(FailureSupport, {
+    message: 'generic', query: '合成敏感原消息',
+    fallback: { kind: 'fixed_support', version: 'v1', variant: 'neutral', message: '这次暂时无法完成回复。', details: '求助热线12338', resource_url: 'https://xiaoan.app/resources' },
+  }))
+  const disclosures = [...html.matchAll(/<details\b([^>]*)>(.*?)<\/details>/gs)]
+  assert.equal(disclosures.length, 2)
+  assert.ok(disclosures.every(match => !/\bopen\b/.test(match[1])))
+  assert.ok(disclosures[0][2].includes('求助热线12338'))
+  assert.ok(disclosures[0][2].includes('/resources#lgbtq'))
+  assert.ok(disclosures[1][2].includes('合成敏感原消息'))
+  assert.ok(!html.slice(0, html.indexOf('<details')).includes('12338'))
+})
+
+test('unknown fallback variants cannot select a visible support mode', async () => {
+  const fallback = { kind: 'fixed_support', version: 'v1', variant: 'unknown', message: 'untrusted', resource_url: 'https://xiaoan.app/resources' }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => !error.fallback)
+})
+
 test('review client saves score/comment with credentials and reloads persisted reviews', async () => {
   let call
   globalThis.fetch = async (url, init) => { call = { url, init }; return Response.json({ responseId: 'r1', score: 5, comment: '清楚' }) }
