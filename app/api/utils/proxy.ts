@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto'
+import { isIP } from 'node:net'
 import type { NextRequest } from 'next/server'
 import { BackendError, fetchBackend } from '@/lib/backend'
 import { optionalActor } from '@/lib/auth/server'
@@ -38,6 +40,43 @@ export async function proxyChatflow(request: NextRequest) {
   for (const name of ['content-type', 'accept']) {
     const value = request.headers.get(name)
     if (value) { headers.set(name, value) }
+  }
+  // Azure appends the actual connecting IP on the right; earlier values can be forged.
+  const contextSecret = process.env.FEEDBACK_CONTEXT_SECRET
+  const captureContext = /\/responses(?:\/stream)?$/.test(path)
+  if (captureContext && contextSecret) {
+    const onVercel = process.env.VERCEL === '1'
+    const onAzure = Boolean(process.env.CONTAINER_APP_NAME)
+    const ip = (onVercel
+      ? request.headers.get('x-vercel-forwarded-for')
+      : onAzure ? request.headers.get('x-forwarded-for')?.split(',').at(-1) : '')?.trim() || ''
+    if (isIP(ip)) {
+      const context: Record<string, string> = { ip, source: onVercel ? 'vercel-ip-geolocation' : 'azure-ingress' }
+      if (onVercel) {
+        context.country = request.headers.get('x-vercel-ip-country') || ''
+        context.region = request.headers.get('x-vercel-ip-country-region') || ''
+        context.city = request.headers.get('x-vercel-ip-city') || ''
+      } else {
+        try {
+          // Best effort only: timeout/failure must not prevent sending the user's message.
+          const geo = await fetch(`https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`, {
+            signal: AbortSignal.timeout(1200), cache: 'no-store', redirect: 'error',
+          })
+          if (geo.ok) {
+            const data = await geo.json()
+            if (data.ip === ip) {
+              for (const key of ['country', 'region', 'city']) {
+                if (typeof data[key] === 'string') { context[key] = data[key].slice(0, 200) }
+              }
+              context.source = 'geojs-ip-geolocation'
+            }
+          }
+        } catch { /* Retain the IP even when geolocation is unavailable. */ }
+      }
+      const encoded = JSON.stringify(context)
+      headers.set('x-xiaoan-feedback-context', encoded)
+      headers.set('x-xiaoan-feedback-signature', createHmac('sha256', contextSecret).update(encoded).digest('hex'))
+    }
   }
   const cookies = request.cookies.getAll().filter(cookie => cookieNames.has(cookie.name))
   if (cookies.length) { headers.set('Cookie', cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')) }

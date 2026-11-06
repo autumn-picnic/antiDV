@@ -70,6 +70,13 @@ jobs:
             --tag "$IMAGE" .
           docker push "$IMAGE"
 
+      - name: Bind feedback metadata signature secret
+        run: |
+          identity=$(az containerapp show -n xiaoan-web -g xiaoan-pilot-rg --query 'keys(identity.userAssignedIdentities)[0]' -o tsv)
+          test -n "$identity"
+          az containerapp secret set -n xiaoan-web -g xiaoan-pilot-rg \
+            --secrets "feedback-context-secret=keyvaultref:https://xiaoan-hd5dc8-kv.vault.azure.net/secrets/xiaoan-feedback-context-secret,identityref:$identity" --output none
+
       - name: Update existing web container
         env:
           IMAGE: xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${{ github.sha }}
@@ -80,6 +87,7 @@ jobs:
             --resource-group xiaoan-pilot-rg \
             --container-name web \
             --image "$IMAGE" \
+            --set-env-vars FEEDBACK_CONTEXT_SECRET=secretref:feedback-context-secret \
             --set-env-vars AZURE_SPEECH_KEY=secretref:azure-speech-key AZURE_SPEECH_REGION=japaneast \
             --output none
 

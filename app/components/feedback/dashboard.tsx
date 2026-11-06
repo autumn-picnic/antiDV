@@ -1,14 +1,27 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import DebugPanel from '@/app/components/chat/debug-panel'
+import type { ChatDebug } from '@/types/chatflow'
 import SpeechRecordings from './speech-recordings'
 import { collectFeedbackExport, downloadFeedbackWorkbook } from './export'
 import type { ExportFailure } from './export'
 
-interface Summary { id: string, userId: string | null, turnCount: number, reviewCount: number }
-interface Turn { number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
+interface RequestContext { started_at?: number, completed_at?: number, ip?: string, country?: string, region?: string, city?: string }
+interface Summary { createdAt?: number, id: string, userId: string | null, turnCount: number, reviewCount: number }
+interface Turn { debug?: ChatDebug, requestContext?: RequestContext, number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
 interface Contact { id: string, createdAt: string, message: string, name: string | null, phone: string | null, wechat: string | null, email: string | null }
 interface Page<T> { items: T[], nextOffset: number | null }
+
+function formatTime(value?: number) {
+  return value ? `${new Date(value * 1000).toLocaleString('zh-CN', { timeZone: 'Asia/Hong_Kong', hour12: false })} (UTC+8)` : '未记录'
+}
+
+function locationLabel(context?: RequestContext) {
+  return [context?.country, context?.region, context?.city].filter(Boolean).map(value => {
+    try { return decodeURIComponent(value!) } catch { return value }
+  }).join(' / ') || '未取得'
+}
 
 export default function FeedbackDashboard() {
   const [conversations, setConversations] = useState<Page<Summary>>({ items: [], nextOffset: null })
@@ -137,6 +150,7 @@ export default function FeedbackDashboard() {
           <button type='button' className={`${button} w-full text-left ${selected === item.id ? 'bg-orange-100' : 'bg-white'}`} onClick={() => { setSelected(item.id); setTurnOffset(0) }}>
             <span className='block break-all'>会话 {item.id.slice(0, 8)}</span>
             <span className='block break-all text-xs'>{item.userId || '游客'}</span>
+            <span className='block text-xs'>创建时间：{formatTime(item.createdAt)}</span>
             <span className='block text-xs'>{item.turnCount} 轮对话 · {item.reviewCount} 条评价</span>
           </button>
         </li>)}</ul>
@@ -151,6 +165,13 @@ export default function FeedbackDashboard() {
         {selected && !loadingTurns && !turns.items.length && <p>本页没有已完成的对话轮次。</p>}
         {turns.items.map(turn => <article key={turn.responseId} className='mb-5 rounded-lg border border-gray-200 bg-white p-4'>
           <h2 className='font-semibold'>第 {turn.number} 轮</h2>
+          <dl className='mt-2 space-y-1 break-words text-sm text-gray-600'>
+            <div><dt className='inline'>对话开始：</dt><dd className='inline'>{formatTime(turn.requestContext?.started_at)}</dd></div>
+            <div><dt className='inline'>回答完成：</dt><dd className='inline'>{formatTime(turn.requestContext?.completed_at)}</dd></div>
+            <div><dt className='inline'>用户 IP：</dt><dd className='inline'>{turn.requestContext?.ip || '未取得'}</dd></div>
+            <div><dt className='inline'>IP 推测地点：</dt><dd className='inline'>{locationLabel(turn.requestContext)}</dd></div>
+          </dl>
+          {turn.debug ? <DebugPanel debug={turn.debug} /> : <p className='mt-2 text-sm text-gray-600'>本轮未留存 Debug 数据</p>}
           <p className='mt-3 whitespace-pre-wrap break-words'><strong>用户：</strong>{turn.question}</p>
           <p className='mt-3 whitespace-pre-wrap break-words'><strong>小安：</strong>{turn.answer}</p>
           <div className='mt-4 border-t pt-3'>
