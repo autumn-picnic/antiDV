@@ -88,7 +88,7 @@ jobs:
             --container-name web \
             --image "$IMAGE" \
             --set-env-vars FEEDBACK_CONTEXT_SECRET=secretref:feedback-context-secret \
-            --set-env-vars AZURE_SPEECH_KEY=secretref:azure-speech-key AZURE_SPEECH_REGION=japaneast \
+              AZURE_SPEECH_KEY=secretref:azure-speech-key AZURE_SPEECH_REGION=japaneast \
             --output none
 
       - name: Verify deployed revision
@@ -98,7 +98,8 @@ jobs:
             ready=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query properties.latestReadyRevisionName -o tsv)
             image=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'properties.template.containers[0].image' -o tsv)
             containers=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'length(properties.template.containers)' -o tsv)
-            if [[ "$latest" == "$ready" && "$containers" == "1" && "$image" == "xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${GITHUB_SHA}" ]]; then
+            feedback_secret=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query "properties.template.containers[0].env[?name=='FEEDBACK_CONTEXT_SECRET'].secretRef | [0]" -o tsv)
+            if [[ "$feedback_secret" == "feedback-context-secret" && "$latest" == "$ready" && "$containers" == "1" && "$image" == "xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${GITHUB_SHA}" ]]; then
               echo "Healthy revision: $latest"
               exit 0
             fi
