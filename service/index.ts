@@ -1,8 +1,9 @@
 import { createParser } from 'eventsource-parser'
 import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationView, GuardDiagnostic } from '../types/chatflow'
+import type { FailureInput } from '../lib/feedback/failure-validation'
 
 export class ChatApiError extends Error {
-  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic, public fallback?: FixedFallback) {
+  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic, public code?: string, public fallback?: FixedFallback) {
     super(message)
   }
 }
@@ -35,7 +36,7 @@ async function request(path: string, init: RequestInit = {}) {
     if (response.status === 503 && response.headers.get('content-type')?.includes('application/json')) {
       const body = await response.json().catch(() => null)
       const fallback = fixedFallback(body?.detail ?? body)
-      if (fallback) { throw new ChatApiError(response.status, fallback.message, undefined, undefined, fallback) }
+      if (fallback) { throw new ChatApiError(response.status, fallback.message, undefined, undefined, undefined, fallback) }
     }
     await response.body?.cancel()
     throw new ChatApiError(response.status, httpMessage(response.status))
@@ -157,7 +158,8 @@ export async function readChatStream(
         completed = { ...data, debug }
         break
       case 'error':
-        throw new ChatApiError(503, fixedFallback(data)?.message || '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data), fixedFallback(data))
+        throw new ChatApiError(503, fixedFallback(data)?.message || '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data),
+          ['storage_unavailable', 'account_disabled', 'conversation_conflict', 'service_unavailable'].includes(data.code) ? data.code : undefined, fixedFallback(data))
       default:
         throw new ChatApiError(502, '回复事件顺序无效', responseId)
     }
@@ -206,14 +208,14 @@ export async function sendChatMessage(id: string, message: string, callbacks: St
 }
 
 export async function fetchReviews(conversationId: string, signal?: AbortSignal): Promise<Record<string, { score: number, comment: string }>> {
-  const response = await fetch(`/api/reviews?conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'include', cache: 'no-store', signal })
+  const response = await fetch(`/v1/reviews?conversationId=${encodeURIComponent(conversationId)}`, { credentials: 'include', cache: 'no-store', signal })
   if (!response.ok) { throw new ChatApiError(response.status, '评价暂时无法读取') }
   const data = await response.json()
   return Object.fromEntries(data.items.map((item: { responseId: string, score: number, comment: string }) => [item.responseId, { score: item.score, comment: item.comment }]))
 }
 
 export async function saveReview(conversationId: string, responseId: string, review: { score: number, comment: string }) {
-  const response = await fetch('/api/reviews', {
+  const response = await fetch('/v1/reviews', {
     method: 'POST',
     credentials: 'include',
     cache: 'no-store',
@@ -221,4 +223,13 @@ export async function saveReview(conversationId: string, responseId: string, rev
     body: JSON.stringify({ conversationId, responseId, ...review }),
   })
   if (!response.ok) { throw new ChatApiError(response.status, response.status === 401 ? '登录已失效，请重新登录' : '评价未保存，请重试') }
+}
+
+export async function saveChatFailure(failure: FailureInput) {
+  const response = await fetch('/api/feedback/failures', {
+    method: 'POST', credentials: 'include', cache: 'no-store', keepalive: true,
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(failure),
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!response.ok) { throw new Error('失败记录暂未保存') }
 }

@@ -36,6 +36,8 @@ const nextConfig = {
         source: '/chat(.*)',
         headers: [
           { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+          // Only the chat's own origin can request microphone access, after a user gesture.
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), payment=()' },
         ],
       },
     ]

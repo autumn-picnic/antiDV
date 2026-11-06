@@ -1,0 +1,23 @@
+{
+  "text": "在院长者面前唱错歌词，又说错歌名。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 6700000,
+    "Duration": 40400000,
+    "DisplayText": "在院长者面前唱错歌词，又说错歌名。",
+    "NBest": [
+      {
+        "Confidence": 0.7066041,
+        "Lexical": "在 院 长 者 面 前 唱 错 歌 词 又 说 错 歌 名",
+        "ITN": "在 院 长 者 面 前 唱 错 歌 词 又 说 错 歌 名",
+        "MaskedITN": "",
+        "Display": "在院长者面前唱错歌词，又说错歌名。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "qingdao_dialect_3",
+  "engine": "azure",
+  "wall_seconds": 1.766
+}

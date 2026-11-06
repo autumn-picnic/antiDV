@@ -1,0 +1,14 @@
+{
+  "text": "产品相关特性与剧情设定较为吻合。",
+  "language": "Chinese",
+  "response": [
+    "Chinese",
+    "产品相关特性与剧情设定较为吻合。",
+    null,
+    ""
+  ],
+  "status": "success",
+  "sample_id": "chengdu_dialect_2",
+  "engine": "qwen",
+  "wall_seconds": 6.478
+}

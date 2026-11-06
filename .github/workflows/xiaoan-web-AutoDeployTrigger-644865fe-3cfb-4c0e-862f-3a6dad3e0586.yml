@@ -39,14 +39,22 @@ jobs:
         run: |
           az containerapp show -n xiaoan-web -g xiaoan-pilot-rg -o json |
             jq -e '
-              .properties.configuration.ingress.fqdn as $fqdn |
+              .location as $location |
+              .properties.configuration.secrets as $secrets |
+              .properties.configuration.ingress as $ingress |
               .properties.template.containers[0].env as $env |
+              $location == "Japan East" and
+              ([$secrets[] | select(.name == "azure-speech-key")] | length) == 1 and
+              ([$env[] | select(.name == "CHATFLOW_DATABASE_URL" and
+                .secretRef == "feedback-database-url")] | length) == 1 and
               ([$env[] | select(.name == "CLERK_SECRET_KEY" and
                 .secretRef == "clerk-secret-key")] | length) == 1 and
               ([$env[] | select(.name == "BACKEND_API_URL" and
                 .value == "http://xiaoan-api")] | length) == 1 and
               ([$env[] | select(.name == "FRONTEND_ORIGIN" and
-                .value == ("https://" + $fqdn))] | length) == 1
+                (.value == ("https://" + $ingress.fqdn) or
+                  .value == "https://xiaoan.app" and
+                  ([$ingress.customDomains[]? | select(.name == "xiaoan.app")] | length) == 1))] | length) == 1
             ' >/dev/null
 
       - name: Login to Azure Container Registry
@@ -62,6 +70,13 @@ jobs:
             --tag "$IMAGE" .
           docker push "$IMAGE"
 
+      - name: Bind feedback metadata signature secret
+        run: |
+          identity=$(az containerapp show -n xiaoan-web -g xiaoan-pilot-rg --query 'keys(identity.userAssignedIdentities)[0]' -o tsv)
+          test -n "$identity"
+          az containerapp secret set -n xiaoan-web -g xiaoan-pilot-rg \
+            --secrets "feedback-context-secret=keyvaultref:https://xiaoan-hd5dc8-kv.vault.azure.net/secrets/xiaoan-feedback-context-secret,identityref:$identity" --output none
+
       - name: Update existing web container
         env:
           IMAGE: xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${{ github.sha }}
@@ -72,6 +87,8 @@ jobs:
             --resource-group xiaoan-pilot-rg \
             --container-name web \
             --image "$IMAGE" \
+            --set-env-vars FEEDBACK_CONTEXT_SECRET=secretref:feedback-context-secret \
+              AZURE_SPEECH_KEY=secretref:azure-speech-key AZURE_SPEECH_REGION=japaneast \
             --output none
 
       - name: Verify deployed revision
@@ -81,7 +98,8 @@ jobs:
             ready=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query properties.latestReadyRevisionName -o tsv)
             image=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'properties.template.containers[0].image' -o tsv)
             containers=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'length(properties.template.containers)' -o tsv)
-            if [[ "$latest" == "$ready" && "$containers" == "1" && "$image" == "xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${GITHUB_SHA}" ]]; then
+            feedback_secret=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query "properties.template.containers[0].env[?name=='FEEDBACK_CONTEXT_SECRET'].secretRef | [0]" -o tsv)
+            if [[ "$feedback_secret" == "feedback-context-secret" && "$latest" == "$ready" && "$containers" == "1" && "$image" == "xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${GITHUB_SHA}" ]]; then
               echo "Healthy revision: $latest"
               exit 0
             fi

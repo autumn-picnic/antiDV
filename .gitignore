@@ -63,3 +63,6 @@ yarn.lock
 # Generated Python tool caches
 __pycache__/
 *.py[cod]
+
+# Isolated local backend database and runtime artifacts
+.local-backend/

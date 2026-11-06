@@ -1,0 +1,584 @@
+/* stylelint-disable no-descending-specificity, no-duplicate-selectors -- Final responsive redesign overrides the existing chat stylesheet in cascade order. */
+
+/* Approved XiaoAn Chat layout: brand tokens and shadcn Chat composition. */
+.figma-chat-shell {
+  background: #fbf9f7;
+  color: #4a4238;
+}
+
+.figma-chat-shell .chat-topbar {
+  min-height: 72px;
+  height: 72px;
+  padding: 14px 230px 14px 20px;
+  border-bottom: 1px solid #e6ddd5;
+}
+
+.chat-topbar-brand {
+  font-size: 19px;
+}
+
+.chat-center-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.figma-chat-shell .chat-scroll-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.figma-chat-shell .chat-content-container {
+  max-width: 768px;
+  padding: 24px 32px !important;
+  flex-grow: 1;
+}
+
+.chat-surface-welcome {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.figma-chat-shell .chat-welcome {
+  margin: 18px auto auto;
+  padding: 16px 0 24px;
+}
+
+.chat-welcome-avatar {
+  width: 168px !important;
+  height: 168px !important;
+  margin: auto;
+}
+
+.figma-chat-shell .chat-welcome h2 {
+  color: #454061;
+  font-size: 25px;
+  margin: 18px 0 10px;
+}
+
+.chat-welcome p {
+  color: #655649;
+  line-height: 1.9;
+  font-size: 14px;
+}
+
+.chat-composer-slot {
+  flex-shrink: 0;
+  padding: 12px 24px 16px;
+  max-height: 50dvh;
+  overflow: auto;
+}
+
+.figma-chat-shell .chat-composer-dock {
+  position: static !important;
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+  background: none;
+}
+
+.chat-composer-inner {
+  max-width: 680px;
+  margin: auto;
+}
+
+.figma-chat-shell .chat-starters {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.figma-chat-shell .chat-starters button {
+  flex: 0 1 108px;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid #e6ddd5;
+  border-radius: 14px;
+  background: #fffefd;
+  white-space: nowrap;
+}
+
+.figma-chat-shell .chat-composer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 58px;
+  padding: 6px 8px 6px 16px !important;
+  border: 1px solid #d5c9bf;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 4px 16px #36271706;
+}
+
+.figma-chat-shell .chat-composer textarea {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 0 !important;
+  line-height: 24px;
+  font-size: 14px;
+}
+
+.figma-chat-shell .chat-composer > .absolute {
+  position: static;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.figma-chat-shell .chat-microphone {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #655649;
+  touch-action: none;
+  user-select: none;
+}
+
+.figma-chat-shell .chat-send {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+}
+
+.chat-composer-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.chat-composer-footer .chat-disclaimer {
+  font-size: 11px;
+  color: #655649;
+  margin: 0;
+}
+
+.chat-composer-footer a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: #713b20;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.chat-privacy-dialog-host > div > :not(dialog) {
+  display: none;
+}
+
+.chat-answer-bubble {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.chat-answer-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: #655649;
+  font-size: 13px;
+}
+
+.chat-answer-number {
+  color: #817365;
+  font-size: 12px;
+}
+
+.figma-chat-shell .chat-answer-bubble .streamdown-markdown {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #4a4238;
+}
+
+.figma-chat-shell .chat-answer-bubble .streamdown-markdown > div > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.figma-chat-shell .chat-answer-bubble .streamdown-markdown > div > * + * {
+  margin-top: 0.625em;
+}
+
+.chat-answer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.figma-chat-shell .chat-answer-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #655649;
+  font-size: 13px;
+}
+
+.chat-answer-action:hover {
+  background: #f5e6d3;
+}
+
+.chat-copy-status {
+  margin: 0;
+  color: #655649;
+  font-size: 12px;
+}
+
+.chat-answer-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.figma-chat-shell .chat-answer-suggestions button {
+  min-height: 44px;
+  height: auto;
+  padding: 8px 14px;
+  border: 1px solid #e6ddd5;
+  border-radius: 24px;
+  background: #fffefd;
+  color: #655649;
+  font-size: 13px;
+  white-space: normal;
+  text-align: left;
+}
+
+.chat-question-bubble {
+  background: #f5e6d3 !important;
+  border: 0 !important;
+  border-radius: 18px 18px 4px;
+  padding: 12px 18px;
+}
+
+.sidebar-account {
+  margin-top: auto;
+  border-top: 1px solid #e6ddd5;
+  padding: 16px 12px;
+}
+
+.sidebar-account .chat-account-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.sidebar-account .chat-account-guest > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  position: static;
+}
+
+.sidebar-account .chat-account-guest a, .sidebar-account .chat-account-guest button {
+  font-size: 12px;
+  padding: 6px;
+  border: 0;
+}
+
+.chat-center-column .read-latest {
+  font-size: 12px;
+}
+
+@media (width <= 767px) {
+  .figma-chat-shell .chat-topbar {
+    padding: 14px 220px 14px 14px;
+  }
+
+  .chat-topbar-brand {
+    gap: 6px;
+    font-size: 17px;
+  }
+
+  .figma-chat-shell .chat-content-container {
+    padding: 18px 20px !important;
+  }
+
+  .chat-welcome-avatar {
+    width: 136px !important;
+    height: 136px !important;
+  }
+
+  .figma-chat-shell .chat-welcome h2 {
+    font-size: 22px;
+  }
+
+  .chat-composer-slot {
+    padding: 8px 16px 10px;
+  }
+
+  .figma-chat-shell .chat-starters {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .figma-chat-shell .chat-starters button {
+    width: 100%;
+    font-size: 12px;
+    padding: 8px 2px;
+  }
+
+  .figma-chat-shell .chat-composer textarea {
+    font-size: 13px;
+  }
+
+  .chat-composer-footer {
+    gap: 4px;
+  }
+
+  .chat-composer-footer .chat-disclaimer {
+    font-size: 10px;
+  }
+}
+
+@media (height <= 600px) {
+  .chat-welcome-avatar {
+    width: 88px !important;
+    height: 88px !important;
+  }
+
+  .figma-chat-shell .chat-welcome {
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .figma-chat-shell .chat-welcome h2 {
+    margin: 8px 0;
+    font-size: 20px;
+  }
+
+  .chat-welcome p {
+    margin-bottom: 0;
+  }
+
+  .chat-composer-slot {
+    max-height: 55dvh;
+  }
+}
+
+.figma-chat-shell .chat-welcome > .chat-welcome-avatar {
+  width: 168px !important;
+  height: 168px !important;
+  border: 0;
+  box-shadow: none;
+  margin-bottom: 18px;
+}
+
+.figma-chat-shell .chat-send span {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: #795035;
+}
+
+.figma-chat-shell .chat-send svg {
+  width: 22px;
+  height: 22px;
+}
+
+.figma-chat-shell .chat-starters button {
+  box-shadow: none;
+}
+
+@media (width <= 767px) {
+  .figma-chat-shell .chat-welcome > .chat-welcome-avatar {
+    width: 136px !important;
+    height: 136px !important;
+  }
+}
+
+@media (height <= 600px) {
+  .figma-chat-shell .chat-welcome > .chat-welcome-avatar {
+    width: 88px !important;
+    height: 88px !important;
+  }
+}
+
+/* Compact history rows retain full-size selection and delete targets. */
+.figma-chat-shell #history-content nav > div > .group {
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.figma-chat-shell #history-content nav > div + div {
+  margin-top: 0;
+}
+
+.figma-chat-shell .history-select {
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.figma-chat-shell .history-select > svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.figma-chat-shell .chat-question-bubble {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.figma-chat-shell .quick-chip {
+  font-weight: 400;
+  box-shadow: none;
+}
+
+.figma-chat-shell #history-content {
+  height: 100%;
+  min-height: 0;
+}
+
+.figma-chat-shell #history-content nav {
+  flex-shrink: 1;
+}
+
+.figma-chat-shell .sidebar-account {
+  margin-top: 0;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
+.figma-chat-shell #history-content > div:last-child {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.figma-chat-shell .history-select,
+.figma-chat-shell #history-content nav button {
+  min-height: 40px;
+}
+
+.chat-account-menu {
+  position: fixed;
+  top: 12px;
+  right: 148px;
+  z-index: 51;
+}
+
+.chat-account-menu > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid #d5c9bf;
+  border-radius: 50%;
+  color: #655649;
+  background: #fbf9f7;
+}
+
+.chat-account-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.chat-account-menu img {
+  border-radius: 50%;
+}
+
+.chat-account-popover {
+  position: absolute;
+  right: 0;
+  top: 52px;
+  width: min(260px, calc(100vw - 32px));
+  max-height: 65dvh;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #e6ddd5;
+  border-radius: 16px;
+  background: #fffdfb;
+  box-shadow: 0 4px 16px #4c494710;
+  font-size: 13px;
+}
+
+.chat-account-popover p {
+  margin: 0 0 8px;
+  color: #655649;
+}
+
+.chat-account-popover :is(a, button) {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  border-radius: 8px;
+}
+
+.chat-account-popover :is(a, button):hover {
+  background: #f5e6d3;
+}
+
+.figma-chat-shell .chat-toolbar {
+  right: 200px;
+}
+
+@media (width <= 767px) {
+  .chat-toolbar .chat-topbar-actions {
+    right: -184px;
+  }
+
+  .chat-account-popover {
+    right: -132px;
+  }
+
+  .chat-topbar-brand {
+    gap: 4px;
+    font-size: 14px;
+  }
+
+  .chat-topbar-brand > [role="img"] {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+/* Content keeps its natural height so alerts remain in the scroll range. */
+.figma-chat-shell .chat-content-container {
+  flex: 0 0 auto;
+  min-height: 100%;
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+.figma-chat-shell .chat-surface {
+  flex-shrink: 0;
+}
+
+.figma-chat-shell .chat-surface-welcome {
+  height: auto;
+}
+
+.figma-chat-shell .chat-scroll-area {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: 24px;
+}
+
+.figma-chat-shell .chat-content-container > [role="alert"] {
+  flex-shrink: 0;
+  overflow-wrap: anywhere;
+}

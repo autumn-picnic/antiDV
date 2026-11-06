@@ -3,15 +3,17 @@ import React from 'react'
 import Spinner from '@/app/components/base/spinner'
 
 export interface IButtonProps {
+  id?: string
   type?: string
   className?: string
   disabled?: boolean
   loading?: boolean
   children: React.ReactNode
-  onClick?: MouseEventHandler<HTMLDivElement>
+  onClick?: MouseEventHandler<HTMLButtonElement>
 }
 
 const Button: FC<IButtonProps> = ({
+  id,
   type,
   disabled,
   children,
@@ -33,14 +35,18 @@ const Button: FC<IButtonProps> = ({
   }
 
   return (
-    <div
+    <button
+      id={id}
+      type="button"
+      disabled={disabled || loading}
+      aria-busy={loading}
       className={`flex justify-center items-center content-center h-9 leading-5 rounded-lg px-4 py-2 text-base ${style} ${className && className}`}
-      onClick={disabled ? undefined : onClick}
+      onClick={onClick}
     >
       {children}
       {/* Spinner is hidden when loading is false */}
       <Spinner loading={loading} className='!text-white !h-3 !w-3 !border-2 !ml-1' />
-    </div>
+    </button>
   )
 }
 

@@ -1,0 +1,23 @@
+{
+  "text": "产品相关特性与剧情设定较为吻合。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 3100000,
+    "Duration": 31200000,
+    "DisplayText": "产品相关特性与剧情设定较为吻合。",
+    "NBest": [
+      {
+        "Confidence": 0.7669739,
+        "Lexical": "产 品 相 关 特 性 与 剧 情 设 定 较 为 吻 合",
+        "ITN": "产 品 相 关 特 性 与 剧 情 设 定 较 为 吻 合",
+        "MaskedITN": "",
+        "Display": "产品相关特性与剧情设定较为吻合。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "chengdu_dialect_2",
+  "engine": "azure",
+  "wall_seconds": 1.273
+}

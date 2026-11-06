@@ -147,31 +147,19 @@ test('cancel discards queued output and late crisis completion', async ({ page }
 })
 
 for (const safety of ['immediate_danger', 'self_harm']) {
-  test(`${safety} opens once, continue keeps text and focuses input`, async ({ page }) => {
+  test(`${safety} keeps the answer visible without opening a safety-pack dialog`, async ({ page }) => {
     await send(page)
     await emit(page, 0, 'start')
     await emit(page, 0, 'delta', { delta: '我们可以继续聊。' })
     await complete(page, safety)
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.getByRole('dialog').getByRole('button', { name: '快速离开此页面' })).toBeVisible()
-    await page.getByRole('button', { name: '我已安全，继续聊天' }).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: '确认退出并查看安全包' })).toHaveCount(0)
     await expect(page.getByText('我们可以继续聊。', { exact: true })).toBeVisible()
-    await expect(page.getByRole('textbox')).toBeFocused()
+    await expect(page.getByRole('textbox')).toBeEnabled()
+    await expect(page).toHaveURL(/\/chat$/)
     expect(await page.evaluate(() => window.smoothFixture.streams.length)).toBe(1)
   })
 }
-
-test('crisis exit opens honest safety-pack placeholder', async ({ page }) => {
-  await send(page)
-  await emit(page, 0, 'start')
-  await emit(page, 0, 'delta', { delta: '回答' })
-  await complete(page, 'immediate_danger')
-  await page.getByRole('button', { name: '确认退出并查看安全包' }).click()
-  await expect(page).toHaveURL(/\/safety-pack$/)
-  await expect(page.getByRole('heading', { name: '生存安全包' })).toBeVisible()
-  await expect(page.getByText('安全包链接尚未设置，这里暂时没有可查看的安全包内容。')).toBeVisible()
-})
 
 test('reduced motion displays complete chunk without animation delay', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })

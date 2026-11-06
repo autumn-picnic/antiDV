@@ -86,7 +86,7 @@ const LocaleLayout = async ({
             dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
           />
         </head>
-        <body className="h-full" style={{ backgroundColor: '#FBF8F4' }}>
+        <body className="h-full" style={{ backgroundColor: '#FBF8F4', fontFamily: '\'PingFang SC\', \'Noto Sans SC\', \'Microsoft YaHei\', system-ui, sans-serif' }}>
           <QuickExit />
           <div className="overflow-x-hidden w-full">
             <div className="w-full h-screen">

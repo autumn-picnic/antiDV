@@ -1,0 +1,23 @@
+{
+  "text": "自愿嫁给了他压根儿瞧不上的男人。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 8700000,
+    "Duration": 33600000,
+    "DisplayText": "自愿嫁给了他压根儿瞧不上的男人。",
+    "NBest": [
+      {
+        "Confidence": 0.77784467,
+        "Lexical": "自 愿 嫁 给 了 他 压 根 儿 瞧 不 上 的 男 人",
+        "ITN": "自 愿 嫁 给 了 他 压 根 儿 瞧 不 上 的 男 人",
+        "MaskedITN": "",
+        "Display": "自愿嫁给了他压根儿瞧不上的男人。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "zhengzhou_dialect_2",
+  "engine": "azure",
+  "wall_seconds": 1.598
+}

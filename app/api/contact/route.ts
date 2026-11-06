@@ -1,69 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import type { NextRequest } from 'next/server'
+import { requireActor } from '@/lib/auth/server'
+import { AccessError, accessResponse, assertSameOrigin } from '@/lib/auth/policy'
+import { createContact, listContacts } from '@/lib/feedback/contact-repository'
+import { pageOffset } from '@/lib/feedback/validation'
 
-const DATA_DIR = process.env.DATA_DIR || (process.env.NODE_ENV === 'production' ? '/tmp/adv-contacts' : path.join(process.cwd(), 'data'))
-const CONTACTS_FILE = path.join(DATA_DIR, 'contacts.jsonl')
-// Simple admin secret — set CONTACT_ADMIN_SECRET env var in production
-const ADMIN_SECRET = process.env.CONTACT_ADMIN_SECRET || 'xiao-an-admin'
-
-function ensureFile() {
-    if (!fs.existsSync(DATA_DIR)) { fs.mkdirSync(DATA_DIR, { recursive: true }) }
-    if (!fs.existsSync(CONTACTS_FILE)) { fs.writeFileSync(CONTACTS_FILE, '') }
-}
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json()
+        assertSameOrigin(request)
+        const text = await request.text()
+        if (text.length > 20000) { throw new AccessError(413, '留言内容过长') }
+        let body
+        try { body = JSON.parse(text) }
+        catch { throw new AccessError(400, '留言格式无效') }
+        if (!body || typeof body !== 'object' || Array.isArray(body)) { throw new AccessError(400, '留言格式无效') }
+        if (Object.keys(body).some(key => !['message', 'name', 'phone', 'wechat', 'email'].includes(key))) { throw new AccessError(400, '留言包含不支持的字段') }
         const { message, name, phone, wechat, email } = body
-
-        if (!message || typeof message !== 'string' || message.trim().length === 0) {
-            return NextResponse.json({ error: '留言内容不能为空' }, { status: 400 })
+        if (typeof message !== 'string' || !message.trim()) { throw new AccessError(400, '留言内容不能为空') }
+        if (Array.from(message.trim()).length > 2000) { throw new AccessError(400, '留言内容不超过 2000 字') }
+        for (const [key, max] of Object.entries({ name: 50, phone: 20, wechat: 50, email: 100 })) {
+            const value = body[key]
+            if (value != null && (typeof value !== 'string' || Array.from(value.trim()).length > max)) { throw new AccessError(400, '联系方式格式或长度无效') }
         }
-        if (message.trim().length > 2000) {
-            return NextResponse.json({ error: '留言内容不超过 2000 字' }, { status: 400 })
-        }
-
-        const record = {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            createdAt: new Date().toISOString(),
+        const record = await createContact({
             message: message.trim(),
-            name: (name || '').trim().slice(0, 50) || null,
-            phone: (phone || '').trim().slice(0, 20) || null,
-            wechat: (wechat || '').trim().slice(0, 50) || null,
-            email: (email || '').trim().slice(0, 100) || null,
-        }
-
-        ensureFile()
-        fs.appendFileSync(CONTACTS_FILE, JSON.stringify(record) + '\n', 'utf8')
-
-        return NextResponse.json({ success: true, id: record.id })
+            name: typeof name === 'string' ? name : '',
+            phone: typeof phone === 'string' ? phone : '',
+            wechat: typeof wechat === 'string' ? wechat : '',
+            email: typeof email === 'string' ? email : '',
+        })
+        return Response.json({ success: true, id: record.id }, { headers: { 'Cache-Control': 'no-store' } })
     }
-    catch (err: any) {
-        console.error('[contact POST]', err)
-        return NextResponse.json({ error: '服务器错误，请稍后再试' }, { status: 500 })
-    }
+    catch (error) { return accessResponse(error) }
 }
 
 export async function GET(request: NextRequest) {
-    const secret = request.nextUrl.searchParams.get('secret')
-    if (secret !== ADMIN_SECRET) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     try {
-        ensureFile()
-        const raw = fs.readFileSync(CONTACTS_FILE, 'utf8')
-        const records = raw
-            .split('\n')
-            .filter(Boolean)
-            .map(line => JSON.parse(line))
-            .reverse() // newest first
-
-        return NextResponse.json({ total: records.length, records })
+        const actor = await requireActor(true)
+        return Response.json(await listContacts(actor, pageOffset(request.nextUrl.searchParams.get('offset'))), { headers: { 'Cache-Control': 'no-store' } })
     }
-    catch (err: any) {
-        console.error('[contact GET]', err)
-        return NextResponse.json({ error: '服务器错误' }, { status: 500 })
-    }
+    catch (error) { return accessResponse(error) }
 }

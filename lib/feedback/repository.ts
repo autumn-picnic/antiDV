@@ -33,11 +33,13 @@ export async function adminConversations(actor: Actor, offset: number, conversat
   const client = await feedbackDatabase().connect()
   try {
     await client.query('BEGIN')
-    // No hidden state or debug payload is returned. Read audit is committed before returning data.
+    // Admin-only diagnostics; read audit is committed before returning data.
     const result = conversationId
       ? await client.query(`
           SELECT t.number, t.response_id AS "responseId", t.content->>'user' AS question,
             t.content->>'assistant' AS answer, t.content->>'safety_level' AS "safetyLevel",
+            t.content->'debug' AS debug,
+            t.content->'request_context' AS "requestContext",
             f.score, f.comment, f.updated_at AS "reviewedAt"
           FROM account_turns t JOIN account_conversations c ON c.id=t.conversation_id
           LEFT JOIN app_users u ON u.id=c.user_id

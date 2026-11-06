@@ -1,0 +1,23 @@
+{
+  "text": "炫技。不少游客询问几款电动车的售价。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 6700000,
+    "Duration": 40400000,
+    "DisplayText": "炫技。不少游客询问几款电动车的售价。",
+    "NBest": [
+      {
+        "Confidence": 0.75820804,
+        "Lexical": "炫 技 不 少 游 客 询 问 几 款 电 动 车 的 售 价",
+        "ITN": "炫 技 不 少 游 客 询 问 几 款 电 动 车 的 售 价",
+        "MaskedITN": "",
+        "Display": "炫技。不少游客询问几款电动车的售价。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "qingdao_dialect_1",
+  "engine": "azure",
+  "wall_seconds": 1.641
+}

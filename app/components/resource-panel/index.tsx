@@ -18,6 +18,14 @@ interface ResourceItem {
 
 const ALL_RESOURCES: ResourceItem[] = [
     {
+        id: 'safety-pack',
+        title: '生存安全包',
+        desc: '为自己的安全多做一点准备。查看不会清除聊天或浏览记录。',
+        href: '/safety-pack',
+        tags: ['安全', '准备'],
+        keywords: ['安全', '危险', '准备'],
+    },
+    {
         id: 'stories',
         title: '受害者故事',
         desc: '阅读走出困境的真实故事，她们也曾和你一样。',
@@ -43,7 +51,7 @@ const ALL_RESOURCES: ResourceItem[] = [
     },
     {
         id: 'psych-resources',
-        title: '心理资源支持库',
+        title: '家暴防治教育资源',
         desc: '家暴防治教育资源：书籍、文章、网站，助你理解与疗愈。',
         href: '/psych-resources',
         tags: ['心理', '疗愈'],
@@ -54,7 +62,7 @@ const ALL_RESOURCES: ResourceItem[] = [
 /* ─── Dynamic Matching Engine ───────────────────────────── */
 
 function matchResources(chatMessage: string): ResourceItem[] {
-    if (!chatMessage || chatMessage.trim() === '') return ALL_RESOURCES
+    if (!chatMessage || chatMessage.trim() === '') { return ALL_RESOURCES }
 
     const text = chatMessage.toLowerCase()
 
@@ -104,6 +112,7 @@ const IconClose = () => (
 )
 
 const resourceIcons: Record<string, React.ReactNode> = {
+    'safety-pack': <IconMapPin />,
     stories: <IconBook />,
     'docs-toolkit': <IconDoc />,
     resources: <IconMapPin />,
@@ -137,11 +146,11 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
     isCollapsed = false,
     onToggleCollapse,
 }) => {
-    const orderedResources = useMemo(() => matchResources(accumulatedAIText), [accumulatedAIText])
+    const orderedResources = ALL_RESOURCES
 
     // Determine which resources are "highlighted" (matched keywords)
     const matchedIds = useMemo(() => {
-        if (!accumulatedAIText || accumulatedAIText.trim() === '') return new Set<string>()
+        if (!accumulatedAIText || accumulatedAIText.trim() === '') { return new Set<string>() }
         const text = accumulatedAIText.toLowerCase()
         return new Set(
             ALL_RESOURCES
@@ -189,10 +198,11 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
                     <button
                         onClick={onToggleCollapse}
                         aria-label="展开资源面板"
+                        aria-expanded="false"
                         title="展开"
                         style={{
-                            width: 24,
-                            height: 24,
+                            width: 44,
+                            height: 44,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -274,8 +284,8 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
                                 aria-label="收起资源面板"
                                 title="收起"
                                 style={{
-                                    width: 24,
-                                    height: 24,
+                                    width: 44,
+                                    height: 44,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -445,6 +455,7 @@ const ResourcePanel: FC<ResourcePanelProps> = ({
                     })}
                 </div>
 
+                {!isMobileOverlay && <a href="#chat-input" style={{ padding: 12, color: '#713B20' }}>返回聊天输入框</a>}
                 {/* Footer */}
                 <div
                     style={{

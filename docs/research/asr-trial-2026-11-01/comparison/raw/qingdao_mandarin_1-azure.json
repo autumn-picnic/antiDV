@@ -1,0 +1,23 @@
+{
+  "text": "这是我国目前为数不多的国家级相关研究。",
+  "response": {
+    "RecognitionStatus": "Success",
+    "Offset": 9300000,
+    "Duration": 43100000,
+    "DisplayText": "这是我国目前为数不多的国家级相关研究。",
+    "NBest": [
+      {
+        "Confidence": 0.9278195,
+        "Lexical": "这 是 我 国 目 前 为 数 不 多 的 国 家 级 相 关 研 究",
+        "ITN": "这 是 我 国 目 前 为 数 不 多 的 国 家 级 相 关 研 究",
+        "MaskedITN": "",
+        "Display": "这是我国目前为数不多的国家级相关研究。"
+      }
+    ]
+  },
+  "locale": "zh-CN",
+  "status": "Success",
+  "sample_id": "qingdao_mandarin_1",
+  "engine": "azure",
+  "wall_seconds": 1.861
+}
