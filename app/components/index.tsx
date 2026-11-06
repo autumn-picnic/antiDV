@@ -20,6 +20,7 @@ import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
 import { BugAntIcon } from '@heroicons/react/24/outline'
 import { GuardSummary } from '@/app/components/chat/debug-panel'
+import FailureSupport from '@/app/components/chat/failure-support'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
 import '@/app/styles/figma-chat.css'
@@ -185,10 +186,8 @@ const Main: FC<IMainProps> = () => {
               {isResponding && <button type='button' onClick={stop} className='px-3 py-2 text-sm underline'>停止接收</button>}
               {failure && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
-                  <p>{failure.fallback?.message || failure.message}</p>
-                  {failure.fallback && <a href='/resources' className='mt-2 inline-block underline'>查看求助资源</a>}
+                  <FailureSupport fallback={failure.fallback} message={failure.message} query={failure.query} />
                   {debugEnabled && failure.guard && <p className="mt-2"><GuardSummary guard={failure.guard} /></p>}
-                  {failure.query && <p className='mt-2 whitespace-pre-wrap'>未完成的消息：{failure.query}</p>}
                   <button type='button' disabled={busy} onClick={() => void recover()} className='mr-4 mt-2 underline'>刷新会话记录</button>
                   {failure.query && !failure.needsRecovery && <button type='button' disabled={busy} onClick={retry} className='mt-2 underline'>重试这条消息</button>}
                 </div>

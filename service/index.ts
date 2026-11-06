@@ -7,13 +7,15 @@ export class ChatApiError extends Error {
   }
 }
 
-interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string }
+interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string, variant?: 'neutral' | 'general' | 'self_harm' | 'medical', details?: string }
 
 function fixedFallback(value: unknown): FixedFallback | undefined {
   const fallback = (value as { fallback?: Partial<FixedFallback> } | null)?.fallback
   if (fallback?.kind !== 'fixed_support' || typeof fallback.version !== 'string'
     || typeof fallback.message !== 'string' || !fallback.message.trim()
     || fallback.resource_url !== 'https://xiaoan.app/resources') { return undefined }
+  if (fallback.variant !== undefined && !['neutral', 'general', 'self_harm', 'medical'].includes(fallback.variant)) { return undefined }
+  if (fallback.details !== undefined && typeof fallback.details !== 'string') { return undefined }
   return fallback as FixedFallback
 }
 
