@@ -6,9 +6,9 @@ const Module = require('node:module')
 const ts = require('typescript')
 
 class ChatApiError extends Error {
-  constructor(status, message, responseId, guard, code) {
+  constructor(status, message, responseId, guard, code, fallback) {
     super(message)
-    Object.assign(this, { status, responseId, guard, code })
+    Object.assign(this, { status, responseId, guard, code, fallback })
   }
 }
 
@@ -111,4 +111,22 @@ test('report persistence failure is visible while preserving the original retry 
   await new Promise(resolve => setImmediate(resolve))
   assert.match(harness.failure().message, /失败记录暂未保存/)
   assert.equal(harness.failure().query, '保留输入')
+})
+
+test('confirmed service fallback unlocks next input while preserving failed query', async () => {
+  const error = new ChatApiError(503, '固定支持', 'r1', undefined, 'upstream_content_filtered', { can_continue: true })
+  const harness = await chatHarness({ sendError: error })
+  await harness.hook.send('原问题')
+  assert.equal(harness.failure().needsRecovery, false)
+  assert.equal(harness.failure().query, '原问题')
+  await harness.hook.send('我现在只需要了解支持渠道')
+  assert.equal(harness.reports.length, 2)
+})
+
+test('lost connection or unconfirmed fallback still requires record reconciliation', async () => {
+  for (const error of [new ChatApiError(0, '连接中断', 'r1'), new ChatApiError(503, '存储结果不明', 'r1', undefined, 'storage_unavailable', { can_continue: false })]) {
+    const harness = await chatHarness({ sendError: error })
+    await harness.hook.send('原问题')
+    assert.equal(harness.failure().needsRecovery, true)
+  }
 })

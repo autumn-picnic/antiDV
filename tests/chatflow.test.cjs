@@ -676,3 +676,9 @@ test('Azure metadata uses the platform-appended IP and keeps IP when lookup fail
     }
   }
 })
+
+test('SSE only accepts a boolean continuation confirmation from backend', async () => {
+  const fallback = { kind: 'fixed_support', version: 'v2', message: '固定支持', resource_url: 'https://xiaoan.app/resources', can_continue: true }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => error.fallback?.can_continue === true)
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback: { ...fallback, can_continue: 'true' } })), 'c1', { onDelta() {} }), error => !error.fallback)
+})

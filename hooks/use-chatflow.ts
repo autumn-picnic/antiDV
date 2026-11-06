@@ -241,7 +241,8 @@ export default function useChatflow({ authReady, signedIn, onCompleted }: { auth
         query: message,
         conversationId: expired ? undefined : id,
         responseId: responseId || (error instanceof ChatApiError ? error.responseId : undefined),
-        needsRecovery: startedGeneration && !expired,
+        needsRecovery: startedGeneration && !expired && !(error instanceof ChatApiError
+          && error.status === 503 && error.fallback?.can_continue === true),
         guard: error instanceof ChatApiError ? error.guard : undefined,
         fallback: error instanceof ChatApiError ? error.fallback : undefined,
       })
