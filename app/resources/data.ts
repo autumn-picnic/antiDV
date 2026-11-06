@@ -1,4 +1,5 @@
 export interface Resource {
+  isOfficial?: boolean
   name: string
   description: string
   hotline?: string
@@ -26,6 +27,7 @@ export const categories: ResourceCategory[] = [
     resources: [
       {
         name: '全国妇女维权热线',
+        isOfficial: true,
         description: '全国妇联设立的妇女维权公益服务热线，提供法律咨询、心理疏导、婚姻家庭纠纷调解等服务。',
         hotline: '12338',
         hours: '各地妇联规定不同，多为工作时间',
@@ -33,6 +35,7 @@ export const categories: ResourceCategory[] = [
       },
       {
         name: '报警电话',
+        isOfficial: true,
         description: '遇到人身安全威胁时，请立即拨打报警电话。',
         hotline: '110',
         hours: '24小时',
@@ -40,6 +43,7 @@ export const categories: ResourceCategory[] = [
       },
       {
         name: '法律援助中心热线',
+        isOfficial: true,
         description: '提供法律咨询、诉讼代理和非诉讼代理等法律援助服务。',
         hotline: '12348',
         hours: '各地司法局规定不同，多为工作时间',
@@ -48,6 +52,7 @@ export const categories: ResourceCategory[] = [
       },
       {
         name: '儿童救助保护热线',
+        isOfficial: true,
         description: '提供儿童救助保护相关政策法规咨询、儿童心理问题疏导、帮扶转介、受理儿童生活困难问题等服务。',
         hotline: '12349',
         hours: '各地民政部门规定不同',
@@ -273,17 +278,20 @@ export const categories: ResourceCategory[] = [
     resources: [
       {
         name: '当地民政局临时庇护场所',
+        isOfficial: true,
         description: '县级或设区的市级人民政府可单独或依托救助管理机构设立临时庇护场所，提供食宿等临时生活帮助、隐私保护、心理辅导及司法救助转介服务。',
         hotline: '12345（政务服务热线，可咨询当地庇护所信息）',
         region: '各地',
       },
       {
         name: '居民委员会 / 村民委员会',
+        isOfficial: true,
         description: '家庭暴力受害人及其法定代理人、近亲属，可以向居民委员会、村民委员会投诉、反映或求助。有关单位接到投诉后应当给予帮助、处理。',
         region: '各地',
       },
       {
         name: '当地妇女联合会',
+        isOfficial: true,
         description: '妇联是维护妇女合法权益的重要机构，可提供协调、呼吁等服务性工作。建议先想清楚自己的需求和目的，说明情况时抓住关键要点。',
         hotline: '12338',
         region: '各地',

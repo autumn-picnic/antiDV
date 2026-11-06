@@ -3,6 +3,14 @@
 import Link from 'next/link'
 import { categories } from './data'
 
+// Temporarily show only official/public support channels and omit empty categories.
+const visibleCategories = categories
+  .map(category => ({
+    ...category,
+    resources: category.resources.filter(resource => resource.isOfficial === true),
+  }))
+  .filter(category => category.resources.length > 0)
+
 /* ── Inline SVG Icons ── */
 const SvgPhone = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-label="电话"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
@@ -91,7 +99,7 @@ export default function ResourcesPage() {
       <main style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px 64px' }}>
         {/* Category nav — text links with dot separators */}
         <nav style={{ marginBottom: 40, textAlign: 'center' }}>
-          {categories.map((cat, i) => (
+          {visibleCategories.map((cat, i) => (
             <span key={cat.id}>
               {i > 0 && <span style={{ color: '#E6DDD5', margin: '0 10px' }}>·</span>}
               <a
@@ -112,7 +120,7 @@ export default function ResourcesPage() {
         </nav>
 
         {/* Categories */}
-        {categories.map(cat => (
+        {visibleCategories.map(cat => (
           <section key={cat.id} id={cat.id} style={{ marginBottom: 48 }}>
             <h2 style={{
               fontFamily: '\'Noto Serif SC\', serif',
