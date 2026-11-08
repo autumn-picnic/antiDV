@@ -162,7 +162,7 @@
 
 .chat-starters {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -619,6 +619,15 @@
 .figma-chat-shell :is(button, a, summary, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid #713B20;
   outline-offset: 3px;
+}
+
+/* The rounded composer already provides the input's focus indicator. */
+.figma-chat-shell .chat-composer textarea,
+.figma-chat-shell .chat-composer textarea:focus,
+.figma-chat-shell .chat-composer textarea:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
 }
 
 .figma-chat-shell button {
