@@ -8,7 +8,7 @@ export function annotateLegalReferences(children: ReactNode): ReactNode {
   return Children.map(children, (child) => {
     if (typeof child === 'string') {
       return child.split(/((?:（《[^（）()\n]+》[^（）()\n]*）|\(《[^（）()\n]+》[^（）()\n]*\))。?)/g).map((text, index) =>
-        /^(?:（|\()《/.test(text)
+        index % 2 === 1
           ? <span key={index} className={styles.reference} role="note" aria-label="法条出处">{text}</span>
           : text,
       )

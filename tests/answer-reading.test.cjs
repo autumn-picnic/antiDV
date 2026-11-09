@@ -25,7 +25,7 @@ test('three legal references become small notes without changing wording or orde
   assert.equal(html.replace(/<[^>]+>/g, ''), text)
 })
 test('streaming partial references and normal parentheses remain inline', () => {
-  for (const text of ['说明（普通括号）。', '说明（《法律》第一', '说明（《法律', '说明（《法律》第一条']) {
+  for (const text of ['说明（普通括号）。', '说明（《法律》第一', '说明（《法律', '说明（《法律》第一条', '（《法律》第一条', '(《法律》第一条']) {
     assert.equal(render(text), `<p>${text}</p>`)
   }
 })
