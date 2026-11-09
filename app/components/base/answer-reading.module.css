@@ -1,0 +1,37 @@
+.answer {
+  color: #4c4947;
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.answer p {
+  margin: 0;
+  white-space: normal;
+}
+
+.answer strong,
+.answer [data-streamdown='strong'] {
+  color: #203e32;
+  font-weight: 700;
+}
+
+.reference {
+  display: block;
+  margin: 4px 0 10px;
+  padding: 0;
+  color: #52655f;
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.answer p:has(> .reference:last-child) {
+  margin-bottom: 0;
+}
+
+.answer p:has(> .reference:last-child) + p {
+  margin-top: 0;
+}

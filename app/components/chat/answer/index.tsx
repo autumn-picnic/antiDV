@@ -185,7 +185,7 @@ const Answer: FC<IAnswerProps> = ({
             <div className="chat-answer-bubble overflow-x-auto">
               {isResponding && !content
                 ? <div className="flex items-center justify-center w-6 h-5"><LoadingAnim type="text" /></div>
-                : item.fallback ? <FailureSupport fallback={item.fallback} /> : <StreamdownMarkdown content={content} />}
+                : item.fallback ? <FailureSupport fallback={item.fallback} /> : <StreamdownMarkdown content={content} answer />}
               {item.userReview && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 border-t border-gray-200 pt-2">
                   <span className="flex shrink-0" aria-hidden="true">
