@@ -48,3 +48,11 @@ test('code and links keep their content and destinations', () => {
   assert.doesNotMatch(html, /role="note"/)
   assert.match(html, /href="https:\/\/example.com"/)
 })
+test('Markdown custom link components retain their original children', () => {
+  function MarkdownLink({ children }) {
+    return React.createElement('a', { href: 'https://example.com' }, children)
+  }
+  const html = render(React.createElement(MarkdownLink, { node: { tagName: 'a' } }, '（《法律》第一条）'))
+  assert.doesNotMatch(html, /role="note"/)
+  assert.match(html, /href="https:\/\/example.com"/)
+})

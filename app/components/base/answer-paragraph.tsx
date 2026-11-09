@@ -13,7 +13,11 @@ export function annotateLegalReferences(children: ReactNode): ReactNode {
           : text,
       )
     }
-    if (!isValidElement<{ children?: ReactNode }>(child) || ['a', 'code', 'pre'].includes(String(child.type))) {
+    if (!isValidElement<{ children?: ReactNode, node?: { tagName?: string } }>(child)) {
+      return child
+    }
+    const tag = child.props.node?.tagName ?? String(child.type)
+    if (['a', 'code', 'pre'].includes(tag)) {
       return child
     }
     return cloneElement(child, undefined, annotateLegalReferences(child.props.children))
