@@ -36,7 +36,11 @@ export async function adminConversations(actor: Actor, offset: number, conversat
     // Admin-only diagnostics; read audit is committed before returning data.
     const result = conversationId
       ? await client.query(`
-          SELECT t.number, t.response_id AS "responseId", t.content->>'user' AS question,
+          SELECT t.number, t.response_id AS "responseId",
+            CASE WHEN t.content->>'status' = 'failed'
+              THEN COALESCE(t.content->>'user_original', t.content->>'user', '')
+              ELSE t.content->>'user'
+            END AS question,
             t.content->>'assistant' AS answer, t.content->>'safety_level' AS "safetyLevel",
             t.content->'debug' AS debug,
             t.content->'request_context' AS "requestContext",
