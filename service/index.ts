@@ -102,6 +102,7 @@ export async function deleteConversation(id: string) {
 export interface StreamCallbacks {
   onStart?: (responseId: string) => void
   onDelta: (text: string) => void
+  onReasoningDelta?: (text: string) => void
 }
 
 function guardDiagnostic(value: unknown): GuardDiagnostic | undefined {
@@ -146,6 +147,10 @@ export async function readChatStream(
       case 'delta':
         if (sawDebug || typeof data.delta !== 'string') { throw new ChatApiError(502, '回复片段格式无效', responseId) }
         callbacks.onDelta(data.delta)
+        break
+      case 'reasoning_delta':
+        if (sawDebug || typeof data.delta !== 'string') { throw new ChatApiError(502, '推理片段格式无效', responseId) }
+        callbacks.onReasoningDelta?.(data.delta)
         break
       case 'debug':
         if (sawDebug) { throw new ChatApiError(502, '重复的调试事件', responseId) }

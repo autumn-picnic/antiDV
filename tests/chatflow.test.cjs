@@ -691,3 +691,15 @@ test('SSE only accepts a boolean continuation confirmation from backend', async 
   await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback })), 'c1', { onDelta() {} }), error => error.fallback?.can_continue === true)
   await assert.rejects(api.readChatStream(stream(start + frame('error', { fallback: { ...fallback, can_continue: 'true' } })), 'c1', { onDelta() {} }), error => !error.fallback)
 })
+
+test('SSE keeps reasoning separate from answer across split frames', async () => {
+  let answer = ''
+  let reasoning = ''
+  await api.readChatStream(stream(start + frame('delta', { delta: '正式答案' }) + frame('reasoning_delta', { delta: '推理文本' }) + done, 1), 'c1', {
+    onDelta: text => { answer += text },
+    onReasoningDelta: text => { reasoning += text },
+  })
+  assert.equal(answer, '正式答案')
+  assert.equal(reasoning, '推理文本')
+  await assert.rejects(api.readChatStream(stream(start + frame('reasoning_delta', { delta: 42 }) + done), 'c1', { onDelta() {} }), /推理片段格式无效/)
+})
