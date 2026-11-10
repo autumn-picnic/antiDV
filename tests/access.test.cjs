@@ -147,6 +147,18 @@ test('admin list reads conversations and commits an audit entry', async () => {
   assert(queryCalls.some(q => q.sql.includes('xiaoan_admin_access') && q.values[0] === 'user_alice'))
   assert.equal(queryCalls.at(-1).sql, 'COMMIT')
 })
+test('admin conversation query uses original input only for failed turns with legacy fallback', async () => {
+  user.publicMetadata.role = 'admin'
+  const response = await feedback.GET(req('/api/feedback?conversationId=c1'))
+  assert.equal(response.status, 200)
+  const query = queryCalls.find(q => q.sql.includes('END AS question'))
+  assert.ok(query)
+  assert.match(query.sql, /CASE WHEN t\.content->>'status' = 'failed'\s+THEN COALESCE\(t\.content->>'user_original', t\.content->>'user', ''\)\s+ELSE t\.content->>'user'\s+END AS question/)
+  assert.match(query.sql, /t\.content->>'assistant' AS answer/)
+  assert.deepEqual(query.values, ['c1', 0])
+  assert(queryCalls.some(q => q.sql.includes('xiaoan_admin_access') && q.values[1] === 'read_conversation'))
+  assert.equal(queryCalls.at(-1).sql, 'COMMIT')
+})
 test('review rejects forged user/transcript/role, invalid score and long comment', () => {
   const valid = { conversationId: 'c1', responseId: 'r1', score: 4, comment: '更具体一些' }
   assert.equal(validateReview(valid).score, 4)
