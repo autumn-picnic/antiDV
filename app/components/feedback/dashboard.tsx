@@ -9,7 +9,7 @@ import type { ExportFailure } from './export'
 
 interface RequestContext { started_at?: number, completed_at?: number, ip?: string, country?: string, region?: string, city?: string }
 interface Summary { createdAt?: number, id: string, userId: string | null, turnCount: number, reviewCount: number }
-interface Turn { debug?: ChatDebug, requestContext?: RequestContext, number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
+interface Turn { reasoning?: string, debug?: ChatDebug, requestContext?: RequestContext, number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
 interface Contact { id: string, createdAt: string, message: string, name: string | null, phone: string | null, wechat: string | null, email: string | null }
 interface Page<T> { items: T[], nextOffset: number | null }
 
@@ -171,6 +171,12 @@ export default function FeedbackDashboard() {
             <div><dt className='inline'>用户 IP：</dt><dd className='inline'>{turn.requestContext?.ip || '未取得'}</dd></div>
             <div><dt className='inline'>IP 推测地点：</dt><dd className='inline'>{locationLabel(turn.requestContext)}</dd></div>
           </dl>
+          {turn.reasoning && (
+            <details className='mt-3 rounded-lg border border-gray-200 text-sm text-gray-600'>
+              <summary className='min-h-11 cursor-pointer px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600'>推理过程</summary>
+              <div className='max-h-80 overflow-y-auto whitespace-pre-wrap break-words border-t border-gray-200 px-3 py-3'>{turn.reasoning}</div>
+            </details>
+          )}
           {turn.debug ? <DebugPanel debug={turn.debug} /> : <p className='mt-2 text-sm text-gray-600'>本轮未留存 Debug 数据</p>}
           <p className='mt-3 whitespace-pre-wrap break-words'><strong>用户：</strong>{turn.question}</p>
           <p className='mt-3 whitespace-pre-wrap break-words'><strong>小安：</strong>{turn.answer}</p>

@@ -155,6 +155,7 @@ test('admin conversation query uses original input only for failed turns with le
   assert.ok(query)
   assert.match(query.sql, /CASE WHEN t\.content->>'status' = 'failed'\s+THEN COALESCE\(t\.content->>'user_original', t\.content->>'user', ''\)\s+ELSE t\.content->>'user'\s+END AS question/)
   assert.match(query.sql, /t\.content->>'assistant' AS answer/)
+  assert.match(query.sql, /t\.content->>'reasoning' AS reasoning/)
   assert.deepEqual(query.values, ['c1', 0])
   assert(queryCalls.some(q => q.sql.includes('xiaoan_admin_access') && q.values[1] === 'read_conversation'))
   assert.equal(queryCalls.at(-1).sql, 'COMMIT')

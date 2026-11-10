@@ -14,7 +14,7 @@ function chatItems(view: ConversationView): DebugChatItem[] {
     const id = turn.response_id || `${view.conversation_id}-${turn.number ?? index}`
     return [
       { id: `question-${id}`, content: turn.user, isAnswer: false },
-      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level || undefined, suggestedQuestions: suggestedQuestions(turn.suggested_questions), debug: turn.debug, fallback: turn.status === 'failed' ? turn.fallback : undefined },
+      { id, content: turn.assistant, isAnswer: true, safetyLevel: turn.safety_level || undefined, suggestedQuestions: suggestedQuestions(turn.suggested_questions), debug: turn.debug, reasoning: turn.reasoning, fallback: turn.status === 'failed' ? turn.fallback : undefined },
     ]
   })
 }
@@ -187,6 +187,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
     let id = conversationId
     let responseId: string | undefined
     let startedGeneration = false
+    let reasoning = ''
     const pendingId = `pending-${Date.now()}`
     try {
       if (id === '-1') {
@@ -200,12 +201,17 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
       setChatList([...committed, question, { id: pendingId, content: '', isAnswer: true }])
       streamRenderer = createStreamRenderer((delta) => {
         text += delta
-        if (isActive()) { setChatList([...committed, question, { id: pendingId, content: text, isAnswer: true }]) }
+        if (isActive()) { setChatList([...committed, question, { id: pendingId, content: text, reasoning, isAnswer: true }]) }
       })
       renderer.current = streamRenderer
       startedGeneration = true
       const completed = await sendChatMessage(id, message, {
         onStart: (value) => { if (isActive()) { responseId = value } },
+        onReasoningDelta: (delta) => {
+          if (!isActive()) { return }
+          reasoning += delta
+          setChatList([...committed, question, { id: pendingId, content: text, reasoning, isAnswer: true }])
+        },
         onDelta: (delta) => {
           if (isActive()) { streamRenderer?.push(delta) }
         },
@@ -216,6 +222,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
       setChatList([...committed, { ...question, id: `question-${completed.response_id}` }, {
         id: completed.response_id,
         content: text,
+        reasoning,
         isAnswer: true,
         safetyLevel: completed.safety_level,
         suggestedQuestions: suggestedQuestions(completed.suggested_questions),

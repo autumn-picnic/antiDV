@@ -43,6 +43,7 @@ export async function adminConversations(actor: Actor, offset: number, conversat
             END AS question,
             t.content->>'assistant' AS answer, t.content->>'safety_level' AS "safetyLevel",
             t.content->'debug' AS debug,
+            t.content->>'reasoning' AS reasoning,
             t.content->'request_context' AS "requestContext",
             f.score, f.comment, f.updated_at AS "reviewedAt"
           FROM account_turns t JOIN account_conversations c ON c.id=t.conversation_id

@@ -183,6 +183,12 @@ const Answer: FC<IAnswerProps> = ({
         <div className={`${s.answerWrap} min-w-0`}>
           <div className={`${s.answer} relative text-sm text-gray-900`}>
             <div className="chat-answer-bubble overflow-x-auto">
+              {item.reasoning && (
+                <details className="mb-3 rounded-lg border border-gray-200 text-sm text-gray-600">
+                  <summary className="min-h-11 cursor-pointer px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">推理过程</summary>
+                  <div className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words border-t border-gray-200 px-3 py-3">{item.reasoning}</div>
+                </details>
+              )}
               {isResponding && !content
                 ? <div className="flex items-center justify-center w-6 h-5"><LoadingAnim type="text" /></div>
                 : item.fallback ? <FailureSupport fallback={item.fallback} /> : <StreamdownMarkdown content={content} answer />}
