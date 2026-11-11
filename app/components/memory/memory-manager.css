@@ -92,7 +92,6 @@
 
 .memory-content {
   padding: 0 28px 24px;
-  padding: 0 16px 20px;
   overflow-y: auto;
   min-height: 0;
   overscroll-behavior: contain;
@@ -354,6 +353,10 @@
 @media(width <= 540px) {
   .memory-heading {
     padding: 18px 16px;
+  }
+
+  .memory-content {
+    padding: 0 16px 20px;
   }
 
   .memory-footer {
