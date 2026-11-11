@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { isFeedbackAdminEmail } from '@/lib/auth/policy'
 import { quickEscape } from '@/app/components/quick-exit'
 
-export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
+export default function AccountControls({ onOpenPrivacy, onOpenMemory }: { onOpenPrivacy: () => void, onOpenMemory: () => void }) {
   const { user, isLoaded, isSignedIn } = useUser()
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -44,6 +44,7 @@ export default function AccountControls({ onOpenPrivacy }: { onOpenPrivacy: () =
       {isLoaded && !isSignedIn && <><Link href="/sign-in">登录</Link><Link href="/sign-up">注册</Link></>}
       <button type="button" disabled={!isLoaded} onClick={() => { if (menu.current) { menu.current.open = false }; onOpenPrivacy() }}>隐私与保存</button>
       {isSignedIn && <>
+        <button type="button" onClick={() => { if (menu.current) { menu.current.open = false }; onOpenMemory() }}>记忆管理</button>
         <button type="button" disabled={busy} onClick={() => void claim()}>将本设备旧游客记录关联到账号</button>
         {user?.publicMetadata.role === 'admin' && isFeedbackAdminEmail(user.primaryEmailAddress?.emailAddress, user.primaryEmailAddress?.verification?.status === 'verified') && <Link href="/feedback">反馈管理</Link>}
         <button type="button" onClick={quickEscape}>退出并清除此设备登录</button>
