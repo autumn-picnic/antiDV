@@ -11,6 +11,8 @@ function allowedMethods(path: string): string[] {
   if (path === '/v1/privacy/options' || path === '/v1/me/privacy') { return ['GET'] }
   if (/^\/v1\/me\/privacy\/(?:region|nickname|preferences)$/.test(path)) { return ['PATCH'] }
   if (/^\/v1\/conversations\/[a-zA-Z0-9_-]+\/policy$/.test(path)) { return ['GET', 'PATCH'] }
+  if (/^\/v1\/conversations\/[a-zA-Z0-9_-]+\/memory$/.test(path)) { return ['GET'] }
+  if (/^\/v1\/conversations\/[a-zA-Z0-9_-]+\/memory\/actions$/.test(path)) { return ['POST'] }
   if (path === '/v1/config/models') { return ['GET'] }
   if (path === '/v1/conversations') { return ['GET', 'POST'] }
   if (path === '/v1/me/claim-guest') { return ['POST'] }

@@ -16,6 +16,7 @@ import ResourcePanel from '@/app/components/resource-panel'
 import BackExitGuard from '@/app/components/back-exit-guard'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import useChatflow from '@/hooks/use-chatflow'
+import MemoryManager from '@/app/components/memory/memory-manager'
 import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
 import { isFeedbackAdminEmail } from '@/lib/auth/policy'
@@ -39,6 +40,7 @@ const Main: FC<IMainProps> = () => {
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse, setTrue: collapsePanel }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(false)
+  const [memoryOpen, setMemoryOpen] = useState(false)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerTarget, setComposerTarget] = useState<HTMLDivElement | null>(null)
   const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), debug: automaticDebug, onCompleted: guestPrompt.completed })
@@ -100,7 +102,7 @@ const Main: FC<IMainProps> = () => {
     }
   }, [operation, failure?.fallback])
 
-  useEffect(() => { setPrivacyOpen(false) }, [isSignedIn])
+  useEffect(() => { setPrivacyOpen(false); setMemoryOpen(false) }, [isSignedIn])
 
   const openPrivacy = async () => {
     if (busy || !isLoaded || failure?.needsRecovery) { return }
@@ -111,6 +113,7 @@ const Main: FC<IMainProps> = () => {
   const handleConversationIdChange = async (id: string) => {
     if (busy) { return }
     setPrivacyOpen(false)
+    setMemoryOpen(false)
     const selected = await selectConversation(id)
     if (!selected) { return }
     hideSidebar()
@@ -150,11 +153,12 @@ const Main: FC<IMainProps> = () => {
       <div className="chat-skip-links"><a href="#chat-content">跳到对话内容</a><a href="#chat-input">跳到输入框</a></div>
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only"><span key={`${operation?.id}:${operation?.kind}:${announcement}`}>{announcement}</span></div>
       <div aria-live="polite" aria-atomic="true" className="sr-only">{fullAnnouncement}</div>
+      {memoryOpen && isSignedIn && !crisisPrompt.visible && <MemoryManager key={currConversationId} conversationId={currConversationId} conversationName={conversationName} disabled={busy || isResponding || Boolean(failure?.needsRecovery)} onClose={() => setMemoryOpen(false)} onSend={text => { setMemoryOpen(false); void handleSend(text) }} />}
       <BackExitGuard />
       {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
-        accountControls={<AccountControls onOpenPrivacy={() => void openPrivacy()} />}
+        accountControls={<AccountControls onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
 
       />
       {guestPrompt.visible && isLoaded && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
