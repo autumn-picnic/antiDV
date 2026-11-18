@@ -5,12 +5,12 @@ import MemoryAddForm from './memory-add-form'
 import './memory-manager.css'
 
 interface Person { id: string, label: string }
-interface Alias { id: string, person_id: string, label: string, status: string }
+interface Alias { id: string, person_id: string, label: string, status: string, user_confirmed?: boolean }
 interface Mention { id: string, person_id: string | null, status: string }
 interface Relationship { id: string, person_id: string, related_person_id: string | null, kind: string, mode: string, status: string }
 interface Memory { revision: number, people: Person[], aliases: Alias[], mentions: Mention[], relationships: Relationship[] }
-type Action = 'delete_person' | 'delete_alias' | 'delete_relation' | 'retract_relation' | 'end_relation' | 'relink_mention'
-interface Change { action: Action, record_id: string, person_id?: string, label: string }
+type Action = 'confirm_alias' | 'rename_alias' | 'delete_person' | 'delete_alias' | 'delete_relation' | 'retract_relation' | 'end_relation' | 'relink_mention'
+interface Change { action: Action, record_id: string, person_id?: string, alias_value?: string, label: string }
 const kinds: Record<string, string> = { friend: '朋友', colleague: '同事', partner: '伴侣', spouse: '配偶', parent: '父母', child: '子女', sibling: '兄弟姐妹', ex_partner: '前伴侣', family: '家人' }
 const statuses: Record<string, string> = { active: '当前', ended: '已结束', retracted: '已撤回', pending: '待确认', unresolved: '待确认', asserted: '已确认', evidence: '待确认' }
 
@@ -64,13 +64,14 @@ export default function MemoryManager({ conversationId, conversationName, disabl
     if (change || editing) { actionPanel.current?.scrollIntoView({ block: 'nearest' }) }
   }, [change, editing, addition])
 
-  async function apply() {
-    if (!change || !memory || saving || disabled) { return }
+  async function apply(action = change) {
+    if (!action || !memory || saving || disabled) { return }
     setSaving(true); setError(''); setNotice('')
     try {
       const response = await fetch(`${endpoint}/actions`, {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ revision: memory.revision, action: change.action, record_id: change.record_id, ...(change.person_id ? { person_id: change.person_id } : {}) }),
+        body: JSON.stringify({ revision: memory.revision, action: action.action, record_id: action.record_id,
+          person_id: action.person_id, alias_value: action.alias_value }),
         signal: request.current?.signal,
       })
       if (response.status === 409) {
@@ -111,7 +112,20 @@ export default function MemoryManager({ conversationId, conversationName, disabl
         <p className='memory-count'>{people.length} 位人物<span>人物可以同时拥有多种关系</span></p>
         {people.map(person => <article key={person.id} className='memory-card'>
           <div className='memory-card-heading'><div className='memory-person-icon' aria-hidden='true'>{person.label.slice(0, 1)}</div><h3>{person.label}</h3><button type='button' disabled={locked} onClick={() => { setAddition(null); setDraft(`关于${person.label}，我想更正：`); setChange(null) }}>修正信息</button><button type='button' className='memory-danger' disabled={locked} onClick={() => { setAddition(null); setChange({ action: 'delete_person', record_id: person.id, label: `删除「${person.label}」的人物记忆及相关称呼、关系和提及` }); setDraft(null) }}>删除</button></div>
-          <div className='memory-aliases'><span>称呼</span>{memory?.aliases.filter(a => a.person_id === person.id && a.status === 'active').map(alias => <span key={alias.id} className='memory-chip'>{alias.label}<button type='button' disabled={locked} aria-label={`删除称呼${alias.label}`} onClick={() => { setAddition(null); setChange({ action: 'delete_alias', record_id: alias.id, label: `删除称呼「${alias.label}」` }); setDraft(null) }}><XMarkIcon width={14} /></button></span>)}</div>
+          <div className='memory-aliases'>
+            <span>称呼</span>
+            {memory?.aliases.filter(a => a.person_id === person.id && a.status === 'active').map(alias => (
+              <div key={alias.id} className='memory-chip'>
+                <span className='break-all'>{alias.label}{alias.user_confirmed && ' · 已确认'}</span>
+                {!alias.user_confirmed && <button type='button' disabled={locked} aria-label={`确认称呼 ${alias.label}`}
+                  onClick={() => { setAddition(null); setDraft(null); setChange({ action: 'confirm_alias', record_id: alias.id, label: `确认称呼「${alias.label}」` }) }}>确认</button>}
+                <button type='button' disabled={locked} aria-label={`修改称呼 ${alias.label}`}
+                  onClick={() => { setAddition(null); setDraft(null); setChange({ action: 'rename_alias', record_id: alias.id, label: alias.label, alias_value: alias.label }) }}>改名</button>
+                <button type='button' disabled={locked} aria-label={`删除称呼 ${alias.label}`}
+                  onClick={() => { setAddition(null); setChange({ action: 'delete_alias', record_id: alias.id, label: `删除称呼「${alias.label}」` }); setDraft(null) }}><XMarkIcon width={14} /></button>
+              </div>
+            ))}
+          </div>
           {memory?.relationships.filter(r => r.person_id === person.id && r.status !== 'deleted').map(relation => <div key={relation.id} className='memory-relation'><div><strong>与{label(relation.related_person_id)} · {kinds[relation.kind] || relation.kind}</strong><span>{statuses[relation.status] || relation.status}{relation.mode !== 'asserted' ? ' · 待确认信息' : ''}</span></div><label><span className='sr-only'>调整{person.label}的关系</span><select value='' disabled={locked} onChange={e => { if (e.target.value) { setAddition(null); setChange({ action: e.target.value as Action, record_id: relation.id, label: `${e.target.selectedOptions[0].text}：${person.label}与${label(relation.related_person_id)}的${kinds[relation.kind] || relation.kind}关系` }); setDraft(null) } }}><option value=''>调整关系</option>{relation.status === 'active' && <option value='end_relation'>关系已结束</option>}{relation.status !== 'retracted' && <option value='retract_relation'>原记录有误，撤回</option>}<option value='delete_relation'>删除这条关系</option></select></label></div>)}
           <button type='button' className='memory-add-relation' disabled={!canAdd} onClick={() => openAddition('relation', person.id)}>＋ 新增关系</button>
           <details className='memory-mentions'><summary>纠正人物提及的归属</summary><p>选择实际指向的人物。更正后，相关事实会重新等待确认。</p>{memory?.mentions.filter(m => m.person_id === person.id && m.status !== 'deleted').map((mention, index) => <label key={mention.id} className='memory-relation'><span>提及 {index + 1} · {statuses[mention.status] || mention.status}</span><select aria-label={`更正${person.label}的第${index + 1}次提及`} value={mention.person_id || ''} disabled={locked} onChange={e => { setAddition(null); setChange({ action: 'relink_mention', record_id: mention.id, person_id: e.target.value || undefined, label: `将这次提及改为「${e.target.value ? label(e.target.value) : '待确认人物'}」${e.target.value ? '' : '（待确认）'}` }); setDraft(null) }}><option value=''>待确认人物</option>{memory?.people.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label>)}</details>
@@ -120,7 +134,23 @@ export default function MemoryManager({ conversationId, conversationName, disabl
       <div ref={actionPanel}>
       {addition && <MemoryAddForm key={`${addition.kind}:${addition.personId || ''}`} kind={addition.kind} initialPersonId={addition.personId} people={memory?.people || []} disabled={!canAdd} onCancel={() => setAddition(null)} onSend={onSend} />}
       {draft !== null && <form className='memory-editor' onSubmit={e => { e.preventDefault(); if (!locked && draft.trim() && Array.from(draft.trim()).length <= 4000) { onSend(draft.trim()) } }}><h3>补充或修正信息</h3><label htmlFor='memory-draft'>希望小安了解什么？</label><textarea id='memory-draft' autoFocus rows={4} maxLength={4000} value={draft} onChange={e => setDraft(e.target.value)} placeholder='例如：晓岚是我的朋友，也是同事。' disabled={locked} /><p>这段内容会作为新消息发送到当前对话，并生成回复。小安会根据内容整理记忆，你可以在回复后重新打开核对。</p><div className='memory-actions'><button type='button' disabled={saving} onClick={() => setDraft(null)}>取消</button><button type='submit' className='memory-primary' disabled={locked || !draft.trim()}>发送到对话</button></div></form>}
-      {change && <section className='memory-confirm' aria-label='确认记忆变更'><h3>确认这次调整？</h3><p>{change.label}</p><p>聊天原文会保留。删除后无法在这里撤销，以后聊天中再次提及仍可能形成新的记忆。</p><div className='memory-actions'><button type='button' disabled={saving} onClick={() => setChange(null)}>取消</button><button type='button' className='memory-primary' disabled={locked} onClick={() => void apply()}>{saving ? '正在更新…' : '确认调整'}</button></div></section>}
+      {change?.action === 'rename_alias' && <form className='memory-editor' onSubmit={e => {
+        e.preventDefault()
+        if (!locked && Array.from(change.alias_value?.trim() || '').length >= 2) {
+          void apply({ ...change, alias_value: change.alias_value?.trim() })
+        }
+      }}>
+        <h3>修改称呼</h3>
+        <label htmlFor='memory-alias-value'>新称呼</label>
+        <input id='memory-alias-value' autoFocus required minLength={2} maxLength={64}
+          value={change.alias_value || ''} disabled={locked}
+          onChange={e => setChange({ ...change, alias_value: e.target.value })} />
+        <div className='memory-actions'>
+          <button type='button' disabled={saving} onClick={() => setChange(null)}>取消</button>
+          <button type='submit' className='memory-primary' disabled={locked || Array.from(change.alias_value?.trim() || '').length < 2}>{saving ? '正在保存…' : '保存称呼'}</button>
+        </div>
+      </form>}
+      {change && change.action !== 'rename_alias' && <section className='memory-confirm' aria-label='确认记忆变更'><h3>确认这次调整？</h3><p>{change.label}</p>{change.action.startsWith('delete_') && <p>聊天原文会保留。删除后无法在这里撤销，以后聊天中再次提及仍可能形成新的记忆。</p>}<div className='memory-actions'><button type='button' disabled={saving} onClick={() => setChange(null)}>取消</button><button type='button' className='memory-primary' disabled={locked} onClick={() => void apply()}>{saving ? '正在更新…' : '确认调整'}</button></div></section>}
       </div>
     </div>
     <footer className='memory-footer'><p>记忆的保存方式沿用当前对话设置；临时模式下的调整仅临时有效。删除记忆会保留聊天原文。</p><button type='button' disabled={saving} onClick={onClose}>完成</button></footer>
