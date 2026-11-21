@@ -28,14 +28,19 @@ export async function ownReviews(actor: Actor, conversationId: string) {
   return result.rows
 }
 
-export async function adminConversations(actor: Actor, offset: number, conversationId?: string) {
+type AdminView = { conversationId: string } | { users: true } | { userId?: string }
+
+export async function adminConversations(actor: Actor, offset: number, view: AdminView = {}) {
   assertAdmin(actor)
   const client = await feedbackDatabase().connect()
   try {
     await client.query('BEGIN')
     // Admin-only diagnostics; read audit is committed before returning data.
-    const result = conversationId
-      ? await client.query(`
+    const conversationId = 'conversationId' in view ? view.conversationId : undefined
+    const visible = "(u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now())))"
+    let result
+    if (conversationId) {
+      result = await client.query(`
           SELECT t.number, t.response_id AS "responseId",
             CASE WHEN t.content->>'status' = 'failed'
               THEN COALESCE(t.content->>'user_original', t.content->>'user', '')
@@ -49,16 +54,30 @@ export async function adminConversations(actor: Actor, offset: number, conversat
           FROM account_turns t JOIN account_conversations c ON c.id=t.conversation_id
           LEFT JOIN app_users u ON u.id=c.user_id
           LEFT JOIN xiaoan_answer_feedback f ON f.response_id=t.response_id
-          WHERE c.id=$1 AND (u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now())))
+          WHERE c.id=$1 AND ${visible}
           ORDER BY t.number LIMIT 51 OFFSET $2`, [conversationId, offset])
-      : await client.query(`
+    }
+    else if ('users' in view) {
+      result = await client.query(`
+          SELECT u.clerk_user_id AS "userId", count(*)::int AS "conversationCount"
+          FROM account_conversations c LEFT JOIN app_users u ON u.id=c.user_id
+          WHERE ${visible}
+          GROUP BY u.clerk_user_id
+          ORDER BY max(c.created_at) DESC, u.clerk_user_id LIMIT 51 OFFSET $1`, [offset])
+    }
+    else {
+      const userId = 'userId' in view ? view.userId : undefined
+      const userFilter = userId === undefined ? '' : 'AND u.clerk_user_id IS NOT DISTINCT FROM NULLIF($2, \'\')'
+      result = await client.query(`
           SELECT c.id, u.clerk_user_id AS "userId", c.created_at AS "createdAt",
             count(t.response_id)::int AS "turnCount", count(f.response_id)::int AS "reviewCount"
           FROM account_conversations c LEFT JOIN app_users u ON u.id=c.user_id
           LEFT JOIN account_turns t ON t.conversation_id=c.id
           LEFT JOIN xiaoan_answer_feedback f ON f.response_id=t.response_id
-          WHERE u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now()))
-          GROUP BY c.id, u.clerk_user_id ORDER BY c.created_at DESC, c.id LIMIT 51 OFFSET $1`, [offset])
+          WHERE ${visible} ${userFilter}
+          GROUP BY c.id, u.clerk_user_id ORDER BY c.created_at DESC, c.id LIMIT 51 OFFSET $1`,
+      userId === undefined ? [offset] : [offset, userId])
+    }
     await client.query('INSERT INTO xiaoan_admin_access(clerk_user_id, action, conversation_id) VALUES ($1,$2,$3)', [actor.userId, conversationId ? 'read_conversation' : 'list_conversations', conversationId || null])
     await client.query('COMMIT')
     return { items: result.rows.slice(0, 50), nextOffset: result.rows.length > 50 ? offset + 50 : null }

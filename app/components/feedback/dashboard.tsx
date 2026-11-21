@@ -1,14 +1,15 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import DebugPanel from '@/app/components/chat/debug-panel'
 import type { ChatDebug } from '@/types/chatflow'
 import SpeechRecordings from './speech-recordings'
-import { collectFeedbackExport, downloadFeedbackWorkbook } from './export'
-import type { ExportFailure } from './export'
+import { collectFeedbackExport, collectSelectedFeedbackExport, downloadFeedbackWorkbook } from './export'
+import type { ExportConversation, ExportFailure } from './export'
 
 interface RequestContext { started_at?: number, completed_at?: number, ip?: string, country?: string, region?: string, city?: string }
-interface Summary { createdAt?: number, id: string, userId: string | null, turnCount: number, reviewCount: number }
+interface UserGroup { userId: string | null, conversationCount: number }
 interface Turn { reasoning?: string, debug?: ChatDebug, requestContext?: RequestContext, number: number, responseId: string, question: string, answer: string, score: number | null, comment: string | null }
 interface Contact { id: string, createdAt: string, message: string, name: string | null, phone: string | null, wechat: string | null, email: string | null }
 interface Page<T> { items: T[], nextOffset: number | null }
@@ -23,16 +24,51 @@ function locationLabel(context?: RequestContext) {
   }).join(' / ') || '未取得'
 }
 
+async function readPage<T>(query: string, signal?: AbortSignal): Promise<Page<T>> {
+  const response = await fetch(`/api/feedback?${query}`, { cache: 'no-store', signal })
+  if (!response.ok) {
+    throw new Error([401, 403].includes(response.status) ? '无管理员权限' : '记录读取失败，请重试')
+  }
+  return response.json()
+}
+
+function useFeedbackPage<T>(query: string | null, version: number) {
+  const [result, setResult] = useState<{ query: string, version: number, page?: Page<T>, error?: string }>()
+  useEffect(() => {
+    if (query === null) { return }
+    const abort = new AbortController()
+    readPage<T>(query, abort.signal)
+      .then((page) => { if (!abort.signal.aborted) { setResult({ query, version, page }) } })
+      .catch((error) => { if (!abort.signal.aborted) { setResult({ query, version, error: error.message }) } })
+    return () => abort.abort()
+  }, [query, version])
+  const current = result?.query === query && result.version === version ? result : undefined
+  return {
+    page: current?.page ?? { items: [], nextOffset: null },
+    error: current?.error,
+    loading: query !== null && !current,
+  }
+}
+
+const button = 'min-h-11 rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40 focus-visible:outline focus-visible:outline-2'
+const turnQuery = (id: string, offset: number) => `conversationId=${encodeURIComponent(id)}&offset=${offset}`
+
+function Pagination({ offset, nextOffset, onChange }: { offset: number, nextOffset: number | null, onChange: (offset: number) => void }) {
+  return <div className='mt-4 flex gap-3'>
+    <button type='button' className={button} disabled={offset === 0} onClick={() => onChange(Math.max(0, offset - 50))}>上一页</button>
+    <button type='button' className={button} disabled={nextOffset === null} onClick={() => { if (nextOffset !== null) { onChange(nextOffset) } }}>下一页</button>
+  </div>
+}
+
 export default function FeedbackDashboard() {
-  const [conversations, setConversations] = useState<Page<Summary>>({ items: [], nextOffset: null })
-  const [turns, setTurns] = useState<Page<Turn>>({ items: [], nextOffset: null })
+  const [group, setGroup] = useState<UserGroup | null>(null)
+  const [userOffset, setUserOffset] = useState(0)
+  const [checked, setChecked] = useState<Map<string, ExportConversation>>(() => new Map())
   const [selected, setSelected] = useState('')
   const [listOffset, setListOffset] = useState(0)
   const [turnOffset, setTurnOffset] = useState(0)
   const [version, setVersion] = useState(0)
   const [error, setError] = useState('')
-  const [loadingList, setLoadingList] = useState(false)
-  const [loadingTurns, setLoadingTurns] = useState(false)
   const [section, setSection] = useState<'chat' | 'contact' | 'speech'>('chat')
   const [contacts, setContacts] = useState<Page<Contact>>({ items: [], nextOffset: null })
   const [contactOffset, setContactOffset] = useState(0)
@@ -44,7 +80,7 @@ export default function FeedbackDashboard() {
   const [exportStatus, setExportStatus] = useState('')
   const exportController = useRef<AbortController | null>(null)
   useEffect(() => () => exportController.current?.abort(), [])
-  async function download() {
+  async function download(selectedConversations?: ExportConversation[]) {
     if (section === 'speech') { return }
     if (exportController.current) { return }
     const controller = new AbortController()
@@ -52,7 +88,9 @@ export default function FeedbackDashboard() {
     setExporting(true)
     setError('')
     try {
-      const tables = await collectFeedbackExport(section, controller.signal, setExportStatus)
+      const tables = selectedConversations
+        ? await collectSelectedFeedbackExport(selectedConversations, controller.signal, setExportStatus)
+        : await collectFeedbackExport(section, controller.signal, setExportStatus)
       controller.signal.throwIfAborted()
       setExportStatus('正在生成 Excel…')
       await downloadFeedbackWorkbook(tables, section, controller.signal)
@@ -64,38 +102,17 @@ export default function FeedbackDashboard() {
     }
     finally { exportController.current = null; setExporting(false) }
   }
-  useEffect(() => {
-    if (section !== 'chat') { return }
-    const abort = new AbortController()
-    setLoadingList(true)
-    setConversations({ items: [], nextOffset: null })
-    setError('')
-    fetch(`/api/feedback?offset=${listOffset}`, { cache: 'no-store', signal: abort.signal })
-      .then(async (response) => {
-        if (!response.ok) { throw new Error(response.status === 403 ? '无管理员权限' : '记录读取失败，请重试') }
-        const data = await response.json()
-        if (!abort.signal.aborted) { setConversations(data) }
-      })
-      .catch((err) => { if (!abort.signal.aborted) { setError(err.message) } })
-      .finally(() => { if (!abort.signal.aborted) { setLoadingList(false) } })
-    return () => abort.abort()
-  }, [section, listOffset, version])
-  useEffect(() => {
-    setTurns({ items: [], nextOffset: null })
-    if (section !== 'chat' || !selected) { return }
-    const abort = new AbortController()
-    setLoadingTurns(true)
-    setError('')
-    fetch(`/api/feedback?conversationId=${encodeURIComponent(selected)}&offset=${turnOffset}`, { cache: 'no-store', signal: abort.signal })
-      .then(async (response) => {
-        if (!response.ok) { throw new Error(response.status === 403 ? '无管理员权限' : '对话读取失败，请重试') }
-        const data = await response.json()
-        if (!abort.signal.aborted) { setTurns(data) }
-      })
-      .catch((err) => { if (!abort.signal.aborted) { setError(err.message) } })
-      .finally(() => { if (!abort.signal.aborted) { setLoadingTurns(false) } })
-    return () => abort.abort()
-  }, [section, selected, turnOffset, version])
+  const users = useFeedbackPage<UserGroup>(section !== 'chat' || group ? null : `view=users&offset=${userOffset}`, version)
+  const conversations = useFeedbackPage<ExportConversation>(section === 'chat' && group ? `userId=${encodeURIComponent(group.userId ?? '')}&offset=${listOffset}` : null, version)
+  const turns = useFeedbackPage<Turn>(section === 'chat' && selected ? turnQuery(selected, turnOffset) : null, version)
+
+  const changeGroup = (next: UserGroup | null) => {
+    setGroup(next)
+    setListOffset(0)
+    setSelected('')
+    setTurnOffset(0)
+  }
+
   useEffect(() => {
     if (section !== 'contact') { return }
     const abort = new AbortController()
@@ -127,7 +144,7 @@ export default function FeedbackDashboard() {
       .finally(() => { if (!abort.signal.aborted) { setLoadingFailures(false) } })
     return () => abort.abort()
   }, [section, failureOffset, version])
-  const button = 'rounded border border-gray-300 px-3 py-2 text-sm disabled:opacity-40 focus-visible:outline focus-visible:outline-2'
+  const list = group ? conversations : users
   return <main className='min-h-screen bg-[#FBF8F4] p-6 text-gray-900'>
     <div className='mb-6 flex flex-wrap items-center gap-5'>
       <h1 className='text-xl font-semibold'>小安 · 对话与反馈管理</h1>
@@ -143,27 +160,55 @@ export default function FeedbackDashboard() {
       <button type='button' aria-pressed={section === 'speech'} className={`${button} min-h-11 rounded-b-none border-b-2 ${section === 'speech' ? 'border-orange-700 bg-orange-50' : 'border-transparent bg-white'}`} onClick={() => { setError(''); setSection('speech') }}>语音录音</button>
     </div>
     {error && <p role='alert' className='mb-4 text-red-700'>{error}</p>}
-    {section === 'chat' && <><div className='grid gap-6 md:grid-cols-[280px_1fr]'>
-      <section aria-label='会话列表'>
-        {loadingList ? <p role='status'>正在读取…</p> : !conversations.items.length && <p>暂无可查看会话</p>}
-        <ul className='space-y-2'>{conversations.items.map(item => <li key={item.id}>
-          <button type='button' className={`${button} w-full text-left ${selected === item.id ? 'bg-orange-100' : 'bg-white'}`} onClick={() => { setSelected(item.id); setTurnOffset(0) }}>
-            <span className='block break-all'>会话 {item.id.slice(0, 8)}</span>
-            <span className='block break-all text-xs'>{item.userId || '游客'}</span>
-            <span className='block text-xs'>创建时间：{formatTime(item.createdAt)}</span>
-            <span className='block text-xs'>{item.turnCount} 轮对话 · {item.reviewCount} 条评价</span>
-          </button>
-        </li>)}</ul>
-        <div className='mt-4 flex gap-3'>
-          <button type='button' className={button} disabled={loadingList || listOffset === 0} onClick={() => setListOffset(n => Math.max(0, n - 50))}>上一页</button>
-          <button type='button' className={button} disabled={loadingList || conversations.nextOffset === null} onClick={() => setListOffset(conversations.nextOffset!)}>下一页</button>
-        </div>
+    {section === 'chat' && <>
+    <div className='mb-6 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4'>
+      <button type='button' className={`${button} inline-flex items-center gap-2 bg-white`} disabled={!checked.size || exporting} onClick={() => void download(Array.from(checked.values()))}>
+        <ArrowDownTrayIcon aria-hidden='true' className='size-4 shrink-0' />
+        下载所选会话 (.xlsx)
+      </button>
+      <span aria-live='polite' className='text-sm text-gray-600'>已选 {checked.size} 个会话</span>
+      {checked.size > 0 && <button type='button' className={button} disabled={exporting} onClick={() => { setChecked(new Map()) }}>清空选择</button>}
+    </div>
+    <div className='grid gap-6 md:grid-cols-[300px_minmax(0,1fr)]'>
+      <section aria-label={group ? '会话列表' : '用户列表'} className='min-w-0'>
+        {group && <button type='button' className={`${button} mb-3`} onClick={() => changeGroup(null)}>返回用户列表</button>}
+        <h2 className='mb-3 break-all text-sm font-semibold'>{group ? group.userId ?? '游客' : '用户列表'}</h2>
+        {list.error && <p role='alert' className='text-red-700'>{list.error}</p>}
+        {list.loading && <p role='status'>正在读取…</p>}
+        {!list.loading && !list.error && !list.page.items.length && <p>{group ? '本页暂无会话' : '本页暂无用户'}</p>}
+        {group
+          ? <ul className='space-y-2'>{conversations.page.items.map(item => <li key={item.id} className={`flex rounded border border-gray-300 ${selected === item.id ? 'bg-orange-100' : 'bg-white'}`}>
+            <label className='flex min-w-11 shrink-0 cursor-pointer items-center justify-center border-r border-gray-200'>
+              <input type='checkbox' className='size-4 accent-orange-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4' aria-label={`选择会话 ${item.id.slice(0, 8)} 下载`} checked={checked.has(item.id)} disabled={exporting} onChange={(event) => {
+                const include = event.currentTarget.checked
+                setChecked((previous) => {
+                  const next = new Map(previous)
+                  if (include) { next.set(item.id, item) }
+                  else { next.delete(item.id) }
+                  return next
+                })
+              }} />
+            </label>
+            <button type='button' aria-pressed={selected === item.id} className='min-w-0 flex-1 rounded-r px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2' onClick={() => { setSelected(item.id); setTurnOffset(0) }}>
+              <span className='block font-medium'>会话 {item.id.slice(0, 8)}</span>
+              <span className='block text-xs'>创建时间：{formatTime(item.createdAt)}</span>
+              <span className='block text-xs'>{item.turnCount} 轮对话 · {item.reviewCount} 条评价</span>
+            </button>
+          </li>)}</ul>
+          : <ul className='space-y-2'>{users.page.items.map(item => <li key={item.userId ?? ''}>
+            <button type='button' className={`${button} w-full bg-white text-left`} onClick={() => changeGroup(item)}>
+              <span className='block break-all font-medium'>{item.userId ?? '游客'}</span>
+              <span className='block text-xs text-gray-600'>{item.conversationCount} 个会话</span>
+            </button>
+          </li>)}</ul>}
+        <Pagination offset={group ? listOffset : userOffset} nextOffset={list.page.nextOffset} onChange={group ? setListOffset : setUserOffset} />
       </section>
       <section aria-label='对话与评价' className='min-w-0'>
-        {!selected && <p>选择会话以查看已完成回答和用户反馈。</p>}
-        {loadingTurns && <p role='status'>正在读取对话…</p>}
-        {selected && !loadingTurns && !turns.items.length && <p>本页没有已完成的对话轮次。</p>}
-        {turns.items.map(turn => <article key={turn.responseId} className='mb-5 rounded-lg border border-gray-200 bg-white p-4'>
+        {selected && <h2 className='mb-3 font-semibold'>会话 {selected.slice(0, 8)}</h2>}
+        {turns.error && <p role='alert' className='text-red-700'>{turns.error}</p>}
+        {turns.loading && <p role='status'>正在读取对话…</p>}
+        {selected && !turns.loading && !turns.error && !turns.page.items.length && <p>本页没有已完成的对话轮次。</p>}
+        {turns.page.items.map(turn => <article key={turn.responseId} className='mb-5 rounded-lg border border-gray-200 bg-white p-4'>
           <h2 className='font-semibold'>第 {turn.number} 轮</h2>
           <dl className='mt-2 space-y-1 break-words text-sm text-gray-600'>
             <div><dt className='inline'>对话开始：</dt><dd className='inline'>{formatTime(turn.requestContext?.started_at)}</dd></div>
@@ -185,10 +230,7 @@ export default function FeedbackDashboard() {
             {turn.comment && <p className='mt-2 whitespace-pre-wrap break-words'>改进建议：{turn.comment}</p>}
           </div>
         </article>)}
-        {selected && <div className='flex gap-3'>
-          <button type='button' className={button} disabled={loadingTurns || turnOffset === 0} onClick={() => setTurnOffset(n => Math.max(0, n - 50))}>前 50 轮</button>
-          <button type='button' className={button} disabled={loadingTurns || turns.nextOffset === null} onClick={() => setTurnOffset(turns.nextOffset!)}>后 50 轮</button>
-        </div>}
+        {selected && <Pagination offset={turnOffset} nextOffset={turns.page.nextOffset} onChange={setTurnOffset} />}
       </section>
     </div>
     <section aria-label='失败会话记录' className='mt-8 space-y-4'>
