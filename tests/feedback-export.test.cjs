@@ -13,7 +13,7 @@ const originalRequire = mod.require.bind(mod)
 let workbook, downloadName
 mod.require = name => name === 'xlsx' ? { ...XLSX, writeFile: (book, name) => { workbook = book; downloadName = name } } : originalRequire(name)
 mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { esModuleInterop: true, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, filename)
-const { collectFeedbackExport, downloadFeedbackWorkbook, loadExportPage } = mod.exports
+const { collectFeedbackExport, collectSelectedFeedbackExport, downloadFeedbackWorkbook, loadExportPage } = mod.exports
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch; workbook = null; downloadName = null })
 const signal = () => new AbortController().signal
@@ -74,6 +74,32 @@ test('chat export includes all failed inputs even without any completed conversa
   assert.equal(roundtrip.Sheets['失败记录'].E2.t, 's')
   assert.equal(roundtrip.Sheets['失败记录'].E2.v, '=failed input')
   assert.equal(roundtrip.Sheets['失败记录'].E2.f, undefined)
+})
+
+test('selected export only loads checked conversations and writes one sheet per conversation', async () => {
+  const calls = []
+  const conversations = [
+    { id: 'c1', userId: 'user_alice', turnCount: 2, reviewCount: 0 },
+    { id: 'c2', userId: null, turnCount: 0, reviewCount: 0 },
+  ]
+  const tables = await collectSelectedFeedbackExport(conversations, signal(), () => {}, async url => {
+    calls.push(url)
+    if (url.includes('conversationId=c2')) { return { items: [], nextOffset: null } }
+    const first = url.endsWith('offset=0')
+    const turn = { number: first ? 1 : 2, responseId: first ? 'r1' : 'r2', question: '=question', answer: '回答', score: null, comment: null }
+    return { items: [turn], nextOffset: first ? 50 : null }
+  })
+  assert.deepEqual(calls, [
+    '/api/feedback?conversationId=c1&offset=0',
+    '/api/feedback?conversationId=c1&offset=50',
+    '/api/feedback?conversationId=c2&offset=0',
+  ])
+  await downloadFeedbackWorkbook(tables, 'chat', signal())
+  const roundtrip = XLSX.read(XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }), { type: 'buffer' })
+  assert.deepEqual(roundtrip.SheetNames, ['1 - c1', '2 - c2'])
+  assert.equal(roundtrip.Sheets['1 - c1'].D3.v, 2)
+  assert.equal(roundtrip.Sheets['1 - c1'].E3.t, 's')
+  assert.equal(roundtrip.Sheets['2 - c2'].B2.v, '游客')
 })
 
 test('failed failure-record page prevents a partial chat workbook', async () => {

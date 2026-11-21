@@ -32,6 +32,33 @@ async function collect<T>(path: string, signal: AbortSignal, load: PageLoader): 
   }
 }
 
+export async function collectSelectedFeedbackExport(
+  conversations: ExportConversation[], signal: AbortSignal,
+  progress: (message: string) => void, load: PageLoader = loadExportPage,
+): Promise<ExportTable[]> {
+  const tables: ExportTable[] = []
+  for (const [index, conversation] of conversations.entries()) {
+    progress(`正在读取会话 ${index + 1} / ${conversations.length}…`)
+    const turns = await collect<ExportTurn>(`/api/feedback?conversationId=${encodeURIComponent(conversation.id)}`, signal, load)
+    const unique = [...new Map(turns.map(turn => [turn.responseId, turn])).values()]
+    if (unique.length < conversation.turnCount) { throw new Error('会话记录在导出期间发生变化，请刷新后重新下载') }
+    const metadata = {
+      会话ID: conversation.id, 用户ID: conversation.userId ?? '游客',
+      创建时间: conversation.createdAt == null ? null : new Date(conversation.createdAt * 1000).toISOString(),
+    }
+    tables.push({
+      name: `${index + 1} - ${conversation.id.slice(0, 8)}`,
+      headers: ['会话ID', '用户ID', '创建时间', '轮次', '问题', '回答', '评分', '反馈建议', '评价时间'],
+      widths: [38, 36, 28, 10, 60, 90, 10, 60, 28],
+      rows: unique.length ? unique.map(turn => ({
+        ...metadata, 轮次: turn.number, 问题: turn.question, 回答: turn.answer,
+        评分: turn.score, 反馈建议: turn.comment, 评价时间: turn.reviewedAt ?? null,
+      })) : [metadata],
+    })
+  }
+  return tables
+}
+
 export async function collectFeedbackExport(
   section: 'chat' | 'contact', signal: AbortSignal,
   progress: (message: string) => void, load: PageLoader = loadExportPage,

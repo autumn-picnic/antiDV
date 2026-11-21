@@ -147,6 +147,30 @@ test('admin list reads conversations and commits an audit entry', async () => {
   assert(queryCalls.some(q => q.sql.includes('xiaoan_admin_access') && q.values[0] === 'user_alice'))
   assert.equal(queryCalls.at(-1).sql, 'COMMIT')
 })
+test('admin user groups count visible conversations and are paginated', async () => {
+  user.publicMetadata.role = 'admin'
+  queryRows = Array.from({ length: 51 }, (_, i) => ({ userId: i ? `user_${i}` : null, conversationCount: 2 }))
+  const response = await feedback.GET(req('/api/feedback?view=users&offset=50'))
+  assert.equal(response.status, 200)
+  const page = await response.json()
+  assert.equal(page.items.length, 50)
+  assert.deepEqual(page.items[0], { userId: null, conversationCount: 2 })
+  assert.equal(page.nextOffset, 100)
+  assert.match(queryCalls[1].sql, /GROUP BY u\.clerk_user_id/)
+  assert.match(queryCalls[1].sql, /c\.user_id IS NULL AND c\.expires_at>/)
+  assert.deepEqual(queryCalls[1].values, [50])
+  assert.equal(queryCalls.at(-1).sql, 'COMMIT')
+})
+test('admin conversation list filters registered users and guests without dropping the visibility condition', async () => {
+  user.publicMetadata.role = 'admin'
+  for (const userId of ['user_alice', '']) {
+    queryCalls = []
+    const response = await feedback.GET(req(`/api/feedback?userId=${userId}&offset=50`))
+    assert.equal(response.status, 200)
+    assert.match(queryCalls[1].sql, /WHERE \(u\.status='active' OR \(c\.user_id IS NULL AND c\.expires_at>[^\n]+\)\) AND u\.clerk_user_id IS NOT DISTINCT FROM NULLIF\(\$2, ''\)/)
+    assert.deepEqual(queryCalls[1].values, [50, userId])
+  }
+})
 test('admin conversation query uses original input only for failed turns with legacy fallback', async () => {
   user.publicMetadata.role = 'admin'
   const response = await feedback.GET(req('/api/feedback?conversationId=c1'))
