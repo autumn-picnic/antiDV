@@ -586,3 +586,11 @@
     gap: 6px;
   }
 }
+
+/* Leave both rail controls reachable when a sidebar expands on a narrow screen. */
+@media (width <= 640px) {
+  .figma-chat-shell #history-content,
+  .figma-chat-shell .resource-panel-slide {
+    max-width: calc(100vw - 96px);
+  }
+}

@@ -6,7 +6,6 @@ import useGuestLoginPrompt from '@/hooks/use-guest-login-prompt'
 import GuestLoginPrompt from '@/app/components/account/guest-login-prompt'
 import AnalysisConsentCompletion from '@/app/components/account/analysis-consent-completion'
 import { useBoolean } from 'ahooks'
-import Modal from '@/app/components/base/modal'
 import CrisisDialog from '@/app/components/crisis-dialog'
 import useCrisisPrompt from '@/hooks/use-crisis-prompt'
 import StreamdownMarkdown from '@/app/components/base/streamdown-markdown'
@@ -15,7 +14,6 @@ import Header from '@/app/components/header'
 import Chat from '@/app/components/chat'
 import ResourcePanel from '@/app/components/resource-panel'
 import BackExitGuard from '@/app/components/back-exit-guard'
-import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import useChatflow from '@/hooks/use-chatflow'
 import MemoryManager from '@/app/components/memory/memory-manager'
 import AccountControls from '@/app/components/account/account-controls'
@@ -33,14 +31,9 @@ const Main: FC<IMainProps> = () => {
   const { user, isLoaded, isSignedIn } = useUser()
   const automaticDebug = Boolean(isSignedIn && isFeedbackAdminEmail(user?.primaryEmailAddress?.emailAddress, user?.primaryEmailAddress?.verification?.status === 'verified'))
   const guestPrompt = useGuestLoginPrompt(Boolean(isSignedIn))
-  const media = useBreakpoints()
-  const isMobile = media === MediaType.mobile
-  const isDesktop = media === MediaType.pc
   const hasSetInputs = true
-  const [isShowSidebar, { setTrue: showSidebar, setFalse: hideSidebar }] = useBoolean(false)
-  const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse, setTrue: collapsePanel }] = useBoolean(true)
-  const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(false)
+  const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(true)
   const [memoryOpen, setMemoryOpen] = useState(false)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerTarget, setComposerTarget] = useState<HTMLDivElement | null>(null)
@@ -117,7 +110,7 @@ const Main: FC<IMainProps> = () => {
     setMemoryOpen(false)
     const selected = await selectConversation(id)
     if (!selected) { return }
-    hideSidebar()
+    collapseSidebar()
     followLatest.current = true
     setFullAnnouncement('')
     setAnnouncement(id === '-1' ? '已建立新对话。' : `已切换到${conversationList.find(item => item.id === id)?.name || '历史对话'}。`)
@@ -128,10 +121,9 @@ const Main: FC<IMainProps> = () => {
   const checkCanSend = () => !busy && !failure?.needsRecovery
   const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer && !item.fallback).map(item => item.content).join(' '), [chatList])
 
-  const renderSidebar = (mobileRail = false) => {
+  const renderSidebar = () => {
     return (
       <Sidebar
-        id={mobileRail ? 'history-rail' : 'history-content'}
         list={conversationList}
         onCurrentIdChange={handleConversationIdChange}
         currentId={currConversationId}
@@ -144,8 +136,8 @@ const Main: FC<IMainProps> = () => {
           })
         }}
         onClearAll={handleClearAll}
-        isCollapsed={mobileRail || (!isMobile && isSidebarCollapsed)}
-        onToggleCollapse={mobileRail ? showSidebar : isMobile ? hideSidebar : toggleSidebarCollapse}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
       />
     )
   }
@@ -167,14 +159,7 @@ const Main: FC<IMainProps> = () => {
       {guestPrompt.visible && isLoaded && !crisisPrompt.visible && <GuestLoginPrompt onContinue={guestPrompt.dismiss} conversationId={currConversationId} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* sidebar */}
-        {isMobile
-          ? <div className="h-full w-12 shrink-0">{renderSidebar(true)}</div>
-          : renderSidebar()}
-        {isMobile && isShowSidebar && (
-          <Modal title="历史对话" onClose={hideSidebar} className="history-modal">
-            {renderSidebar()}
-          </Modal>
-        )}
+        {renderSidebar()}
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
           <div className="chat-center-column">
@@ -234,13 +219,12 @@ const Main: FC<IMainProps> = () => {
           </main>
           <div className="chat-composer-slot" ref={setComposerTarget} />
           </div>
-          {/* Desktop resource panel */}
+          {/* Resource sidebar */}
           {hasSetInputs && (
             <ResourcePanel
               accumulatedAIText={accumulatedAIText}
-              isCollapsed={!isDesktop || isPanelCollapsed}
+              isCollapsed={isPanelCollapsed}
               onToggleCollapse={() => {
-                if (!isDesktop) { showResourcePanel(); return }
                 togglePanelCollapse()
                 requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-label="展开资源面板"]')?.focus())
               }}
@@ -248,12 +232,7 @@ const Main: FC<IMainProps> = () => {
           )}
         </div>
       </div>
-      {/* Mobile resource panel overlay */}
-      {!isDesktop && isShowResourcePanel && (
-        <Modal title="支持资源" onClose={hideResourcePanel}>
-          <ResourcePanel accumulatedAIText={accumulatedAIText} />
-        </Modal>
-      )}
+
     </div>
   )
 }
