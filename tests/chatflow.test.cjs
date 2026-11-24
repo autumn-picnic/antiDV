@@ -703,3 +703,32 @@ test('SSE keeps reasoning separate from answer across split frames', async () =>
   assert.equal(reasoning, '推理文本')
   await assert.rejects(api.readChatStream(stream(start + frame('reasoning_delta', { delta: 42 }) + done), 'c1', { onDelta() {} }), /推理片段格式无效/)
 })
+
+
+test('content-filter failure retains authorized diagnostics without completing', async () => {
+  const diagnostic = { diagnostics: { request_id: 'r1', code: 'content_filter', stage: 'response' } }
+  await assert.rejects(api.readChatStream(stream(start + frame('error', { debug: diagnostic })), 'c1', { onDelta() {} }),
+    error => error.status === 503 && error.debug.diagnostics.code === 'content_filter')
+})
+
+test('ordinary stream failures have no debug payload', async () => {
+  await assert.rejects(api.readChatStream(stream(start + frame('error')), 'c1', { onDelta() {} }),
+    error => error.status === 503 && error.debug === undefined)
+})
+
+test('failure debug panel renders request identity and retry metadata with escaped values', () => {
+  const React = require('react')
+  const { renderToStaticMarkup } = require('react-dom/server')
+  const DebugPanel = load('app/components/chat/debug-panel.tsx').default
+  const html = renderToStaticMarkup(React.createElement(DebugPanel, { debug: { diagnostics: {
+    request_id: 'request-test', deployment_revision: 'release-test', stage: 'response', code: 'content_filter',
+    response_stream_attempts: 3, response_attempt_events: [{ event: 'response_retry', attempt: 2 }],
+    content_filter_signals: [{ category: 'sexual', filtered: true }],
+    provider_request_id: '<script>test</script>',
+  } } }))
+  assert.match(html, /失败请求诊断/)
+  assert.match(html, /request-test/)
+  assert.match(html, /失败尝试与重试记录/)
+  assert.match(html, /content_filter/)
+  assert.ok(!html.includes('<script>'))
+})

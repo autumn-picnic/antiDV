@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createStreamRenderer } from '../utils/stream-renderer'
 import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview, saveChatFailure } from '../service'
 import type { ConversationItem } from '../types/app'
-import type { ConversationView, DebugChatItem, GuardDiagnostic } from '../types/chatflow'
+import type { ConversationView, DebugChatItem, GuardDiagnostic, ChatDebug } from '../types/chatflow'
 
 function suggestedQuestions(value: unknown): string[] | undefined {
   return Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())).map(item => item.trim()))] : undefined
@@ -25,7 +25,7 @@ function errorMessage(error: unknown) {
 
 export interface ChatOperation { id: string, conversationId: string, kind: 'sending' | 'completed' | 'stopped' | 'failed', content?: string, responseId?: string, safetyLevel?: import('../types/chatflow').SafetyLevel }
 
-interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, guard?: GuardDiagnostic, attemptId?: string, fallback?: ChatApiError['fallback'] }
+interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, debug?: ChatDebug, guard?: GuardDiagnostic, attemptId?: string, fallback?: ChatApiError['fallback'] }
 
 export default function useChatflow({ authReady, signedIn, debug = false, onCompleted }: { authReady: boolean, signedIn: boolean, debug?: boolean, onCompleted: () => void }) {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
@@ -240,7 +240,8 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
       const failedItems: DebugChatItem[] = startedGeneration && !expired
         ? [...committed, { id: `question-${failedId}`, content: message, isAnswer: false },
           ...(fixedFallback ? [{ id: failedId, content: fixedFallback.details || fixedFallback.message,
-            isAnswer: true, fallback: fixedFallback, feedbackDisabled: true }] : [])]
+            isAnswer: true, fallback: fixedFallback, feedbackDisabled: true,
+            debug: error instanceof ChatApiError ? error.debug : undefined }] : [])]
         : committed
       setChatList(failedItems)
       setOperation({ id: attemptId, conversationId: id, kind: 'failed', content: text })
@@ -257,6 +258,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
         needsRecovery: startedGeneration && !expired && !(error instanceof ChatApiError
           && error.status === 503 && error.fallback?.can_continue === true),
         guard: error instanceof ChatApiError ? error.guard : undefined,
+        debug: error instanceof ChatApiError ? error.debug : undefined,
         fallback: error instanceof ChatApiError ? error.fallback : undefined,
       })
       if (!abort.signal.aborted) {

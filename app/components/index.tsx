@@ -20,7 +20,7 @@ import MemoryManager from '@/app/components/memory/memory-manager'
 import AccountControls from '@/app/components/account/account-controls'
 import PrivacyControls from '@/app/components/privacy/privacy-controls'
 import { isFeedbackAdminEmail } from '@/lib/auth/policy'
-import { GuardSummary } from '@/app/components/chat/debug-panel'
+import DebugPanel, { GuardSummary } from '@/app/components/chat/debug-panel'
 import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
 import '@/app/styles/figma-chat.css'
@@ -218,6 +218,7 @@ const Main: FC<IMainProps> = () => {
               {failure && (!failure.fallback || failure.needsRecovery) && (
                 <div role='alert' className='my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800'>
                   <p>{failure.fallback ? '请先刷新会话记录，确认这次回复是否已保存。' : failure.message}</p>
+                  {debugEnabled && !failure.fallback && failure.debug && <DebugPanel debug={failure.debug} />}
                   {debugEnabled && failure.guard && <p className="mt-2"><GuardSummary guard={failure.guard} /></p>}
                   <button type='button' disabled={busy} onClick={() => void recover()} className='mr-4 mt-2 underline'>刷新会话记录</button>
                   {failure.query && !failure.needsRecovery && <button type='button' disabled={busy} onClick={retry} className='mt-2 underline'>重试这条消息</button>}

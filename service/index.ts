@@ -3,9 +3,19 @@ import type { ChatDebug, CompletedResponse, ConversationSummary, ConversationVie
 import type { FailureInput } from '../lib/feedback/failure-validation'
 
 export class ChatApiError extends Error {
-  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic, public code?: string, public fallback?: FixedFallback) {
+  constructor(public status: number, message: string, public responseId?: string, public guard?: GuardDiagnostic, public code?: string, public fallback?: FixedFallback, public debug?: ChatDebug) {
     super(message)
   }
+}
+
+function errorDebug(value: unknown): ChatDebug | undefined {
+  const diagnostics = (value as { debug?: { diagnostics?: unknown } } | null)?.debug?.diagnostics
+  if (!diagnostics || typeof diagnostics !== 'object' || Array.isArray(diagnostics)) { return undefined }
+  const allowed = ['request_id', 'started_at_utc', 'elapsed_ms', 'deployment_revision', 'models',
+    'stage', 'error_type', 'code', 'status_code', 'provider_request_id', 'transport_kind', 'guard_reason',
+    'content_filter_signals', 'filter_policy_version', 'response_stream_attempts', 'first_content_received',
+    'stages', 'response_attempt_events']
+  return { diagnostics: Object.fromEntries(Object.entries(diagnostics).filter(([key]) => allowed.includes(key))) }
 }
 
 export interface FixedFallback { kind: 'fixed_support', version: string, message: string, resource_url: string, variant?: 'neutral' | 'general' | 'self_harm' | 'medical', details?: string, can_continue?: boolean }
@@ -36,8 +46,11 @@ async function request(path: string, init: RequestInit = {}) {
   if (!response.ok || response.status === 202) {
     if (response.status === 503 && response.headers.get('content-type')?.includes('application/json')) {
       const body = await response.json().catch(() => null)
-      const fallback = fixedFallback(body?.detail ?? body)
-      if (fallback) { throw new ChatApiError(response.status, fallback.message, undefined, undefined, undefined, fallback) }
+      const detail = body?.detail ?? body
+      const fallback = fixedFallback(detail)
+      if (fallback) { throw new ChatApiError(response.status, fallback.message,
+        typeof detail?.response_id === 'string' ? detail.response_id : undefined,
+        undefined, undefined, fallback, errorDebug(detail)) }
     }
     await response.body?.cancel()
     throw new ChatApiError(response.status, httpMessage(response.status))
@@ -165,7 +178,7 @@ export async function readChatStream(
         break
       case 'error':
         throw new ChatApiError(503, fixedFallback(data)?.message || '本次回复未完成，请稍后手动重试', responseId, guardDiagnostic(data),
-          ['storage_unavailable', 'account_disabled', 'conversation_conflict', 'service_unavailable'].includes(data.code) ? data.code : undefined, fixedFallback(data))
+          ['storage_unavailable', 'account_disabled', 'conversation_conflict', 'service_unavailable'].includes(data.code) ? data.code : undefined, fixedFallback(data), errorDebug(data))
       default:
         throw new ChatApiError(502, '回复事件顺序无效', responseId)
     }
