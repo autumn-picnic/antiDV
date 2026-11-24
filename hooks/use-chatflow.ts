@@ -72,12 +72,8 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
     let active = true
     async function init() {
       try {
-        const rows = await refreshList(abort.signal)
-        const current = await fetchCurrentConversation(abort.signal) || (rows[0] ? await fetchConversation(rows[0].id, abort.signal) : null)
-        if (active && current) {
-          setConversationId(current.conversation_id)
-          setChatList(chatItems(current))
-        }
+        // Keep the new-chat state on page load; history opens only when selected.
+        await refreshList(abort.signal)
       }
       catch (error) {
         if (active) { setFailure({ message: errorMessage(error) }) }
