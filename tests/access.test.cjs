@@ -167,19 +167,20 @@ test('admin conversation list filters registered users and guests without droppi
     queryCalls = []
     const response = await feedback.GET(req(`/api/feedback?userId=${userId}&offset=50`))
     assert.equal(response.status, 200)
-    assert.match(queryCalls[1].sql, /WHERE \(u\.status='active' OR \(c\.user_id IS NULL AND c\.expires_at>[^\n]+\)\) AND u\.clerk_user_id IS NOT DISTINCT FROM NULLIF\(\$2, ''\)/)
+    assert.match(queryCalls[1].sql, /WHERE \(u\.status='active' OR \(c\.user_id IS NULL AND c\.expires_at>[\s\S]+AND u\.clerk_user_id IS NOT DISTINCT FROM NULLIF\(\$2, ''\)/)
     assert.deepEqual(queryCalls[1].values, [50, userId])
   }
 })
-test('admin conversation query uses original input only for failed turns with legacy fallback', async () => {
+test('analysis detail selects masked transcripts and omits raw originals, diagnostics and IP', async () => {
   user.publicMetadata.role = 'admin'
   const response = await feedback.GET(req('/api/feedback?conversationId=c1'))
   assert.equal(response.status, 200)
-  const query = queryCalls.find(q => q.sql.includes('END AS question'))
+  const query = queryCalls.find(q => q.sql.includes('AS question'))
   assert.ok(query)
-  assert.match(query.sql, /CASE WHEN t\.content->>'status' = 'failed'\s+THEN COALESCE\(t\.content->>'user_original', t\.content->>'user', ''\)\s+ELSE t\.content->>'user'\s+END AS question/)
+  assert.match(query.sql, /t\.content->>'user' AS question/)
+  assert.doesNotMatch(query.sql, /user_original|assistant_original|->'debug'|->>'reasoning'|->'ip'|->'city'/)
   assert.match(query.sql, /t\.content->>'assistant' AS answer/)
-  assert.match(query.sql, /t\.content->>'reasoning' AS reasoning/)
+  assert.match(query.sql, /NULL AS debug, NULL AS reasoning/)
   assert.deepEqual(query.values, ['c1', 0])
   assert(queryCalls.some(q => q.sql.includes('xiaoan_admin_access') && q.values[1] === 'read_conversation'))
   assert.equal(queryCalls.at(-1).sql, 'COMMIT')
@@ -224,7 +225,7 @@ test('logout revokes only session, expires cookies and never deletes history', a
   assert.deepEqual(revoked, ['sess_1'])
   assert.equal(queryCalls.length, 0)
   const cookies = response.headers.getSetCookie()
-  for (const [name, cookiePath] of [['__session', '/'], ['xiaoan_guest', '/v1'], ['xiaoan_current', '/v1'], ['feedback_auth', '/feedback'], ['custom', '/']]) {
+  for (const [name, cookiePath] of [['xiaoan_analysis_intent', '/v1'], ['__session', '/'], ['xiaoan_guest', '/v1'], ['xiaoan_current', '/v1'], ['feedback_auth', '/feedback'], ['custom', '/']]) {
     assert(cookies.some(c => c.startsWith(name + '=;') && c.includes(`Path=${cookiePath};`) && c.includes('Max-Age=0')))
   }
   assert.match(response.headers.get('Clear-Site-Data'), /cookies/)
@@ -360,4 +361,28 @@ test('guest reads fail closed on invalid credential, mismatched response and bac
   queryRows = [{ responseId: 'r1', score: 5, comment: '' }]
   assert.equal((await reviews.GET(request('c1'))).status, 200)
   assert.deepEqual(queryCalls[0].values, ['c1', 'guest:c1'])
+})
+
+test('all admin listing, grouping, detail and export paths require explicit analysis consent', async () => {
+  user.publicMetadata.role = 'admin'
+  for (const query of ['', '?view=users', '?userId=user_alice', '?userId=', '?conversationId=c1&offset=50']) {
+    queryCalls = []
+    assert.equal((await feedback.GET(req(`/api/feedback${query}`))).status, 200)
+    const sql = queryCalls[1].sql
+    assert.match(sql, /ac.clerk_user_id=u.clerk_user_id AND ac.granted=true/)
+    assert.match(sql, /c.created_at>=extract\(epoch from ac.decided_at\)/)
+    assert.match(sql, /cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true/)
+    assert.match(sql, /c.user_id IS NULL OR u.clerk_user_id=cc.clerk_user_id/)
+  }
+})
+
+test('failure analysis also requires explicit consent and excludes unmasked question/reason', async () => {
+  user.publicMetadata.role = 'admin'
+  const response = await failures.GET(req('/api/feedback/failures'))
+  assert.equal(response.status, 200)
+  const sql = queryCalls[1].sql
+  assert.match(sql, /ac.clerk_user_id=f.clerk_user_id AND ac.granted=true/)
+  assert.match(sql, /cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true/)
+  assert.match(sql, /f.created_at>=ac.decided_at/)
+  assert.doesNotMatch(sql, /f.question|f.reason|reason AS comment/)
 })

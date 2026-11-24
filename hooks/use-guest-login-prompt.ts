@@ -5,6 +5,7 @@ import type { GuestPromptState } from '@/lib/auth/guest-prompt'
 
 export default function useGuestLoginPrompt(signedIn: boolean) {
   const current = useRef<GuestPromptState>({ completedTurns: 0, dismissed: false })
+  const [manualOpen, setManualOpen] = useState(false)
   const [state, setState] = useState(current.current)
   useEffect(() => {
     try { current.current = readGuestPrompt(sessionStorage.getItem(GUEST_LOGIN_PROMPT_KEY)) }
@@ -19,10 +20,11 @@ export default function useGuestLoginPrompt(signedIn: boolean) {
     catch { /* The prompt still works for this mounted chat. */ }
   }
   return {
-    visible: shouldPromptGuest(state, signedIn),
+    visible: !signedIn && (manualOpen || shouldPromptGuest(state, signedIn)),
+    open: () => { if (!signedIn) { setManualOpen(true) } },
     completed: () => {
       if (!signedIn) { update({ ...current.current, completedTurns: current.current.completedTurns + 1 }) }
     },
-    dismiss: () => update({ ...current.current, dismissed: true }),
+    dismiss: () => { setManualOpen(false); update({ ...current.current, dismissed: true }) },
   }
 }

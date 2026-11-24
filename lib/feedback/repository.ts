@@ -35,21 +35,31 @@ export async function adminConversations(actor: Actor, offset: number, view: Adm
   const client = await feedbackDatabase().connect()
   try {
     await client.query('BEGIN')
-    // Admin-only diagnostics; read audit is committed before returning data.
+    // Analysis consent applies to every list/detail/export query. Read audit is
+    // committed before returning data. Only de-identified transcript fields are
+    // selected: raw originals, debug prompts, reasoning and IP/location stay out.
     const conversationId = 'conversationId' in view ? view.conversationId : undefined
-    const visible = "(u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now())))"
+    const visible = `(u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now())))
+      AND (
+        EXISTS (SELECT 1 FROM xiaoan_analysis_consent ac
+          WHERE ac.clerk_user_id=u.clerk_user_id AND ac.granted=true
+            AND c.created_at>=extract(epoch from ac.decided_at))
+        OR EXISTS (SELECT 1 FROM xiaoan_conversation_analysis_consent cc
+          JOIN xiaoan_analysis_consent ac ON ac.clerk_user_id=cc.clerk_user_id
+          WHERE cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true
+            AND (c.user_id IS NULL OR u.clerk_user_id=cc.clerk_user_id))
+      )`
     let result
     if (conversationId) {
       result = await client.query(`
           SELECT t.number, t.response_id AS "responseId",
-            CASE WHEN t.content->>'status' = 'failed'
-              THEN COALESCE(t.content->>'user_original', t.content->>'user', '')
-              ELSE t.content->>'user'
-            END AS question,
+            t.content->>'user' AS question,
             t.content->>'assistant' AS answer, t.content->>'safety_level' AS "safetyLevel",
-            t.content->'debug' AS debug,
-            t.content->>'reasoning' AS reasoning,
-            t.content->'request_context' AS "requestContext",
+            NULL AS debug, NULL AS reasoning,
+            json_build_object(
+              'started_at', t.content->'request_context'->'started_at',
+              'completed_at', t.content->'request_context'->'completed_at'
+            ) AS "requestContext",
             f.score, f.comment, f.updated_at AS "reviewedAt"
           FROM account_turns t JOIN account_conversations c ON c.id=t.conversation_id
           LEFT JOIN app_users u ON u.id=c.user_id

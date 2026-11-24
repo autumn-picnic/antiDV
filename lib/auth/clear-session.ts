@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { ANALYSIS_CONSENT_COOKIE } from '@/lib/privacy/analysis-consent'
 
 /** Clear local credentials only. Never DELETE conversations or account records. */
 export function clearedSessionResponse(request: NextRequest, revoked: boolean) {
@@ -7,7 +8,7 @@ export function clearedSessionResponse(request: NextRequest, revoked: boolean) {
     'Clear-Site-Data': '"cookies", "storage", "cache"',
     'Content-Type': 'application/json',
   })
-  const names = new Set(['xiaoan_guest', 'xiaoan_current', 'xiaoan_session', 'session_id', 'feedback_auth', 'locale', '__session', '__client_uat', '__clerk_db_jwt'])
+  const names = new Set([ANALYSIS_CONSENT_COOKIE, 'xiaoan_guest', 'xiaoan_current', 'xiaoan_session', 'session_id', 'feedback_auth', 'locale', '__session', '__client_uat', '__clerk_db_jwt'])
   for (const { name } of request.cookies.getAll()) {
     if (/^[!#$%&'*+.^_`|~\w-]+$/.test(name)) { names.add(name) }
   }

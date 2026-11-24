@@ -9,6 +9,7 @@
     "lib/backend.ts",
     "app/api/utils/proxy.ts",
     "app/v1/[...path]/route.ts",
+    "app/v1/analysis-consent/route.ts",
     "hooks/use-chatflow.ts",
     "hooks/use-speech-input.ts",
     "utils/speech-audio.ts",

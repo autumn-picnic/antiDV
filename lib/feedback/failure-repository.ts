@@ -18,9 +18,23 @@ export async function listFailures(actor: Actor, offset: number) {
   try {
     await client.query('BEGIN')
     const result = await client.query(`
-      SELECT id, clerk_user_id AS "userId", conversation_id AS "conversationId", response_id AS "responseId",
-        question, stage, status, reason AS comment, code, created_at AS "createdAt"
-      FROM xiaoan_chat_failures ORDER BY created_at DESC, id DESC LIMIT 51 OFFSET $1`, [offset])
+      SELECT f.id, f.clerk_user_id AS "userId", f.conversation_id AS "conversationId", f.response_id AS "responseId",
+        '[未生成去标识化文本]' AS question, f.stage, f.status,
+        '请求未完成' AS comment, f.code, f.created_at AS "createdAt"
+      FROM xiaoan_chat_failures f
+      LEFT JOIN account_conversations c ON c.id=f.conversation_id
+      LEFT JOIN app_users u ON u.id=c.user_id
+      WHERE EXISTS (
+        SELECT 1 FROM xiaoan_analysis_consent ac JOIN app_users owner ON owner.clerk_user_id=ac.clerk_user_id
+        WHERE ac.clerk_user_id=f.clerk_user_id AND ac.granted=true AND owner.status='active'
+          AND f.created_at>=ac.decided_at
+      ) OR EXISTS (
+        SELECT 1 FROM xiaoan_conversation_analysis_consent cc
+        JOIN xiaoan_analysis_consent ac ON ac.clerk_user_id=cc.clerk_user_id
+        WHERE cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true
+          AND ((c.user_id IS NULL AND c.expires_at>extract(epoch from now()))
+            OR (u.clerk_user_id=cc.clerk_user_id AND u.status='active'))
+      ) ORDER BY f.created_at DESC, f.id DESC LIMIT 51 OFFSET $1`, [offset])
     await client.query('INSERT INTO xiaoan_failure_admin_access(clerk_user_id) VALUES ($1)', [actor.userId])
     await client.query('COMMIT')
     return { items: result.rows.slice(0, 50), nextOffset: result.rows.length > 50 ? offset + 50 : null }

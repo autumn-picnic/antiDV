@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { isFeedbackAdminEmail } from '@/lib/auth/policy'
 import { quickEscape } from '@/app/components/quick-exit'
 
-export default function AccountControls({ onOpenPrivacy, onOpenMemory }: { onOpenPrivacy: () => void, onOpenMemory: () => void }) {
+export default function AccountControls({ onOpenPrivacy, onOpenMemory, onRegister }: { onOpenPrivacy: () => void, onOpenMemory: () => void, onRegister: () => void }) {
   const { user, isLoaded, isSignedIn } = useUser()
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,7 +41,10 @@ export default function AccountControls({ onOpenPrivacy, onOpenMemory }: { onOpe
     </summary>
     <div className="chat-account-popover">
       <p>{!isLoaded ? '正在加载账号…' : isSignedIn ? `已登录${user?.firstName ? `：${user.firstName}` : ''}` : '正在以游客身份聊天'}</p>
-      {isLoaded && !isSignedIn && <><Link href="/sign-in">登录</Link><Link href="/sign-up">注册</Link></>}
+      {isLoaded && !isSignedIn && <button type="button" onClick={() => {
+        if (menu.current) { menu.current.open = false }
+        onRegister()
+      }}>注册 / 登录</button>}
       <button type="button" disabled={!isLoaded} onClick={() => { if (menu.current) { menu.current.open = false }; onOpenPrivacy() }}>隐私与保存</button>
       {isSignedIn && <>
         <button type="button" onClick={() => { if (menu.current) { menu.current.open = false }; onOpenMemory() }}>记忆管理</button>
