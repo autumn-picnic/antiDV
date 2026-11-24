@@ -16,6 +16,9 @@ import useModalDialog from '@/hooks/use-modal-dialog'
 import { quickEscape } from '@/app/components/quick-exit'
 import useSpeechInput from '@/hooks/use-speech-input'
 
+// Temporarily hide the safety-pack entry; set to true to restore it.
+const SHOW_SAFETY_PACK_ENTRY = false
+
 export interface IChatProps {
   chatList: DebugChatItem[]
   feedbackDisabled?: boolean
@@ -278,7 +281,7 @@ const Chat: FC<IChatProps> = ({
               <div className="chat-composer-footer"><p className="chat-disclaimer">
                 小安是AI助手，回答可能有误。如有任何反馈，欢迎通过电邮联系我们：
                 <a href="mailto:support@xiaoan.app" className="underline underline-offset-2">support@xiaoan.app</a>。
-              </p><a href="/safety-pack">查看安全包</a></div>
+              </p>{SHOW_SAFETY_PACK_ENTRY && <a href="/safety-pack">查看安全包</a>}</div>
               <div className="chat-privacy-dialog-host">{privacyControls}</div>
             </div>
           </div>
