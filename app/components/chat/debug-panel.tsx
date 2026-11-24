@@ -12,6 +12,7 @@ export function GuardSummary({ guard }: { guard?: GuardDiagnostic }) {
 }
 
 const groups = [
+  ['diagnostics', '失败请求诊断'],
   ['timings', '耗时'],
   ['safety', 'Safety 安全判断'],
   ['route', '路由／胶囊'],
@@ -25,6 +26,12 @@ const groups = [
 ] as const
 
 const fieldLabels: Record<string, string> = {
+  request_id: '请求编号', started_at_utc: '请求开始时间（UTC）', deployment_revision: '部署版本',
+  stage: '失败阶段', error_type: '异常类型', code: '错误码', status_code: '上游 HTTP 状态',
+  provider_request_id: '供应商请求编号', content_filter_signals: '内容过滤信号',
+  filter_policy_version: '过滤策略版本', response_stream_attempts: '回答流式调用次数',
+  first_content_received: '是否收到生成正文', stages: '阶段记录', response_attempt_events: '失败尝试与重试记录',
+
   preprocess_ms: '预处理耗时', safety_ms: 'Safety 耗时', router_ms: 'Router 耗时',
   ground_ms: 'Ground 耗时', response_ttft_ms: '回答模型首字等待',
   first_guarded_delta_ms: '整轮到首个可见片段', response_generation_ms: '回答生成耗时',
