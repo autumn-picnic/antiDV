@@ -36,7 +36,7 @@ const Main: FC<IMainProps> = () => {
   const isMobile = media === MediaType.mobile
   const isDesktop = media === MediaType.pc
   const hasSetInputs = true
-  const [isShowSidebar, { setFalse: hideSidebar }] = useBoolean(false)
+  const [isShowSidebar, { setTrue: showSidebar, setFalse: hideSidebar }] = useBoolean(false)
   const [isShowResourcePanel, { setTrue: showResourcePanel, setFalse: hideResourcePanel }] = useBoolean(false)
   const [isPanelCollapsed, { toggle: togglePanelCollapse, setTrue: collapsePanel }] = useBoolean(true)
   const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(false)
