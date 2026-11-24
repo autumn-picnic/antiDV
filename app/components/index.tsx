@@ -128,9 +128,10 @@ const Main: FC<IMainProps> = () => {
   const checkCanSend = () => !busy && !failure?.needsRecovery
   const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer && !item.fallback).map(item => item.content).join(' '), [chatList])
 
-  const renderSidebar = () => {
+  const renderSidebar = (mobileRail = false) => {
     return (
       <Sidebar
+        id={mobileRail ? 'history-rail' : 'history-content'}
         list={conversationList}
         onCurrentIdChange={handleConversationIdChange}
         currentId={currConversationId}
@@ -143,8 +144,8 @@ const Main: FC<IMainProps> = () => {
           })
         }}
         onClearAll={handleClearAll}
-        isCollapsed={isMobile ? false : isSidebarCollapsed}
-        onToggleCollapse={isMobile ? hideSidebar : toggleSidebarCollapse}
+        isCollapsed={mobileRail || (!isMobile && isSidebarCollapsed)}
+        onToggleCollapse={mobileRail ? showSidebar : isMobile ? hideSidebar : toggleSidebarCollapse}
       />
     )
   }
@@ -159,8 +160,6 @@ const Main: FC<IMainProps> = () => {
       {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
-        isSidebarOpen={isMobile && isShowSidebar}
-        onShowSideBar={showSidebar}
         accountControls={<AccountControls onRegister={guestPrompt.open} onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
 
       />
@@ -168,7 +167,9 @@ const Main: FC<IMainProps> = () => {
       {guestPrompt.visible && isLoaded && !crisisPrompt.visible && <GuestLoginPrompt onContinue={guestPrompt.dismiss} conversationId={currConversationId} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* sidebar */}
-        {!isMobile && renderSidebar()}
+        {isMobile
+          ? <div className="h-full w-12 shrink-0">{renderSidebar(true)}</div>
+          : renderSidebar()}
         {isMobile && isShowSidebar && (
           <Modal title="历史对话" onClose={hideSidebar} className="history-modal">
             {renderSidebar()}

@@ -586,32 +586,3 @@
     gap: 6px;
   }
 }
-
-/* Keep mobile history reachable beside the existing account and tool controls. */
-.chat-history-toggle {
-  display: none;
-}
-
-@media (width <= 640px) {
-  .figma-chat-shell .chat-topbar {
-    height: 124px;
-    min-height: 124px;
-  }
-
-  .chat-history-toggle {
-    position: absolute;
-    left: 14px;
-    bottom: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 12px;
-    border: 1px solid #d5c9bf;
-    border-radius: 10px;
-    background: #fbf9f7;
-    color: #655649;
-    font-size: 14px;
-    cursor: pointer;
-  }
-}
