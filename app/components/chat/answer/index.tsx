@@ -17,6 +17,9 @@ import { randomString } from '@/utils/string'
 import LoadingAnim from '../loading-anim'
 import s from '../style.module.css'
 
+// Temporarily pause answer follow-up bubbles; set to true to restore them.
+const ANSWER_SUGGESTIONS_ENABLED = false
+
 function OperationBtn({ innerContent, onClick, className, label }: { innerContent: React.ReactNode, onClick?: () => void, className?: string, label: string }) {
   return (
     <button type="button" aria-label={label}
@@ -236,7 +239,7 @@ const Answer: FC<IAnswerProps> = ({
               )}
             </div>
             {copyStatus && <p role="status" className="chat-copy-status">{copyStatus}</p>}
-            {!isResponding && suggestedQuestions.length > 0 && <div className="chat-answer-suggestions">
+            {ANSWER_SUGGESTIONS_ENABLED && !isResponding && suggestedQuestions.length > 0 && <div className="chat-answer-suggestions">
               {suggestedQuestions.map((suggestion, index) => <Button key={`${suggestion}-${index}`} className="text-sm" type="link" onClick={() => suggestionClick(suggestion)}>{suggestion}</Button>)}
             </div>}
           </div>
