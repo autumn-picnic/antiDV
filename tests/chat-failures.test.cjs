@@ -29,7 +29,8 @@ async function chatHarness({ createError, sendError, reportError, currentView, s
   }
   const api = {
     ChatApiError,
-    fetchConversations: async () => [],
+    fetchConversations: async () => currentView ? [{ id: currentView.conversation_id }] : [],
+    fetchConversation: async () => currentView,
     fetchCurrentConversation: async () => currentView || null,
     createConversation: async () => {
       if (createError) { throw createError }
@@ -126,12 +127,14 @@ test('confirmed service fallback unlocks next input while preserving failed quer
   assert.equal(harness.reports.length, 2)
 })
 
-test('restored failed history shows original user bubble and fixed support before later replies', async () => {
+test('page load starts empty; selecting history restores original user bubble and fixed support', async () => {
   const fallback = { kind: 'fixed_support', version: 'approved-test', message: '固定支持', can_continue: true, resource_url: 'https://xiaoan.app/resources' }
   const harness = await chatHarness({ currentView: { conversation_id: 'c1', turns: [
     { number: 1, response_id: 'r1', user: '原求助', assistant: '固定支持', status: 'failed', safety_level: null, fallback },
     { number: 2, response_id: 'r2', user: '下一段话', assistant: '正常回答', safety_level: 'normal' },
   ] } })
+  assert.deepEqual(harness.chatList(), [])
+  await harness.hook.selectConversation('c1')
   assert.deepEqual(harness.chatList().map(item => [item.isAnswer, item.content]), [
     [false, '原求助'], [true, '固定支持'], [false, '下一段话'], [true, '正常回答'],
   ])
