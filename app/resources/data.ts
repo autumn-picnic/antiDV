@@ -51,12 +51,12 @@ export const categories: ResourceCategory[] = [
         wechat: '中国普法（各地司法行政公众号）',
       },
       {
-        name: '儿童救助保护热线',
+        name: '未成年人保护咨询与转介',
         isOfficial: true,
         description: '提供儿童救助保护相关政策法规咨询、儿童心理问题疏导、帮扶转介、受理儿童生活困难问题等服务。',
-        hotline: '12349',
-        hours: '各地民政部门规定不同',
-        region: '试点地区（全国5省14市）',
+        hotline: '12345',
+        hours: '具体受理和转介安排以当地规定为准',
+        region: '中国大陆各地；用于非紧急咨询和转介',
       },
       {
         name: 'AVON雅芳-为平妇女支持热线',
@@ -78,9 +78,9 @@ export const categories: ResourceCategory[] = [
       {
         name: '北京市千千律师事务所',
         description: '致力于维护妇女儿童权益、用法律推动性别平等的公益性律师事务所。前身为北京大学法学院妇女法律研究与服务中心，是中国第一家专门从事妇女法律援助及研究的公益性民间组织。',
-        hotline: '010-84833270 / 010-84831639',
+        hotline: '010-84833270 / 010-84833276',
         email: 'ngo@woman-legalaid.org.cn',
-        hours: '工作日 9:00-17:00',
+        hours: '接线时间请向机构确认',
         region: '全国',
         wechat: '公众号：北京市千千律师事务所',
       },
@@ -89,9 +89,9 @@ export const categories: ResourceCategory[] = [
         description: '5A级社会组织，拥有国内最专业的针对妇女儿童暴力（家庭暴力、性骚扰、性侵害）处理团队。志愿律师超200人，开通法律咨询热线及"家暴求助"小程序，服务超1万人次。十年来办理500余起维权案件。',
         hotline: '17701242202 / 15901337457',
         email: 'bjyuanzhong@126.com',
-        hours: '工作日 9:00-17:00（热线 9:00-22:00）',
+        hours: '接线及在线回复时间请向机构确认',
         region: '全国',
-        wechat: '公众号：源众性别发展中心',
+        wechat: '小程序：家暴求助（从源众官网说明页扫码进入在线咨询）；公众号名称以机构官网为准',
         weibo: '@源众反暴力热线',
       },
       {
@@ -132,7 +132,7 @@ export const categories: ResourceCategory[] = [
         name: '北京红枫妇女心理咨询服务中心',
         description: '国内最早的针对妇女和性别暴力的心理支持热线。普及知识，提供心理咨询服务。',
         hotline: '010-68333388 / 010-64073800',
-        hours: '工作日 9:00-17:00',
+        hours: '一般热线：工作日 9:00-21:00（北京时间）；专题时段另询',
         region: '全国',
       },
       {
@@ -236,15 +236,13 @@ export const categories: ResourceCategory[] = [
       {
         name: '徐璐律师',
         description: '接触相关领域六年时间，办理过彩虹伴侣的意定监护。',
-        hotline: '15872398599',
-        email: '781494847@qq.com',
         region: '武汉',
       },
       {
         name: '芮欢月律师（上海九泽律师事务所）',
         description: '多次提供意定监护、形式婚姻、财产共有规划等非诉服务。承办上海首例女同性恋子女确认亲子关系纠纷案件。已解答400+与多元性别相关的法律问题。',
-        hotline: '15872398599',
-        email: '781494847@qq.com',
+        hotline: '021-80120131',
+        email: 'ruihuanyue@jiuzelaw.com',
         region: '上海',
       },
       {
