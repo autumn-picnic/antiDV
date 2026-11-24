@@ -17,6 +17,7 @@ function classNames(...classes: any[]) {
 }
 
 export interface ISidebarProps {
+  id?: string
   accountControls?: React.ReactNode
   copyRight: string
   currentId: string
@@ -29,6 +30,7 @@ export interface ISidebarProps {
 }
 
 const Sidebar: FC<ISidebarProps> = ({
+  id = 'history-content',
   accountControls,
   copyRight,
   currentId,
@@ -67,8 +69,8 @@ const Sidebar: FC<ISidebarProps> = ({
 
   return (
     <div
-      id="history-content"
-      className="shrink-0 flex flex-col tablet:h-[calc(100vh_-_3rem)] mobile:h-screen"
+      id={id}
+      className="shrink-0 flex flex-col h-full min-h-0"
       style={{
         width: isCollapsed ? 48 : 244,
         flexBasis: isCollapsed ? 48 : 244,
@@ -84,7 +86,7 @@ const Sidebar: FC<ISidebarProps> = ({
           onClick={onToggleCollapse}
           aria-label={isCollapsed ? '展开左边栏' : '收起左边栏'}
           aria-expanded={!isCollapsed}
-          aria-controls="history-content"
+          aria-controls={id}
           title={isCollapsed ? '展开' : '收起'}
           style={{
             width: 44, height: 44, flexShrink: 0,
