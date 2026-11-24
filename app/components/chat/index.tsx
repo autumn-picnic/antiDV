@@ -275,7 +275,10 @@ const Chat: FC<IChatProps> = ({
                   <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { speechInformed.current = true; setSpeechInfoOpen(false); void speech.start(true, recordingMode) }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
                 </div>
               </dialog>
-              <div className="chat-composer-footer"><p className="chat-disclaimer">小安是AI助手，回答可能有误。</p><a href="/safety-pack">查看安全包</a></div>
+              <div className="chat-composer-footer"><p className="chat-disclaimer">
+                小安是AI助手，回答可能有误。如有任何反馈，欢迎通过电邮联系我们：
+                <a href="mailto:support@xiaoan.app" className="underline underline-offset-2">support@xiaoan.app</a>。
+              </p><a href="/safety-pack">查看安全包</a></div>
               <div className="chat-privacy-dialog-host">{privacyControls}</div>
             </div>
           </div>
