@@ -158,6 +158,8 @@ const Main: FC<IMainProps> = () => {
       {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
+        isSidebarOpen={isMobile && isShowSidebar}
+        onShowSideBar={showSidebar}
         accountControls={<AccountControls onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
 
       />
