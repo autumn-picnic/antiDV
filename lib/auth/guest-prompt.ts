@@ -1,4 +1,4 @@
-export const GUEST_LOGIN_PROMPT_TURNS = 5
+export const GUEST_LOGIN_PROMPT_TURNS = 6
 export const GUEST_LOGIN_PROMPT_KEY = 'xiaoan_guest_login_prompt'
 export interface GuestPromptState { completedTurns: number, dismissed: boolean }
 

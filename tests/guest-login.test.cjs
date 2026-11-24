@@ -78,15 +78,15 @@ const { readGuestPrompt, shouldPromptGuest } = load('lib/auth/guest-prompt.ts')
 const useGuestLoginPrompt = load('hooks/use-guest-login-prompt.ts').default
 const useChatflow = load('hooks/use-chatflow.ts').default
 
-test('prompt begins at five completed turns and stays optional for guests', () => {
-  for (let count = 0; count < 5; count++) assert.equal(shouldPromptGuest({ completedTurns: count, dismissed: false }, false), false)
-  assert.equal(shouldPromptGuest({ completedTurns: 5, dismissed: false }, false), true)
+test('prompt begins at six completed turns and stays optional for guests', () => {
+  for (let count = 0; count < 6; count++) assert.equal(shouldPromptGuest({ completedTurns: count, dismissed: false }, false), false)
+  assert.equal(shouldPromptGuest({ completedTurns: 6, dismissed: false }, false), true)
   assert.equal(shouldPromptGuest({ completedTurns: 6, dismissed: true }, false), false)
-  assert.equal(shouldPromptGuest({ completedTurns: 5, dismissed: false }, true), false)
+  assert.equal(shouldPromptGuest({ completedTurns: 6, dismissed: false }, true), false)
   for (const value of [null, 'broken', '{}', '{"completedTurns":-1,"dismissed":false}']) assert.deepEqual(readGuestPrompt(value), { completedTurns: 0, dismissed: false })
 })
 
-test('actual chat completion counts five rounds; interruption does not count; continue survives remount', async () => {
+test('actual chat completion counts six rounds; interruption does not count; continue survives remount', async () => {
   const storage = new Map()
   globalThis.sessionStorage = { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) }
   try {
@@ -94,7 +94,7 @@ test('actual chat completion counts five rounds; interruption does not count; co
     const chat = hooks(() => useChatflow({ authReady: true, signedIn: false, onCompleted: () => prompt.value.completed() }))
     await new Promise(resolve => setImmediate(resolve))
     chat.render()
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       await chat.value.send('测试消息')
       chat.render(); prompt.render()
       assert.equal(prompt.value.visible, false)
@@ -104,12 +104,12 @@ test('actual chat completion counts five rounds; interruption does not count; co
     chat.render(); prompt.render()
     assert.equal(prompt.value.visible, false)
     failSend = false
-    await chat.value.send('第五轮')
+    await chat.value.send('第六轮')
     chat.render(); prompt.render()
     assert.equal(prompt.value.visible, true)
     prompt.value.dismiss(); prompt.render()
     assert.equal(prompt.value.visible, false)
-    await chat.value.send('第六轮仍可聊天')
+    await chat.value.send('第七轮仍可聊天')
     chat.render(); prompt.render()
     assert.equal(prompt.value.visible, false)
     const restored = hooks(() => useGuestLoginPrompt(false))
@@ -122,10 +122,30 @@ test('blocked browser storage still permits counting and continuing without regi
   globalThis.sessionStorage = { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } }
   try {
     const prompt = hooks(() => useGuestLoginPrompt(false))
-    for (let i = 0; i < 5; i++) { prompt.value.completed(); prompt.render() }
+    for (let i = 0; i < 6; i++) { prompt.value.completed(); prompt.render() }
     assert.equal(prompt.value.visible, true)
     prompt.value.dismiss(); prompt.render()
     assert.equal(prompt.value.visible, false)
   }
   finally { delete globalThis.sessionStorage }
+})
+
+test('account menu can open the prompt before six turns and after dismissal', () => {
+  const prompt = hooks(() => useGuestLoginPrompt(false))
+  assert.equal(prompt.render().visible, false)
+  prompt.value.open(); prompt.render()
+  assert.equal(prompt.value.visible, true)
+  prompt.value.dismiss(); prompt.render()
+  assert.equal(prompt.value.visible, false)
+  prompt.value.open(); prompt.render()
+  assert.equal(prompt.value.visible, true)
+})
+
+test('manual prompt is hidden when signed in', () => {
+  let signedIn = false
+  const prompt = hooks(() => useGuestLoginPrompt(signedIn))
+  prompt.value.open(); prompt.render()
+  assert.equal(prompt.value.visible, true)
+  signedIn = true
+  assert.equal(prompt.render().visible, false)
 })

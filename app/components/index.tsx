@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import useGuestLoginPrompt from '@/hooks/use-guest-login-prompt'
 import GuestLoginPrompt from '@/app/components/account/guest-login-prompt'
+import AnalysisConsentCompletion from '@/app/components/account/analysis-consent-completion'
 import { useBoolean } from 'ahooks'
 import Modal from '@/app/components/base/modal'
 import CrisisDialog from '@/app/components/crisis-dialog'
@@ -160,10 +161,11 @@ const Main: FC<IMainProps> = () => {
         title={APP_INFO.title}
         isSidebarOpen={isMobile && isShowSidebar}
         onShowSideBar={showSidebar}
-        accountControls={<AccountControls onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
+        accountControls={<AccountControls onRegister={guestPrompt.open} onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
 
       />
-      {guestPrompt.visible && isLoaded && <GuestLoginPrompt onContinue={guestPrompt.dismiss} />}
+      {isLoaded && isSignedIn && <AnalysisConsentCompletion key={user?.id} />}
+      {guestPrompt.visible && isLoaded && !crisisPrompt.visible && <GuestLoginPrompt onContinue={guestPrompt.dismiss} conversationId={currConversationId} />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* sidebar */}
         {!isMobile && renderSidebar()}
