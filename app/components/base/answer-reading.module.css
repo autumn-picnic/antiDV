@@ -1,7 +1,11 @@
 .answer {
-  color: #4c4947;
+  color: #2c2520;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 1.7;
+  letter-spacing: 0.025em;
+  text-align: start;
+  line-break: strict;
   overflow-wrap: anywhere;
 }
 
@@ -10,28 +14,34 @@
   white-space: normal;
 }
 
+.answer li + li {
+  margin-top: 8px;
+}
+
+.answer li > p + p {
+  margin-top: 12px;
+}
+
 .answer strong,
 .answer [data-streamdown='strong'] {
-  color: #203e32;
-  font-weight: 700;
+  color: #171310;
+  font-weight: 600;
 }
 
 .reference {
-  display: block;
-  margin: 4px 0 10px;
+  display: inline;
+  margin: 0;
   padding: 0;
-  color: #52655f;
-  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
-  font-size: 13px;
+  color: #7a7067;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: inherit;
+  letter-spacing: 0.02em;
   white-space: normal;
 }
 
-.answer p:has(> .reference:last-child) {
-  margin-bottom: 0;
-}
-
-.answer p:has(> .reference:last-child) + p {
-  margin-top: 0;
+.answer pre,
+.answer code {
+  letter-spacing: normal;
 }
