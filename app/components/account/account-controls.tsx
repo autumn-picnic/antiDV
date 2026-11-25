@@ -26,7 +26,13 @@ export default function AccountControls({ onOpenPrivacy, onOpenMemory, onRegiste
     setSavingNickname(true)
     setNicknameError('')
     try {
-      await user.updateMetadata({ unsafeMetadata: { xiaoanNickname: nicknameDraft.trim() || null } })
+      const response = await fetch('/api/account/nickname', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: nicknameDraft.trim() }),
+      })
+      if (!response.ok) { throw new Error() }
+      await user.reload()
       setNicknameDraft(null)
     }
     catch {

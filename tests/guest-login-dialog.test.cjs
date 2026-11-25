@@ -1,4 +1,4 @@
-const { test, afterEach } = require('node:test')
+const { test, afterEach, mock } = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
@@ -6,7 +6,7 @@ const Module = require('node:module')
 const ts = require('typescript')
 let rendering, submissions, routes, dismissed, save, signedIn, clerkUser
 function reset() { submissions = []; routes = []; dismissed = 0; save = async () => {}; signedIn = false; clerkUser = null }
-reset(); afterEach(reset)
+reset(); afterEach(() => { mock.restoreAll(); reset() })
 const react = {
   useState(initial) {
     const runner = rendering; const index = runner.cursor++
@@ -121,11 +121,16 @@ test('account nickname can be saved, displayed, and cleared without replacing ot
     firstName: 'Existing name',
     publicMetadata: {},
     unsafeMetadata: { other: true },
-    async updateMetadata({ unsafeMetadata }) {
-      updates.push(unsafeMetadata)
-      Object.assign(this.unsafeMetadata, unsafeMetadata)
-    },
+    async reload() {},
   }
+  mock.method(globalThis, 'fetch', async (path, request) => {
+    assert.equal(path, '/api/account/nickname')
+    assert.equal(request.method, 'POST')
+    const { nickname } = JSON.parse(request.body)
+    updates.push(nickname)
+    clerkUser.unsafeMetadata.xiaoanNickname = nickname
+    return { ok: true }
+  })
   const runner = mount(Controls, {})
   const submit = () => nodes(runner.tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} })
   const changeNickname = value => { input(runner).props.onChange({ target: { value } }); runner.render() }
@@ -134,12 +139,12 @@ test('account nickname can be saved, displayed, and cleared without replacing ot
   button(runner, '设置昵称').props.onClick(); runner.render()
   changeNickname(' 小雨 ')
   await submit(); runner.render()
-  assert.deepEqual(updates, [{ xiaoanNickname: '小雨' }])
+  assert.deepEqual(updates, ['小雨'])
   assert.equal(displayedName(), '已登录：小雨')
   button(runner, '编辑昵称').props.onClick(); runner.render()
   changeNickname('   ')
   await submit(); runner.render()
-  assert.deepEqual(updates[1], { xiaoanNickname: null })
+  assert.deepEqual(updates[1], '')
   assert.equal(clerkUser.unsafeMetadata.other, true)
   assert.equal(displayedName(), '已登录：Existing name')
 })
@@ -150,11 +155,13 @@ test('failed nickname save preserves the draft and allows retry', async () => {
   clerkUser = {
     publicMetadata: {},
     unsafeMetadata: {},
-    async updateMetadata({ unsafeMetadata }) {
-      if (++attempts === 1) throw new Error('Unavailable')
-      Object.assign(this.unsafeMetadata, unsafeMetadata)
-    },
+    async reload() {},
   }
+  mock.method(globalThis, 'fetch', async (_path, request) => {
+    if (++attempts === 1) return { ok: false }
+    clerkUser.unsafeMetadata.xiaoanNickname = JSON.parse(request.body).nickname
+    return { ok: true }
+  })
   const runner = mount(Controls, {})
   const submit = () => nodes(runner.tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} })
   button(runner, '设置昵称').props.onClick(); runner.render()
