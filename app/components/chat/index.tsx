@@ -276,7 +276,11 @@ const Chat: FC<IChatProps> = ({
                   <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { speechInformed.current = true; setSpeechInfoOpen(false); void speech.start(true, recordingMode) }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
                 </div>
               </dialog>
-              <div className="chat-composer-footer"><button type="button" disabled={disabled || isResponding} onClick={onOpenPrivacy}>隐私说明</button><p className="chat-disclaimer">小安是AI助手，回答可能有误。</p>{SHOW_SAFETY_PACK_ENTRY && <a href="/safety-pack">查看安全包</a>}</div>
+              <div className="chat-composer-footer">
+                <p className="chat-disclaimer">小安是AI助手，回答可能有误。</p>
+                {SHOW_SAFETY_PACK_ENTRY && <a href="/safety-pack">查看安全包</a>}
+                <button type="button" disabled={disabled || isResponding} onClick={onOpenPrivacy}>隐私说明</button>
+              </div>
               <div className="chat-privacy-dialog-host">{privacyControls}</div>
             </div>
           </div>
