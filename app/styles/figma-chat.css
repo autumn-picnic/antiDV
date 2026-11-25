@@ -375,6 +375,26 @@
   color: #4c4947;
 }
 
+/* Keep answer list markers visible independently of generated utility classes. */
+.chat-answer-bubble .streamdown-markdown ul,
+.chat-answer-bubble .streamdown-markdown ol {
+  margin-inline: 0;
+  padding-inline-start: 1.5em;
+  list-style-position: outside;
+}
+
+.chat-answer-bubble .streamdown-markdown ul {
+  list-style-type: disc;
+}
+
+.chat-answer-bubble .streamdown-markdown ol {
+  list-style-type: decimal;
+}
+
+.chat-answer-bubble .streamdown-markdown li {
+  display: list-item;
+}
+
 @media (width <= 767px) {
   .chat-welcome {
     padding-top: 24px;
