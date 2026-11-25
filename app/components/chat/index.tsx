@@ -37,6 +37,7 @@ export interface IChatProps {
   inputRight?: number
   onComposerResize?: (height: number) => void
   privacyControls?: React.ReactNode
+  onOpenPrivacy?: () => void
   debugEnabled?: boolean
   speechInfoKey?: number
   composerTarget?: HTMLElement | null
@@ -62,6 +63,7 @@ const Chat: FC<IChatProps> = ({
   debugEnabled,
   onComposerResize,
   privacyControls,
+  onOpenPrivacy,
   speechInfoKey = 0,
   composerTarget,
   speechResetKey = '',
@@ -188,10 +190,6 @@ const Chat: FC<IChatProps> = ({
             style={{ left: inputLeft ?? 0, right: inputRight ?? 0 }}
           >
             <div className="chat-composer-inner">
-              {isWelcome && <div className="chat-starters" aria-label="可以从这些话题开始">
-                {starterQuestions.map(question => <button type="button" key={question} disabled={disabled || isResponding || speech.active}
-                  onClick={() => suggestionClick(question)}>{question}</button>)}
-              </div>}
               <div className='chat-composer relative p-2 max-h-[200px] overflow-y-auto'>
                 <Textarea
                   id="chat-input"
@@ -278,7 +276,7 @@ const Chat: FC<IChatProps> = ({
                   <button type="button" className="speech-permission-button speech-permission-confirm" disabled={disabled || isResponding || speech.active} onClick={() => { speechInformed.current = true; setSpeechInfoOpen(false); void speech.start(true, recordingMode) }}>{speech.permissionDenied ? '已设置，重新尝试' : '请求麦克风权限'}</button>
                 </div>
               </dialog>
-              <div className="chat-composer-footer"><p className="chat-disclaimer">小安是AI助手，回答可能有误。</p>{SHOW_SAFETY_PACK_ENTRY && <a href="/safety-pack">查看安全包</a>}</div>
+              <div className="chat-composer-footer"><button type="button" disabled={disabled || isResponding} onClick={onOpenPrivacy}>隐私说明</button><p className="chat-disclaimer">小安是AI助手，回答可能有误。</p>{SHOW_SAFETY_PACK_ENTRY && <a href="/safety-pack">查看安全包</a>}</div>
               <div className="chat-privacy-dialog-host">{privacyControls}</div>
             </div>
           </div>
@@ -286,7 +284,7 @@ const Chat: FC<IChatProps> = ({
   )
 
   return (
-    <div className={cn(!feedbackDisabled && 'px-3.5', 'chat-surface', isWelcome && 'chat-surface-welcome')}>
+    <div className={cn('chat-surface', isWelcome && 'chat-surface-welcome')}>
       {isWelcome && (
         <section className="chat-welcome" aria-labelledby="chat-welcome-title">
           <AppIcon size="hero" rounded className="chat-welcome-avatar" />
@@ -294,6 +292,10 @@ const Chat: FC<IChatProps> = ({
           <p>这里不用急着找到答案。<br />你可以慢慢说，也可以先看看。</p>
         </section>
       )}
+              {isWelcome && <div className="chat-starters" aria-label="可以从这些话题开始">
+                {starterQuestions.map(question => <button type="button" key={question} disabled={disabled || isResponding || speech.active}
+                  onClick={() => suggestionClick(question)}>{question}</button>)}
+              </div>}
       {/* Chat List */}
       <div id="chat-content" role="region" aria-label="对话内容" tabIndex={-1} className="space-y-9 chat-messages">
         {chatList.filter(item => !item.isOpeningStatement).map((item, index) => {

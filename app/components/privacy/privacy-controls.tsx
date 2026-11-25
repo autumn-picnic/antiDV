@@ -82,15 +82,11 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
     ? `新对话默认每轮保留${options.default_retention_days}天，可在「隐私与保存」中修改。`
     : retentionNotice(policy)
   return <div className='mt-2 text-center text-xs leading-5 text-[#65594F]'>
-    <div className='max-w-full overflow-x-auto'>
-      <div className='mx-auto flex w-max flex-nowrap items-center gap-x-4 whitespace-nowrap'>
-        <span>尽量不要输入真实姓名、身份证号、电话或详细住址等个人敏感信息。</span>
-        <span aria-live='polite'>{fineprint}</span>
-        {policy?.expires_at != null && <span>{policy.mode === 'ephemeral' ? '临时上下文到期：' : '当前已保存内容最晚到期：'}{expiryText(policy.expires_at)}</span>}
-      </div>
-    </div>
     {pending && <p role='status'>恢复保护记录仍在同步，尚未确认完成。</p>}
     {open && <PrivacyDialog onClose={() => setOpen(false)} saving={saving}>
+      <p className='mb-2 text-sm leading-6'>尽量不要输入真实姓名、身份证号、电话或详细住址等个人敏感信息。</p>
+      <p className='mb-2 text-sm leading-6' aria-live='polite'>{fineprint}</p>
+      {policy?.expires_at != null && <p className='mb-2 text-sm'>{policy.mode === 'ephemeral' ? '临时上下文到期：' : '当前已保存内容最晚到期：'}{expiryText(policy.expires_at)}</p>}
       <p className='text-sm leading-6'>可以直接聊天，也可以选择保存期限。个人信息仅用于在对话中提供适合你的回答；拒绝保存不影响基本聊天。</p>
       {(loadError || notice) && <p role='status' className='my-3 rounded-lg bg-[#FFF1E5] p-3 text-sm'>{notice || loadError}</p>}
       <button type='button' onClick={refresh} disabled={saving} className={`${buttonClass} mt-3`}>刷新状态</button>
@@ -135,7 +131,7 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
 function PrivacyDialog({ children, onClose, saving }: { children: React.ReactNode, onClose: () => void, saving: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null)
   useModalDialog(dialog)
-  return <dialog ref={dialog} aria-labelledby='privacy-title' onCancel={(event) => { event.preventDefault(); if (!saving) { onClose() } }} className='max-h-[90dvh] w-[min(94vw,640px)] overflow-y-auto rounded-2xl bg-[#FBF9F6] p-5 text-left text-[#3D3028] shadow-xl backdrop:bg-black/30 sm:p-6'>
+  return <dialog ref={dialog} aria-labelledby='privacy-title' onCancel={(event) => { event.preventDefault(); if (!saving) { onClose() } }} className='m-auto max-h-[90dvh] w-[min(94vw,640px)] overflow-y-auto rounded-2xl bg-[#FBF9F6] p-5 text-left text-[#3D3028] shadow-xl backdrop:bg-black/30 sm:p-6'>
     <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
       <h2 id='privacy-title' className='text-lg font-semibold'>隐私与保存</h2>
       <div className='flex gap-2'>

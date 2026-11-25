@@ -48,6 +48,11 @@ async function harness({ delayedCreate = false, delayedPaint = false } = {}) {
   mod.filename = filename
   mod.require = name => {
     if (name === 'react') { return react }
+    if (name === '../utils/conversation-title') {
+      const titleModule = new Module(path.resolve(__dirname, '../utils/conversation-title.ts'), module)
+      titleModule._compile(ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../utils/conversation-title.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, titleModule.id)
+      return titleModule.exports
+    }
     if (name === '../service') { return api }
     if (name === '../utils/stream-renderer') { return { createStreamRenderer(append) {
       const paint = deferred()
@@ -193,6 +198,11 @@ function composerHarness() {
   const originalRequire = mod.require.bind(mod)
   mod.require = name => {
     if (name === 'react') { return react }
+    if (name === '../utils/conversation-title') {
+      const titleModule = new Module(path.resolve(__dirname, '../utils/conversation-title.ts'), module)
+      titleModule._compile(ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../utils/conversation-title.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, titleModule.id)
+      return titleModule.exports
+    }
     if (name === 'react/jsx-runtime') { return originalRequire(name) }
     if (name === 'react-i18next') { return { useTranslation: () => ({ t: key => key }) } }
     if (name.endsWith('/toast')) { return { notify() {} } }

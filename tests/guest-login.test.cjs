@@ -55,6 +55,7 @@ function load(file) {
     if (name === 'react') return react
     if (name === '@/service' || name === '../service') return service
     if (name === '../utils/stream-renderer') return { createStreamRenderer: append => ({ push: append, finish: async () => {}, cancel() {} }) }
+    if (name === '../utils/conversation-title') return load('utils/conversation-title.ts')
     if (name.startsWith('@/')) return load(`${name.slice(2)}.ts`)
     return originalRequire(name)
   }
