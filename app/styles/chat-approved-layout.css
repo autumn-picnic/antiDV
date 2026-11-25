@@ -82,7 +82,7 @@
   .chat-toolbar > button > .chat-toolbar-chevron { position: absolute; right: 5px; top: 12px; width: 10px; }
   .chat-content-container { padding-left: 16px; padding-right: 16px; }
   .chat-welcome { padding-top: 12px; padding-bottom: 24px; }
-  .chat-welcome > .chat-welcome-avatar { width: 170px !important; height: 150px !important; margin-bottom: 18px; }
+  .chat-welcome > .chat-welcome-avatar { width: 160px !important; height: 140px !important; margin-bottom: 18px; }
   .chat-welcome h2 { font-size: clamp(20px, 5.4vw, 26px); margin-bottom: 14px; }
   .chat-welcome p { font-size: 15px; }
   .chat-starters { gap: 8px; }
@@ -104,7 +104,7 @@
 .figma-chat-shell .chat-welcome { margin: 0 auto; padding: 12px 0 24px; }
 .figma-chat-shell .chat-welcome > .chat-welcome-avatar { width: 200px !important; height: 180px !important; border-radius: 0; background-size: contain; margin-bottom: 18px; }
 .figma-chat-shell .chat-welcome h2 { margin: 0 0 16px; font-size: 28px; font-weight: 700; }
-.figma-chat-shell .chat-starters { grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; margin: 0 auto; gap: 10px 12px; }
+.figma-chat-shell .chat-starters { max-height: none; overflow: visible; padding: 0; grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; margin: 0 auto; gap: 10px 12px; }
 .figma-chat-shell .chat-starters button { min-height: 52px; padding: 12px 16px; font-size: 14px; background: #fff; border: 1px solid #e6ddd5; border-radius: 18px; text-align: left; }
 .figma-chat-shell .chat-composer-slot { padding: 12px 24px; }
 .figma-chat-shell .chat-composer-dock { position: static; padding: 0; }
@@ -118,7 +118,7 @@
 .figma-chat-shell .chat-account-popover { position: absolute; right: 0; top: 100%; width: min(280px,85vw); }
 @media (max-width:767px) {
   .figma-chat-shell .chat-content-container { padding: 16px !important; }
-  .figma-chat-shell .chat-welcome > .chat-welcome-avatar { width: 170px !important; height: 150px !important; }
+  .figma-chat-shell .chat-welcome > .chat-welcome-avatar { width: 160px !important; height: 140px !important; }
   .figma-chat-shell .chat-welcome h2 { font-size: clamp(20px,5.4vw,26px); }
   .figma-chat-shell .chat-starters { gap: 8px; }
   .figma-chat-shell .chat-starters button { font-size: 13px; padding: 10px 12px; min-height: 58px; }
