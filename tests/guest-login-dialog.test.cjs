@@ -1,12 +1,12 @@
-const { test, afterEach } = require('node:test')
+const { test, afterEach, mock } = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
 const Module = require('node:module')
 const ts = require('typescript')
-let rendering, submissions, routes, dismissed, save, signedIn
-function reset() { submissions = []; routes = []; dismissed = 0; save = async () => {}; signedIn = false }
-reset(); afterEach(reset)
+let rendering, submissions, routes, dismissed, save, signedIn, clerkUser
+function reset() { submissions = []; routes = []; dismissed = 0; save = async () => {}; signedIn = false; clerkUser = null }
+reset(); afterEach(() => { mock.restoreAll(); reset() })
 const react = {
   useState(initial) {
     const runner = rendering; const index = runner.cursor++
@@ -19,6 +19,7 @@ const react = {
     return runner.cells[index]
   },
   useEffect() {},
+  useId() { return 'test-id' },
 }
 function load(file) {
   const filename = path.resolve(__dirname, '..', file)
@@ -30,7 +31,7 @@ function load(file) {
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
     if (name === 'next/navigation') return { useRouter: () => ({ push: url => routes.push(url) }) }
     if (name === 'next/link') return { default: 'a' }
-    if (name === '@clerk/nextjs') return { useUser: () => ({ isLoaded: true, isSignedIn: signedIn, user: null }) }
+    if (name === '@clerk/nextjs') return { useUser: () => ({ isLoaded: true, isSignedIn: signedIn, user: clerkUser }) }
     if (name === '@heroicons/react/24/outline') return { UserCircleIcon: 'svg' }
     if (name === '@/hooks/use-modal-dialog') return { default() {} }
     if (name === '@/app/components/quick-exit') return { quickEscape() {} }
@@ -110,4 +111,65 @@ test('guest avatar registration closes the menu and invokes the shared dialog wi
   assert(!nodes(runner.tree).some(node => node.props.href === '/sign-up' || node.props.href === '/sign-in'))
   button(runner, '注册 / 登录').props.onClick({ currentTarget: { closest: () => ({ removeAttribute() {} }) } })
   assert.equal(opened, 1)
+})
+
+
+test('account nickname can be saved, displayed, and cleared without replacing other Clerk metadata', async () => {
+  const updates = []
+  signedIn = true
+  clerkUser = {
+    firstName: 'Existing name',
+    publicMetadata: {},
+    unsafeMetadata: { other: true },
+    async reload() {},
+  }
+  mock.method(globalThis, 'fetch', async (path, request) => {
+    assert.equal(path, '/api/account/nickname')
+    assert.equal(request.method, 'POST')
+    const { nickname } = JSON.parse(request.body)
+    updates.push(nickname)
+    clerkUser.unsafeMetadata.xiaoanNickname = nickname
+    return { ok: true }
+  })
+  const runner = mount(Controls, {})
+  const submit = () => nodes(runner.tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} })
+  const changeNickname = value => { input(runner).props.onChange({ target: { value } }); runner.render() }
+  const displayedName = () => nodes(runner.tree).find(node => node.type === 'p').props.children
+  assert.equal(displayedName(), '已登录：Existing name')
+  button(runner, '设置昵称').props.onClick(); runner.render()
+  changeNickname(' 小雨 ')
+  await submit(); runner.render()
+  assert.deepEqual(updates, ['小雨'])
+  assert.equal(displayedName(), '已登录：小雨')
+  button(runner, '编辑昵称').props.onClick(); runner.render()
+  changeNickname('   ')
+  await submit(); runner.render()
+  assert.deepEqual(updates[1], '')
+  assert.equal(clerkUser.unsafeMetadata.other, true)
+  assert.equal(displayedName(), '已登录：Existing name')
+})
+
+test('failed nickname save preserves the draft and allows retry', async () => {
+  signedIn = true
+  let attempts = 0
+  clerkUser = {
+    publicMetadata: {},
+    unsafeMetadata: {},
+    async reload() {},
+  }
+  mock.method(globalThis, 'fetch', async (_path, request) => {
+    if (++attempts === 1) return { ok: false }
+    clerkUser.unsafeMetadata.xiaoanNickname = JSON.parse(request.body).nickname
+    return { ok: true }
+  })
+  const runner = mount(Controls, {})
+  const submit = () => nodes(runner.tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} })
+  button(runner, '设置昵称').props.onClick(); runner.render()
+  input(runner).props.onChange({ target: { value: '小雨' } }); runner.render()
+  await submit(); runner.render()
+  assert.equal(input(runner).props.value, '小雨')
+  assert.equal(nodes(runner.tree).find(node => node.props.role === 'alert').props.children, '昵称保存失败，请重试。')
+  await submit(); runner.render()
+  assert.equal(input(runner), undefined)
+  assert.equal(clerkUser.unsafeMetadata.xiaoanNickname, '小雨')
 })
