@@ -174,12 +174,12 @@ const Chat: FC<IChatProps> = ({
 
   const isWelcome = !chatList.some(item => !item.isOpeningStatement)
   const starterQuestions = [
-    '我遇到的这些，算家暴吗？',
-    '怎么让我现在安全一点？',
-    '报警、保护令，具体怎么办？',
-    '我该留下哪些证据？',
-    '我还没想离开，但我很难受',
-    '如果我离开了之后怎么办？',
+    '我遇到的这些算家暴吗',
+    '怎么让我现在安全一点',
+    '报警保护令具体怎么办',
+    '我该留下哪些证据',
+    '我还没想离开但很难受',
+    '离开了之后怎么办',
   ]
 
   const composer = (
