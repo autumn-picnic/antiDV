@@ -39,7 +39,7 @@ export async function adminConversations(actor: Actor, offset: number, view: Adm
     // committed before returning data. Only de-identified transcript fields are
     // selected: raw originals, debug prompts, reasoning and IP/location stay out.
     const conversationId = 'conversationId' in view ? view.conversationId : undefined
-    const visible = `(u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now())))
+    const normal = `(u.status='active' OR (c.user_id IS NULL AND c.expires_at>extract(epoch from now())))
       AND (
         EXISTS (SELECT 1 FROM xiaoan_analysis_consent ac
           WHERE ac.clerk_user_id=u.clerk_user_id AND ac.granted=true
@@ -49,6 +49,13 @@ export async function adminConversations(actor: Actor, offset: number, view: Adm
           WHERE cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true
             AND (c.user_id IS NULL OR u.clerk_user_id=cc.clerk_user_id))
       )`
+    // Frozen inventory of internal tests, never a grant for future conversations.
+    const historical = `EXISTS (SELECT 1 FROM xiaoan_prelaunch_feedback h
+      WHERE h.conversation_id=c.id AND c.created_at<1795540356)`
+    const visible = `((${normal}) OR ${historical})`
+    const turnVisible = `((${normal}) OR EXISTS (
+      SELECT 1 FROM xiaoan_prelaunch_feedback h WHERE h.conversation_id=c.id
+        AND c.created_at<1795540356 AND t.number<=h.max_turn_number))`
     let result
     if (conversationId) {
       result = await client.query(`
@@ -64,7 +71,7 @@ export async function adminConversations(actor: Actor, offset: number, view: Adm
           FROM account_turns t JOIN account_conversations c ON c.id=t.conversation_id
           LEFT JOIN app_users u ON u.id=c.user_id
           LEFT JOIN xiaoan_answer_feedback f ON f.response_id=t.response_id
-          WHERE c.id=$1 AND ${visible}
+          WHERE c.id=$1 AND ${visible} AND ${turnVisible}
           ORDER BY t.number LIMIT 51 OFFSET $2`, [conversationId, offset])
     }
     else if ('users' in view) {
@@ -82,7 +89,7 @@ export async function adminConversations(actor: Actor, offset: number, view: Adm
           SELECT c.id, u.clerk_user_id AS "userId", c.created_at AS "createdAt",
             count(t.response_id)::int AS "turnCount", count(f.response_id)::int AS "reviewCount"
           FROM account_conversations c LEFT JOIN app_users u ON u.id=c.user_id
-          LEFT JOIN account_turns t ON t.conversation_id=c.id
+          LEFT JOIN account_turns t ON t.conversation_id=c.id AND ${turnVisible}
           LEFT JOIN xiaoan_answer_feedback f ON f.response_id=t.response_id
           WHERE ${visible} ${userFilter}
           GROUP BY c.id, u.clerk_user_id ORDER BY c.created_at DESC, c.id LIMIT 51 OFFSET $1`,

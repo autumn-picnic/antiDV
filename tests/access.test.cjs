@@ -167,7 +167,8 @@ test('admin conversation list filters registered users and guests without droppi
     queryCalls = []
     const response = await feedback.GET(req(`/api/feedback?userId=${userId}&offset=50`))
     assert.equal(response.status, 200)
-    assert.match(queryCalls[1].sql, /WHERE \(u\.status='active' OR \(c\.user_id IS NULL AND c\.expires_at>[\s\S]+AND u\.clerk_user_id IS NOT DISTINCT FROM NULLIF\(\$2, ''\)/)
+    assert.match(queryCalls[1].sql, /u\.status='active'/)
+    assert(queryCalls[1].sql.includes("AND u.clerk_user_id IS NOT DISTINCT FROM NULLIF($2, '')"))
     assert.deepEqual(queryCalls[1].values, [50, userId])
   }
 })
@@ -373,6 +374,8 @@ test('all admin listing, grouping, detail and export paths require explicit anal
     assert.match(sql, /c.created_at>=extract\(epoch from ac.decided_at\)/)
     assert.match(sql, /cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true/)
     assert.match(sql, /c.user_id IS NULL OR u.clerk_user_id=cc.clerk_user_id/)
+    assert.match(sql, /c.created_at<1795540356/)
+    assert.match(sql, /FROM xiaoan_prelaunch_feedback h/)
   }
 })
 
@@ -384,5 +387,28 @@ test('failure analysis also requires explicit consent and excludes unmasked ques
   assert.match(sql, /ac.clerk_user_id=f.clerk_user_id AND ac.granted=true/)
   assert.match(sql, /cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true/)
   assert.match(sql, /f.created_at>=ac.decided_at/)
+  assert.match(sql, /f.created_at<to_timestamp\(1795540356\)/)
+  assert.match(sql, /h.failure_id=f.id/)
   assert.doesNotMatch(sql, /f.question|f.reason|reason AS comment/)
+})
+
+test('historical detail and export counts are capped at captured turns', async () => {
+  user.publicMetadata.role = 'admin'
+  for (const query of ['', '?conversationId=old_guest']) {
+    queryCalls = []
+    assert.equal((await feedback.GET(req(`/api/feedback${query}`))).status, 200)
+    const sql = queryCalls[1].sql
+    assert.match(sql, /t.number<=h.max_turn_number/)
+    assert.match(sql, /c.created_at<1795540356/)
+  }
+})
+
+test('backfill freezes inventory, preserves personal consent and records prior expiry', () => {
+  const sql = fs.readFileSync(path.resolve(__dirname, '../db/operations/restore_prelaunch_test_feedback.sql'), 'utf8')
+  assert.match(sql, /NOT EXISTS\(SELECT 1 FROM xiaoan_prelaunch_backfill_run WHERE id=1\)/)
+  assert.match(sql, /r.completed_at<1795540356/)
+  assert.match(sql, /previous_guest_expires_at/)
+  assert.match(sql, /previous_expires_at/)
+  assert.doesNotMatch(sql, /(?:INSERT INTO|UPDATE) xiaoan_analysis_consent/)
+  assert.doesNotMatch(sql, /(?:INSERT INTO|UPDATE) xiaoan_conversation_analysis_consent/)
 })

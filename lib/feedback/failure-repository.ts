@@ -34,7 +34,8 @@ export async function listFailures(actor: Actor, offset: number) {
         WHERE cc.conversation_id=c.id AND cc.granted=true AND ac.granted=true
           AND ((c.user_id IS NULL AND c.expires_at>extract(epoch from now()))
             OR (u.clerk_user_id=cc.clerk_user_id AND u.status='active'))
-      ) ORDER BY f.created_at DESC, f.id DESC LIMIT 51 OFFSET $1`, [offset])
+      ) OR EXISTS (SELECT 1 FROM xiaoan_prelaunch_failures h
+        WHERE h.failure_id=f.id AND f.created_at<to_timestamp(1795540356)) ORDER BY f.created_at DESC, f.id DESC LIMIT 51 OFFSET $1`, [offset])
     await client.query('INSERT INTO xiaoan_failure_admin_access(clerk_user_id) VALUES ($1)', [actor.userId])
     await client.query('COMMIT')
     return { items: result.rows.slice(0, 50), nextOffset: result.rows.length > 50 ? offset + 50 : null }
