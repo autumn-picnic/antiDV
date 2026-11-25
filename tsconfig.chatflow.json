@@ -31,7 +31,9 @@
     "app/exit/page.tsx",
     "app/sign-in/**/*.tsx",
     "app/sign-up/**/*.tsx",
-    "middleware.ts"
+    "middleware.ts",
+    "app/v1/conversations/**/title/route.ts",
+    "lib/chat-title/**/*.ts"
   ],
   "exclude": [
     "node_modules",

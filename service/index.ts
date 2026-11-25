@@ -79,6 +79,26 @@ export async function fetchConversations(signal?: AbortSignal): Promise<Conversa
   }
 }
 
+export async function fetchModelConversationTitle(id: string, generate: boolean, signal?: AbortSignal): Promise<string | null> {
+  const data = await (await request(`/conversations/${encodeURIComponent(id)}/title`, { method: generate ? 'POST' : 'GET', signal })).json()
+  if (data.title == null) { return null }
+  if (typeof data.title !== 'string' || data.title !== data.title.trim() || Array.from(data.title).length < 2
+    || Array.from(data.title).length > 24 || /[\r\n<>]/.test(data.title)) {
+    throw new ChatApiError(502, '会话标题格式无效')
+  }
+  return data.title
+}
+
+/** Title previews need only the earliest retained turn, never the full transcript. */
+export async function fetchConversationFirstMessage(id: string, signal?: AbortSignal): Promise<string> {
+  const page: ConversationView = await (await request(`/conversations/${encodeURIComponent(id)}?limit=1&after=0`, { signal })).json()
+  if (page.conversation_id !== id || !Array.isArray(page.turns)
+    || page.turns.some(turn => typeof turn.user !== 'string')) {
+    throw new ChatApiError(502, '会话记录格式无效')
+  }
+  return page.turns[0]?.user || ''
+}
+
 export async function fetchConversation(id: string, signal?: AbortSignal): Promise<ConversationView> {
   const turns: ConversationView['turns'] = []
   let after = 0

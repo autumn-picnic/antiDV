@@ -5,12 +5,12 @@ import { useUser } from '@clerk/nextjs'
 import useGuestLoginPrompt from '@/hooks/use-guest-login-prompt'
 import GuestLoginPrompt from '@/app/components/account/guest-login-prompt'
 import AnalysisConsentCompletion from '@/app/components/account/analysis-consent-completion'
-import { useBoolean } from 'ahooks'
 import CrisisDialog from '@/app/components/crisis-dialog'
 import useCrisisPrompt from '@/hooks/use-crisis-prompt'
 import StreamdownMarkdown from '@/app/components/base/streamdown-markdown'
 import Sidebar from '@/app/components/sidebar'
 import Header from '@/app/components/header'
+import ChatDrawer from '@/app/components/chat/drawer'
 import Chat from '@/app/components/chat'
 import ResourcePanel from '@/app/components/resource-panel'
 import BackExitGuard from '@/app/components/back-exit-guard'
@@ -24,6 +24,7 @@ import { setLocaleOnClient } from '@/i18n/client'
 import { APP_INFO } from '@/config'
 import '@/app/styles/figma-chat.css'
 import '@/app/styles/chat-redesign.css'
+import '@/app/styles/chat-approved-layout.css'
 
 export interface IMainProps { params?: unknown }
 
@@ -31,13 +32,12 @@ const Main: FC<IMainProps> = () => {
   const { user, isLoaded, isSignedIn } = useUser()
   const automaticDebug = Boolean(isSignedIn && isFeedbackAdminEmail(user?.primaryEmailAddress?.emailAddress, user?.primaryEmailAddress?.verification?.status === 'verified'))
   const guestPrompt = useGuestLoginPrompt(Boolean(isSignedIn))
-  const hasSetInputs = true
-  const [isPanelCollapsed, { toggle: togglePanelCollapse, setTrue: collapsePanel }] = useBoolean(true)
-  const [isSidebarCollapsed, { toggle: toggleSidebarCollapse, setTrue: collapseSidebar }] = useBoolean(true)
+  const [drawer, setDrawer] = useState<'history' | 'resources' | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const [memoryOpen, setMemoryOpen] = useState(false)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [composerTarget, setComposerTarget] = useState<HTMLDivElement | null>(null)
-  const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), debug: automaticDebug, onCompleted: guestPrompt.completed })
+  const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), debug: automaticDebug, onCompleted: guestPrompt.completed, historyOpen: drawer === 'history', authKey: user?.id })
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
   const crisisPrompt = useCrisisPrompt(currConversationId, operation)
   const chatListDomRef = useRef<HTMLDivElement>(null)
@@ -47,23 +47,8 @@ const Main: FC<IMainProps> = () => {
   const [fullAnnouncement, setFullAnnouncement] = useState('')
   const notified = useRef('')
 
-  useEffect(() => {
-    const closeOutside = (event: MouseEvent) => {
-      const target = event.target
-      if (!(target instanceof Element)) { return }
-      document.querySelectorAll<HTMLDetailsElement>('.chat-toolbar[open], .chat-settings[open], .chat-account-menu[open]').forEach(menu => {
-        if (!menu.contains(target)) { menu.open = false }
-      })
-      // Dialog actions belong to the active overlay; keep their owners mounted.
-      if (target.closest('dialog[open]')) { return }
-      if (!target.closest('#history-content, [aria-label="打开历史对话"]')) { collapseSidebar() }
-      if (!target.closest('.resource-panel-slide, [data-resource-trigger], [aria-label="打开支持资源"]')) { collapsePanel() }
-    }
-    document.addEventListener('click', closeOutside)
-    return () => {
-      document.removeEventListener('click', closeOutside)
-    }
-  }, [collapsePanel, collapseSidebar])
+  useEffect(() => { if (contentRef.current) { contentRef.current.inert = drawer !== null } }, [drawer])
+  useEffect(() => { setDrawer(null) }, [isSignedIn, user?.id])
 
   useEffect(() => {
     document.title = APP_INFO.title
@@ -101,6 +86,7 @@ const Main: FC<IMainProps> = () => {
   const openPrivacy = async () => {
     if (busy || !isLoaded || failure?.needsRecovery) { return }
     if (!await prepareConversation()) { return }
+    setDrawer(null)
     setPrivacyOpen(true)
   }
 
@@ -110,7 +96,7 @@ const Main: FC<IMainProps> = () => {
     setMemoryOpen(false)
     const selected = await selectConversation(id)
     if (!selected) { return }
-    collapseSidebar()
+    setDrawer(null)
     followLatest.current = true
     setFullAnnouncement('')
     setAnnouncement(id === '-1' ? '已建立新对话。' : `已切换到${conversationList.find(item => item.id === id)?.name || '历史对话'}。`)
@@ -120,27 +106,6 @@ const Main: FC<IMainProps> = () => {
   }
   const checkCanSend = () => !busy && !failure?.needsRecovery
   const accumulatedAIText = useMemo(() => chatList.filter(item => item.isAnswer && !item.fallback).map(item => item.content).join(' '), [chatList])
-
-  const renderSidebar = () => {
-    return (
-      <Sidebar
-        list={conversationList}
-        onCurrentIdChange={handleConversationIdChange}
-        currentId={currConversationId}
-        copyRight={APP_INFO.copyright || APP_INFO.title}
-        onDeleteConversation={async id => {
-          await handleDeleteConversation(id)
-          requestAnimationFrame(() => {
-            const target = document.querySelector<HTMLElement>('.history-select') || document.getElementById('history-new-chat')
-            target?.focus()
-          })
-        }}
-        onClearAll={handleClearAll}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={toggleSidebarCollapse}
-      />
-    )
-  }
 
   return (
     <div className='figma-chat-shell'>
@@ -152,14 +117,18 @@ const Main: FC<IMainProps> = () => {
       {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
-        accountControls={<AccountControls onRegister={guestPrompt.open} onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
+        isSidebarOpen={drawer === 'history'}
+        isResourceOpen={drawer === 'resources'}
+        onShowSideBar={() => setDrawer(value => value === 'history' ? null : 'history')}
+        onShowResourcePanel={() => setDrawer(value => value === 'resources' ? null : 'resources')}
+        onCreateNewChat={() => void handleConversationIdChange('-1')}
+        hasSetInputs
+        accountControls={<AccountControls onMenuOpen={() => setDrawer(null)} onRegister={guestPrompt.open} onOpenPrivacy={() => { setMemoryOpen(false); void openPrivacy() }} onOpenMemory={() => { setPrivacyOpen(false); setMemoryOpen(true) }} />}
 
       />
       {isLoaded && isSignedIn && <AnalysisConsentCompletion key={user?.id} />}
       {guestPrompt.visible && isLoaded && !crisisPrompt.visible && <GuestLoginPrompt onContinue={guestPrompt.dismiss} conversationId={currConversationId} />}
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* sidebar */}
-        {renderSidebar()}
+      <div ref={contentRef} className="flex min-h-0 flex-1 overflow-hidden">
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
           <div className="chat-center-column">
@@ -186,6 +155,7 @@ const Main: FC<IMainProps> = () => {
                 onStop={stop}
                 disabled={busy || Boolean(failure?.needsRecovery)}
                 checkCanSend={checkCanSend}
+                onOpenPrivacy={() => void openPrivacy()}
                 privacyControls={<PrivacyControls
                   key={isSignedIn ? 'account' : 'guest'}
                   open={privacyOpen}
@@ -219,19 +189,16 @@ const Main: FC<IMainProps> = () => {
           </main>
           <div className="chat-composer-slot" ref={setComposerTarget} />
           </div>
-          {/* Resource sidebar */}
-          {hasSetInputs && (
-            <ResourcePanel
-              accumulatedAIText={accumulatedAIText}
-              isCollapsed={isPanelCollapsed}
-              onToggleCollapse={() => {
-                togglePanelCollapse()
-                requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-label="展开资源面板"]')?.focus())
-              }}
-            />
-          )}
         </div>
       </div>
+      {drawer === 'history' && <ChatDrawer id="chat-history-drawer" label="历史对话" side="left" onClose={() => setDrawer(null)}>
+        <Sidebar list={conversationList} currentId={currConversationId} onCurrentIdChange={handleConversationIdChange}
+          onDeleteConversation={handleDeleteConversation} onClearAll={handleClearAll} disabled={busy}
+          copyRight={APP_INFO.copyright || APP_INFO.title} />
+      </ChatDrawer>}
+      {drawer === 'resources' && <ChatDrawer id="chat-resources-drawer" label="支持资源" side="right" onClose={() => setDrawer(null)}>
+        <ResourcePanel accumulatedAIText={accumulatedAIText} />
+      </ChatDrawer>}
 
     </div>
   )

@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { summarizeConversationTitle } from '../utils/conversation-title'
 import { createStreamRenderer } from '../utils/stream-renderer'
-import { ChatApiError, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview, saveChatFailure } from '../service'
+import { ChatApiError, fetchModelConversationTitle, fetchConversationFirstMessage, createConversation, deleteConversation, fetchConversation, fetchConversations, fetchCurrentConversation, sendChatMessage, fetchReviews, saveReview, saveChatFailure } from '../service'
 import type { ConversationItem } from '../types/app'
 import type { ConversationView, DebugChatItem, GuardDiagnostic, ChatDebug } from '../types/chatflow'
 
@@ -27,7 +28,7 @@ export interface ChatOperation { id: string, conversationId: string, kind: 'send
 
 interface Failure { message: string, query?: string, conversationId?: string, responseId?: string, needsRecovery?: boolean, debug?: ChatDebug, guard?: GuardDiagnostic, attemptId?: string, fallback?: ChatApiError['fallback'] }
 
-export default function useChatflow({ authReady, signedIn, debug = false, onCompleted }: { authReady: boolean, signedIn: boolean, debug?: boolean, onCompleted: () => void }) {
+export default function useChatflow({ authReady, signedIn, debug = false, onCompleted, historyOpen = false, authKey }: { authReady: boolean, signedIn: boolean, debug?: boolean, onCompleted: () => void, historyOpen?: boolean, authKey?: string }) {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
   const [conversationId, setConversationId] = useState('-1')
   const [chatList, setChatList] = useState<DebugChatItem[]>([])
@@ -43,12 +44,41 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
   const cancelSend = useRef<(() => void) | null>(null)
   const mounted = useRef(true)
 
+  const titles = useRef(new Map<string, string>())
+  const generatedTitles = useRef(new Set<string>())
+  const titleRequests = useRef(new Map<string, AbortController>())
+  function applyModelTitle(id: string, title: string) {
+    generatedTitles.current.add(id)
+    titles.current.set(id, title)
+    setConversationList(list => list.map(item => item.id === id ? { ...item, name: title } : item))
+  }
+  async function updateModelTitle(id: string, generate: boolean) {
+    if (titleRequests.current.has(id)) {
+      if (!generate) { return }
+      titleRequests.current.get(id)?.abort()
+    }
+    const abort = new AbortController()
+    titleRequests.current.set(id, abort)
+    try {
+      const title = await fetchModelConversationTitle(id, generate, abort.signal)
+      if (!abort.signal.aborted && mounted.current && title) { applyModelTitle(id, title) }
+    }
+    catch { /* Keep the extractive title; title errors never interrupt the chat. */ }
+    finally { if (titleRequests.current.get(id) === abort) { titleRequests.current.delete(id) } }
+  }
+  function rememberTitle(id: string, message: string) {
+    if (generatedTitles.current.has(id)) { return }
+    const title = summarizeConversationTitle(message)
+    titles.current.set(id, title)
+    setConversationList(list => list.map(item => item.id === id ? { ...item, name: title } : item))
+  }
+
   async function refreshList(signal?: AbortSignal) {
     const rows = await fetchConversations(signal)
     if (mounted.current && !signal?.aborted) {
       setConversationList(rows.map(row => ({
         id: row.id,
-        name: `对话 ${row.id.slice(0, 8)}`,
+        name: titles.current.get(row.id) || '未命名对话',
         inputs: null,
         introduction: '',
       })))
@@ -62,6 +92,8 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
     lock.current = true
     setBusy(true)
     setResponding(false)
+    titles.current.clear()
+    generatedTitles.current.clear()
     setConversationList([])
     setConversationId('-1')
     setChatList([])
@@ -70,6 +102,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
     const abort = new AbortController()
     controller.current = abort
     let active = true
+    const requests = titleRequests.current
     async function init() {
       try {
         // Keep the new-chat state on page load; history opens only when selected.
@@ -83,8 +116,38 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
       }
     }
     void init()
-    return () => { active = false; mounted.current = false; controller.current?.abort(); renderer.current?.cancel() }
-  }, [authReady, signedIn])
+    return () => {
+      active = false; mounted.current = false; controller.current?.abort(); renderer.current?.cancel()
+      requests.forEach(request => request.abort()); requests.clear()
+    }
+  }, [authReady, signedIn, authKey])
+
+  const conversationIds = conversationList.map(item => item.id).join(',')
+  useEffect(() => {
+    if (!historyOpen || !authReady) { return }
+    const abort = new AbortController()
+    const queue = conversationIds.split(',').filter(Boolean)
+    // Bound concurrent reads and cancel on close, identity change, or deletion.
+    async function worker() {
+      while (queue.length && !abort.signal.aborted) {
+        const id = queue.shift()!
+        try {
+          const message = await fetchConversationFirstMessage(id, abort.signal)
+          if (abort.signal.aborted) { return }
+          rememberTitle(id, message)
+          const previousModelTitle = generatedTitles.current.has(id) ? titles.current.get(id) : undefined
+          const title = await fetchModelConversationTitle(id, false, abort.signal)
+          if (!abort.signal.aborted) {
+            if (title) { applyModelTitle(id, title) }
+            else if (!titleRequests.current.has(id) && titles.current.get(id) === previousModelTitle) { generatedTitles.current.delete(id); rememberTitle(id, message) }
+          }
+        }
+        catch { /* Keep the generic title; selecting a conversation still retries its read. */ }
+      }
+    }
+    void Promise.all(Array.from({ length: Math.min(3, queue.length) }, worker))
+    return () => abort.abort()
+  }, [historyOpen, conversationIds, authReady, signedIn, authKey])
 
   useEffect(() => {
     if (!authReady || conversationId === '-1' || isResponding) { return }
@@ -122,7 +185,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
     try {
       if (id === '-1') { setConversationId('-1'); setChatList([]); return true }
       const view = await fetchConversation(id, controller.current!.signal)
-      if (mounted.current) { setConversationId(id); setChatList(chatItems(view)) }
+      if (mounted.current) { setConversationId(id); setChatList(chatItems(view)); rememberTitle(id, view.turns[0]?.user || ''); void updateModelTitle(id, false) }
       return true
     }
     catch (error) {
@@ -145,7 +208,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
       const created = await createConversation(controller.current!.signal)
       if (!mounted.current) { return null }
       setConversationId(created.conversation_id)
-      setConversationList(list => [{ id: created.conversation_id, name: `对话 ${created.conversation_id.slice(0, 8)}`, inputs: null, introduction: '' }, ...list])
+      setConversationList(list => [{ id: created.conversation_id, name: '新对话', inputs: null, introduction: '' }, ...list])
       return created.conversation_id
     }
     catch (error) {
@@ -191,7 +254,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
         id = created.conversation_id
         if (!isActive()) { return }
         setConversationId(id)
-        setConversationList(list => [{ id, name: `对话 ${id.slice(0, 8)}`, inputs: null, introduction: '' }, ...list])
+        setConversationList(list => [{ id, name: '新对话', inputs: null, introduction: '' }, ...list])
       }
       const question: DebugChatItem = { id: `question-${pendingId}`, content: message, isAnswer: false }
       setChatList([...committed, question, { id: pendingId, content: '', isAnswer: true }])
@@ -225,6 +288,7 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
         debug: completed.debug,
       }])
       setOperation({ id: attemptId, conversationId: id, kind: 'completed', content: text, responseId: completed.response_id, safetyLevel: completed.safety_level })
+      if (!committed.some(item => !item.isAnswer && !item.isOpeningStatement)) { rememberTitle(id, message); void updateModelTitle(id, true) }
       onCompleted()
     }
     catch (error) {
@@ -297,6 +361,10 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
       if (!mounted.current) { return }
       setConversationId(view?.conversation_id || '-1')
       setChatList(view ? chatItems(view) : [])
+      if (view) {
+        rememberTitle(view.conversation_id, view.turns[0]?.user || '')
+        void updateModelTitle(view.conversation_id, view.turns.length === 1 && Boolean(failed.responseId) && view.turns[0].response_id === failed.responseId && view.turns[0].status !== 'failed')
+      }
       const committed = failed.responseId && view?.turns.some(turn => turn.response_id === failed.responseId)
       if (failed.query && !committed) {
         setFailure({ ...failed, message: failed.fallback?.message || '已刷新记录。请核对是否已有回复，再决定是否重试。', needsRecovery: false })
@@ -324,6 +392,8 @@ export default function useChatflow({ authReady, signedIn, debug = false, onComp
           if (!(error instanceof ChatApiError && error.status === 404)) { throw error }
         }
         removed.add(id)
+        titles.current.delete(id); generatedTitles.current.delete(id)
+        titleRequests.current.get(id)?.abort(); titleRequests.current.delete(id)
       }
     }
     catch (error) {

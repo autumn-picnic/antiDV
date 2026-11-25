@@ -17,6 +17,7 @@ for (const count of [0, 19, 20, 21, 100]) {
     mod.paths = Module._nodeModulePaths(path.dirname(filename))
     const originalRequire = mod.require.bind(mod)
     mod.require = name => {
+      if (name === 'react') { return { ...React, useState: value => [value, () => {}] } }
       if (name === 'react-i18next') {
         return { useTranslation: () => ({ t: () => '新对话' }) }
       }
@@ -38,14 +39,15 @@ for (const count of [0, 19, 20, 21, 100]) {
       onCurrentIdChange: id => { selected = id },
       onDeleteConversation() {}, onClearAll() {},
     }))
-    assert.ok(html.includes('新对话'))
-    assert.equal((html.match(/class="history-select"/g) || []).length, count)
-    if (count) { assert.match(html, /<button[^>]*aria-current="true"/) }
-    assert.ok(newChatProps)
+    assert.ok(html.includes('新建对话'))
+    assert.equal((html.match(/class="chat-history-select"/g) || []).length, count)
+    if (count) { assert.match(html, /<button[^>]*aria-current="page"/) }
+    const tree = mod.exports.default.type({ copyRight: '小安', currentId: 'c0', list, onCurrentIdChange: id => { selected = id }, onDeleteConversation() {}, onClearAll() {} })
+    newChatProps = tree.props.children[0].props
     assert.ok(!newChatProps.disabled)
     newChatProps.onClick()
     assert.equal(selected, '-1')
     assert.equal(html.includes('清空全部对话'), count > 0)
-    assert.equal((html.match(/title="删除此对话"/g) || []).length, count)
+    assert.equal((html.match(/aria-label="删除对话：/g) || []).length, count)
   })
 }
