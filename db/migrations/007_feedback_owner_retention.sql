@@ -19,5 +19,5 @@ CREATE INDEX IF NOT EXISTS xiaoan_speech_recordings_guest ON xiaoan_speech_recor
 CREATE INDEX IF NOT EXISTS xiaoan_contact_feedback_expiry ON xiaoan_contact_feedback(expires_at);
 CREATE INDEX IF NOT EXISTS xiaoan_chat_failures_expiry ON xiaoan_chat_failures(expires_at);
 CREATE INDEX IF NOT EXISTS xiaoan_speech_recordings_expiry ON xiaoan_speech_recordings(expires_at);
-GRANT SELECT, INSERT, UPDATE, DELETE ON xiaoan_contact_feedback, xiaoan_chat_failures, xiaoan_speech_recordings TO xiaoan_feedback_web;
+GRANT DELETE ON xiaoan_contact_feedback, xiaoan_chat_failures, xiaoan_speech_recordings TO xiaoan_feedback_web;
 COMMIT;
