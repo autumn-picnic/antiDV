@@ -634,7 +634,6 @@ test('gateway discards caller-supplied tracking headers', async () => {
   assert.equal(response.status, 200)
 })
 
-
 test('Azure metadata uses the platform-appended IP and keeps IP when lookup fails', async () => {
   const saved = { VERCEL: process.env.VERCEL, CONTAINER_APP_NAME: process.env.CONTAINER_APP_NAME, FEEDBACK_CONTEXT_SECRET: process.env.FEEDBACK_CONTEXT_SECRET }
   delete process.env.VERCEL
@@ -687,7 +686,6 @@ test('SSE keeps reasoning separate from answer across split frames', async () =>
   assert.equal(reasoning, '推理文本')
   await assert.rejects(api.readChatStream(stream(start + frame('reasoning_delta', { delta: 42 }) + done), 'c1', { onDelta() {} }), /推理片段格式无效/)
 })
-
 
 test('content-filter failure retains authorized diagnostics without completing', async () => {
   const diagnostic = { diagnostics: { request_id: 'r1', code: 'content_filter', stage: 'response' } }

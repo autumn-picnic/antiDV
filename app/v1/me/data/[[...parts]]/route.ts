@@ -6,7 +6,7 @@ import { pageOffset } from '@/lib/feedback/validation'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-type Context = { params: Promise<{ parts?: string[] }> }
+interface Context { params: Promise<{ parts?: string[] }> }
 const headers = { 'Cache-Control': 'no-store' }
 
 async function parsePath(context: Context) {

@@ -5,7 +5,7 @@ import { buttonClass } from '../privacy-form-styles'
 
 const kinds = { contact: '留言', failures: '出错记录', recordings: '语音录音' }
 type Kind = keyof typeof kinds
-type RecordSummary = { id: string, createdAt: string, preview?: string, durationMs?: number }
+interface RecordSummary { id: string, createdAt: string, preview?: string, durationMs?: number }
 
 async function dataRequest(path: string, signal: AbortSignal, remove = false) {
   const response = await fetch(`/v1/me/data${path}`, {

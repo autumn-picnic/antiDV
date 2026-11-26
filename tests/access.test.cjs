@@ -441,7 +441,6 @@ test('analysis withdrawal requires an active session, same origin and exact body
   assert.equal(queryCalls[4].sql, 'COMMIT')
 })
 
-
 test('data removal uses live Clerk identity or a hashed guest credential and rejects cross-site requests', async () => {
   const route = load('app/v1/me/data/[[...parts]]/route.ts')
   const detail = { params: Promise.resolve({ parts: ['failures', 'f1'] }) }

@@ -30,7 +30,7 @@ export async function requestAnalysisConsent(signal: AbortSignal, withdraw = fal
   if (!response.ok) { throw new Error('暂时无法确认团队分析授权，请重试。') }
   const status = await response.json()
   if (typeof status?.granted !== 'boolean' || !(status.decidedAt === null || typeof status.decidedAt === 'string')
-      || !(status.version === null || typeof status.version === 'string')) {
+    || !(status.version === null || typeof status.version === 'string')) {
     throw new Error('团队分析授权状态无法确认，请刷新。')
   }
   return status
