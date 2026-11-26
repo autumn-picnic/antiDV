@@ -77,7 +77,7 @@ export default function useSpeechInput(onTranscript: (text: string) => void, res
     const abort = new AbortController(); request.current = abort
     const deadline = setTimeout(() => abort.abort(), 45000)
     try {
-      const response = await fetch('/api/speech/transcribe', {
+      const response = await fetch('/v1/speech/transcribe', {
         method: 'POST', headers: { 'Content-Type': 'audio/wav' },
         body: encodeSpeechWav(audio, rate), signal: abort.signal, credentials: 'same-origin',
       })

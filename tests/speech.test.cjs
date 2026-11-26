@@ -31,6 +31,7 @@ const policy = load('lib/auth/policy.ts')
 function route(actor = null, persistence = {}) {
   return load('app/api/speech/transcribe/route.ts', {
     '@/lib/feedback/speech-repository': { saveSpeechRecording: async (_actor, bytes) => { stored.push(bytes); return 'recording-id' }, completeSpeechRecording: async (...args) => { completed.push(args) }, ...persistence },
+    '@/lib/feedback/data-owner': { guestCredentialHash: () => null },
     '@/lib/auth/server': { optionalActor: async () => actor },
     '@/lib/auth/policy': policy, '@/utils/speech-audio': audio,
   }).POST

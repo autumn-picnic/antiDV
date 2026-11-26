@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { dataOwner } from '@/lib/feedback/data-owner'
 import { requireActor } from '@/lib/auth/server'
 import { AccessError, accessResponse, assertSameOrigin } from '@/lib/auth/policy'
 import { createContact, listContacts } from '@/lib/feedback/contact-repository'
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
             phone: typeof phone === 'string' ? phone : '',
             wechat: typeof wechat === 'string' ? wechat : '',
             email: typeof email === 'string' ? email : '',
-        })
+        }, await dataOwner(request))
         return Response.json({ success: true, id: record.id }, { headers: { 'Cache-Control': 'no-store' } })
     }
     catch (error) { return accessResponse(error) }

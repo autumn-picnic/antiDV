@@ -8,6 +8,8 @@ import { AccessError } from '@/lib/auth/policy'
 const cookieNames = new Set(['xiaoan_guest', 'xiaoan_current', 'xiaoan_session'])
 
 function allowedMethods(path: string): string[] {
+  if (path === '/v1/me/memory/profile') { return ['GET'] }
+  if (path === '/v1/me/memory/profile/actions') { return ['POST'] }
   if (path === '/v1/privacy/options' || path === '/v1/me/privacy') { return ['GET'] }
   if (/^\/v1\/me\/privacy\/(?:region|nickname|preferences)$/.test(path)) { return ['PATCH'] }
   if (/^\/v1\/conversations\/[a-zA-Z0-9_-]+\/policy$/.test(path)) { return ['GET', 'PATCH'] }
@@ -46,35 +48,25 @@ export async function proxyChatflow(request: NextRequest) {
   // Azure appends the actual connecting IP on the right; earlier values can be forged.
   const contextSecret = process.env.FEEDBACK_CONTEXT_SECRET
   const captureContext = /\/responses(?:\/stream)?$/.test(path)
-  if (captureContext && contextSecret) {
-    const onVercel = process.env.VERCEL === '1'
-    const onAzure = Boolean(process.env.CONTAINER_APP_NAME)
-    const ip = (onVercel
-      ? request.headers.get('x-vercel-forwarded-for')
-      : onAzure ? request.headers.get('x-forwarded-for')?.split(',').at(-1) : '')?.trim() || ''
+  if (captureContext && contextSecret && process.env.CONTAINER_APP_NAME) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim() || ''
     if (isIP(ip)) {
-      const context: Record<string, string> = { ip, source: onVercel ? 'vercel-ip-geolocation' : 'azure-ingress' }
-      if (onVercel) {
-        context.country = request.headers.get('x-vercel-ip-country') || ''
-        context.region = request.headers.get('x-vercel-ip-country-region') || ''
-        context.city = request.headers.get('x-vercel-ip-city') || ''
-      } else {
-        try {
-          // Best effort only: timeout/failure must not prevent sending the user's message.
-          const geo = await fetch(`https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`, {
-            signal: AbortSignal.timeout(1200), cache: 'no-store', redirect: 'error',
-          })
-          if (geo.ok) {
-            const data = await geo.json()
-            if (data.ip === ip) {
-              for (const key of ['country', 'region', 'city']) {
-                if (typeof data[key] === 'string') { context[key] = data[key].slice(0, 200) }
-              }
-              context.source = 'geojs-ip-geolocation'
+      const context: Record<string, string> = { ip, source: 'azure-ingress' }
+      try {
+        // Best effort only: timeout/failure must not prevent sending the user's message.
+        const geo = await fetch(`https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`, {
+          signal: AbortSignal.timeout(1200), cache: 'no-store', redirect: 'error',
+        })
+        if (geo.ok) {
+          const data = await geo.json()
+          if (data.ip === ip) {
+            for (const key of ['country', 'region', 'city']) {
+              if (typeof data[key] === 'string') { context[key] = data[key].slice(0, 200) }
             }
+            context.source = 'geojs-ip-geolocation'
           }
-        } catch { /* Retain the IP even when geolocation is unavailable. */ }
-      }
+        }
+      } catch { /* Retain the IP even when geolocation is unavailable. */ }
       const encoded = JSON.stringify(context)
       headers.set('x-xiaoan-feedback-context', encoded)
       headers.set('x-xiaoan-feedback-signature', createHmac('sha256', contextSecret).update(encoded).digest('hex'))
@@ -84,7 +76,7 @@ export async function proxyChatflow(request: NextRequest) {
   if (cookies.length) { headers.set('Cookie', cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')) }
   try {
     const actor = await optionalActor()
-    if ((path === '/v1/me/claim-guest' || path.startsWith('/v1/me/privacy')) && !actor) { throw new AccessError(401, '请先登录') }
+    if ((path === '/v1/me/claim-guest' || path.startsWith('/v1/me/privacy') || path.startsWith('/v1/me/memory/')) && !actor) { throw new AccessError(401, '请先登录') }
     if (actor) { headers.set('Authorization', `Bearer ${actor.token}`) }
     // Signed-in chats use account identity; guests retain their own credentials.
     if (actor && path !== '/v1/me/claim-guest') { headers.delete('Cookie')

@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { guestCredentialHash } from '@/lib/feedback/data-owner'
 import { optionalActor, requireActor } from '@/lib/auth/server'
 import { AccessError, accessResponse, assertSameOrigin } from '@/lib/auth/policy'
 import { validateFailure } from '@/lib/feedback/failure-validation'
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     catch { throw new AccessError(400, '失败记录格式无效') }
     const failure = validateFailure(body)
     const actor = await optionalActor()
-    await saveFailure(actor, failure)
+    await saveFailure(actor, failure, guestCredentialHash(request))
     return Response.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } })
   }
   catch (error) { return accessResponse(error) }

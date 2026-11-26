@@ -6,8 +6,6 @@ import { getLocaleOnServer } from '@/i18n/server'
 import './styles/globals.css'
 import './styles/markdown.scss'
 import QuickExit from '@/app/components/quick-exit'
-import { Analytics } from '@vercel/analytics/next'
-import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://anti-dv.vercel.app'),
@@ -91,8 +89,6 @@ const LocaleLayout = async ({
           <div className="overflow-x-hidden w-full">
             <div className="w-full h-screen">
               {children}
-              <Analytics />
-              <SpeedInsights />
             </div>
           </div>
         </body>

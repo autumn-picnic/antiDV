@@ -2,19 +2,20 @@ import 'server-only'
 import { randomUUID } from 'node:crypto'
 import { feedbackDatabase } from './database'
 import type { Actor } from '@/lib/auth/policy'
+import type { DataOwner } from './data-owner'
 import { assertAdmin } from '@/lib/auth/policy'
 
 export interface ContactInput { message: string, name: string, phone: string, wechat: string, email: string }
 
 function optionalText(value: string) { return value.trim() || null }
 
-export async function createContact(input: ContactInput) {
+export async function createContact(input: ContactInput, owner: DataOwner | null = null) {
     const result = await feedbackDatabase().query(`
-      INSERT INTO xiaoan_contact_feedback ("id", "createdAt", "message", "name", "phone", "wechat", "email")
-      VALUES ($1, now(), $2, $3, $4, $5, $6)
+      INSERT INTO xiaoan_contact_feedback ("id", "createdAt", "message", "name", "phone", "wechat", "email", owner_kind, owner_ref, expires_at)
+      VALUES ($1, now(), $2, $3, $4, $5, $6, $7, $8, now() + interval '180 days')
       RETURNING "id", "createdAt", "message", "name", "phone", "wechat", "email"`, [
         randomUUID(), input.message.trim(), optionalText(input.name), optionalText(input.phone),
-        optionalText(input.wechat), optionalText(input.email),
+        optionalText(input.wechat), optionalText(input.email), owner?.kind ?? null, owner?.ref ?? null,
     ])
     return result.rows[0]
 }

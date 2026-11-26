@@ -1,15 +1,17 @@
 'use client'
-import useModalDialog from '@/hooks/use-modal-dialog'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChatApiError } from '@/service'
 import { changeConsent, changeConversationPolicy, expiryText, fetchConversationPolicy, fetchPrivacyOptions, fetchPrivacyStatus, retentionNotice } from '@/service/privacy'
-import type { ConsentChange, ConsentStatus, ConversationPolicy, PrivacyField, PrivacyOptions, PrivacyStatus, RetentionMode } from '@/types/privacy'
-import { quickEscape } from '@/app/components/quick-exit'
+import type { ConversationPolicy, PrivacyField, PrivacyOptions, PrivacyStatus } from '@/types/privacy'
+import PrivacyDialog from './privacy-dialog'
+import RetentionForm from './retention-form'
+import ConsentForm from './consent-form'
+import AnalysisSection from './sections/analysis-section'
+import DataSection from './sections/data-section'
+import ProfileSection from './sections/profile-section'
+import { buttonClass } from './privacy-form-styles'
 
-const inputClass = 'mt-1 min-h-11 w-full rounded-lg border border-[#D5C9BF] bg-white px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#95684D]'
-const buttonClass = 'min-h-11 rounded-lg border border-[#95684D] px-3 text-sm hover:bg-[#FFF1E5] disabled:cursor-not-allowed disabled:opacity-50'
-const fieldNames: Record<PrivacyField, string> = { region: '省市地区', nickname: '称呼', preferences: '回答偏好' }
 function message(error: unknown) { return error instanceof ChatApiError ? error.message : '设置暂时不可用，你仍可继续聊天' }
 
 export default function PrivacyControls({ conversationId, signedIn, authReady, busy, completedId, refreshConversation, open, onOpenChange }: {
@@ -86,6 +88,7 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
     {open && <PrivacyDialog onClose={() => setOpen(false)} saving={saving}>
       <p className='mb-2 text-sm leading-6'>尽量不要输入真实姓名、身份证号、电话或详细住址等个人敏感信息。</p>
       <p className='mb-2 text-sm leading-6' aria-live='polite'>{fineprint}</p>
+      {!signedIn && <p className='mb-2 text-sm leading-6'>游客对话最长保留到访问凭证到期。</p>}
       {policy?.expires_at != null && <p className='mb-2 text-sm'>{policy.mode === 'ephemeral' ? '临时上下文到期：' : '当前已保存内容最晚到期：'}{expiryText(policy.expires_at)}</p>}
       <p className='text-sm leading-6'>可以直接聊天，也可以选择保存期限。个人信息仅用于在对话中提供适合你的回答；拒绝保存不影响基本聊天。</p>
       {(loadError || notice) && <p role='status' className='my-3 rounded-lg bg-[#FFF1E5] p-3 text-sm'>{notice || loadError}</p>}
@@ -124,119 +127,9 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
               : <p className='mt-3 text-sm'>个人信息保存服务暂时不可用，你仍可继续聊天。</p>
             : <p className='mt-3 text-sm'>授权状态正在确认，尚未修改任何授权。</p>}
       </section>
+      <DataSection key={String(signedIn)} reload={reload} disabled={saving || busy} mutate={mutate} />
+      <AnalysisSection signedIn={signedIn} disabled={saving || busy} reload={reload} mutate={mutate} />
+      <ProfileSection signedIn={signedIn} disabled={saving || busy} temporary={policy?.mode === 'ephemeral'} reload={reload} mutate={mutate} />
     </PrivacyDialog>}
   </div>
-}
-
-function PrivacyDialog({ children, onClose, saving }: { children: React.ReactNode, onClose: () => void, saving: boolean }) {
-  const dialog = useRef<HTMLDialogElement>(null)
-  useModalDialog(dialog)
-  return <dialog ref={dialog} aria-labelledby='privacy-title' onCancel={(event) => { event.preventDefault(); if (!saving) { onClose() } }} className='m-auto max-h-[90dvh] w-[min(94vw,640px)] overflow-y-auto rounded-2xl bg-[#FBF9F6] p-5 text-left text-[#3D3028] shadow-xl backdrop:bg-black/30 sm:p-6'>
-    <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-      <h2 id='privacy-title' className='text-lg font-semibold'>隐私与保存</h2>
-      <div className='flex gap-2'>
-        <button type='button' onClick={quickEscape} className={buttonClass}>快速离开</button>
-        <button type='button' onClick={onClose} disabled={saving} className={buttonClass}>关闭</button>
-      </div>
-    </div>
-    {saving && <p role='status'>正在保存，请稍候</p>}
-    {children}
-  </dialog>
-}
-
-function RetentionForm({ policy, maxDays, disabled, onSave }: { policy: ConversationPolicy, maxDays: number, disabled: boolean, onSave: (mode: RetentionMode, days: number, saveExisting: boolean, deleteExisting: boolean, extendExisting: boolean) => Promise<void> }) {
-  const [mode, setMode] = useState(policy.mode)
-  const [days, setDays] = useState(String(policy.retention_days ?? 30))
-  const [saveExisting, setSaveExisting] = useState(false)
-  const [deleteExisting, setDeleteExisting] = useState(false)
-  const [extendExisting, setExtendExisting] = useState(false)
-  return <form className='mt-4' onSubmit={(event) => { event.preventDefault(); void onSave(mode, Number(days), saveExisting, deleteExisting, extendExisting) }}>
-    <fieldset disabled={disabled} className='space-y-3'>
-      <legend className='mb-2 font-semibold'>本次对话的保存期限</legend>
-      <label className='block text-sm'>保存方式
-        <select className={inputClass} value={mode} onChange={(event) => {
-          const next = event.target.value as RetentionMode
-          setMode(next); setDays(String(next === 'rolling' ? 14 : 30)); setSaveExisting(false); setDeleteExisting(false); setExtendExisting(false)
-        }}>
-          <option value='history'>逐轮保存</option><option value='rolling'>整段会话一起保留</option><option value='ephemeral'>不保存新的聊天历史</option>
-        </select>
-      </label>
-      {mode !== 'ephemeral'
-        ? <>
-          <label className='block text-sm'>保留天数（1–{maxDays}天）<input type='number' required min={1} max={maxDays} step={1} value={days} onChange={event => setDays(event.target.value)} className={inputClass} /></label>
-          <p className='text-sm leading-6'>{mode === 'rolling' ? '整段会话从最后一轮成功回答起计算；新回复成功完成后重新起算。' : '每轮从成功完成回答起分别计算保存时间。'}</p>
-          {policy.mode === 'ephemeral' && <label className='flex items-start gap-2 text-sm leading-6'><input type='checkbox' checked={saveExisting} onChange={event => setSaveExisting(event.target.checked)} className='mt-1' />同时保存当前仍有效的临时对话内容</label>}
-          <label className='flex items-start gap-2 text-sm leading-6'><input type='checkbox' checked={extendExisting} onChange={event => setExtendExisting(event.target.checked)} className='mt-1' />将尚未到期的已有历史从现在起延长至所选天数</label>
-          <p className='text-xs leading-5'>增加天数默认仅影响后续保存，不自动延长已有历史；缩短期限会同时缩短已有记录，到期内容不会恢复。</p>
-        </>
-        : <>
-          <p className='text-sm leading-6'>新回复只保留临时上下文，闲置24小时后清除；服务重启可能丢失。已有历史仍按原期限到期。</p>
-          <label className='flex items-start gap-2 text-sm leading-6'><input type='checkbox' checked={deleteExisting} onChange={event => setDeleteExisting(event.target.checked)} className='mt-1' />同时删除已有历史与临时上下文（删除后无法恢复）</label>
-        </>}
-      <button type='submit' className={buttonClass}>保存会话设置</button>
-    </fieldset>
-  </form>
-}
-
-function ConsentForm({ field, status, options, disabled, onSave }: { field: PrivacyField, status: ConsentStatus, options: PrivacyOptions, disabled: boolean, onSave: (change: ConsentChange) => Promise<void> }) {
-  const [allowed, setAllowed] = useState(status.allowed)
-  const [days, setDays] = useState(String(options.default_retention_days))
-  const [nickname, setNickname] = useState('')
-  const [province, setProvince] = useState('')
-  const [city, setCity] = useState('')
-  const [purpose, setPurpose] = useState<'event' | 'help'>('event')
-  const [detail, setDetail] = useState('default')
-  const [presentation, setPresentation] = useState('default')
-  const body = (allowed: boolean, extend = false): ConsentChange => ({ version: status.version, allowed, retention_days: Number(days), extend })
-  return <form className='rounded-xl border border-[#E6DDD5] p-3' onSubmit={(event) => {
-    event.preventDefault()
-    const change = body(allowed)
-    if (allowed) { change.value = field === 'nickname'
-      ? nickname.trim()
-      : field === 'region'
-        ? { province_code: province, ...(city ? { city_code: city } : {}), purpose }
-        : { detail, presentation } }
-    void onSave(change)
-  }}>
-    <fieldset disabled={disabled} className='space-y-3'>
-      <legend className='font-semibold'>{fieldNames[field]}</legend>
-      <p className='text-xs leading-5'>{status.allowed ? `已授权，到期：${expiryText(status.expires_at)}` : '未授权或已到期'}</p>
-      <label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={allowed} onChange={event => setAllowed(event.target.checked)} />允许保存{fieldNames[field]}</label>
-      {allowed && <>
-        {field === 'nickname' && <label className='block text-sm'>昵称（无需真实姓名）<input required value={nickname} maxLength={40} pattern={'[^\\[\\]@0-9\\r\\n]+'} onChange={event => setNickname(event.target.value)} autoComplete='off' className={inputClass} /></label>}
-        {field === 'region' && <>
-          <label className='block text-sm'>省级地区<select required value={province} onChange={(event) => { setProvince(event.target.value); setCity('') }} className={inputClass}>
-            <option value=''>请主动选择</option>{Object.entries(options.provinces).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select></label>
-          <label className='block text-sm'>城市（可选，行政区划代码）<select value={city} onChange={event => setCity(event.target.value)} disabled={!province || disabled} className={inputClass}>
-            <option value=''>仅使用省级地区</option>{options.city_codes.filter(code => code.slice(0, 2) === province.slice(0, 2)).map(code => <option key={code} value={code}>{code}</option>)}
-          </select></label>
-          <label className='block text-sm'>此地区用于<select value={purpose} onChange={event => setPurpose(event.target.value as 'event' | 'help')} className={inputClass}>
-            <option value='event'>事件发生地法规匹配</option><option value='help'>希望求助地法规匹配</option>
-          </select></label>
-        </>}
-        {field === 'preferences' && <>
-          <label className='block text-sm'>详细程度<select value={detail} onChange={event => setDetail(event.target.value)} className={inputClass}>
-            <option value='default'>默认</option><option value='brief'>简短</option><option value='detailed'>详细</option>
-          </select></label>
-          <label className='block text-sm'>表达方式<select value={presentation} onChange={event => setPresentation(event.target.value)} className={inputClass}>
-            <option value='default'>默认</option><option value='paragraphs'>以段落为主</option><option value='few_steps'>少列步骤</option>
-          </select></label>
-        </>}
-      </>}
-      <label className='block text-sm'>保存或展期天数（1–{options.max_retention_days}天）<input type='number' required min={1} max={options.max_retention_days} step={1} value={days} onChange={event => setDays(event.target.value)} className={inputClass} /></label>
-      {status.allowed && <p className='text-xs leading-5'>已保存的原值不回填到表单。更新内容沿用原到期时间；展期从现在起计算，并沿用已授权内容。</p>}
-      <div className='flex flex-wrap gap-2'>
-        <button type='submit' className={buttonClass}>{allowed ? status.allowed ? '更新内容' : '确认授权并保存' : '确认不保存 / 撤回'}</button>
-        {status.allowed && <>
-          <button type='button' className={buttonClass} onClick={(event) => {
-            // Validate the period without requiring a replacement nickname or region.
-            const period = event.currentTarget.form?.querySelector<HTMLInputElement>('input[type="number"]')
-            if (period?.reportValidity()) { void onSave(body(true, true)) }
-          }}>沿用内容并展期</button>
-          <button type='button' className={buttonClass} onClick={() => void onSave({ ...body(false), retention_days: options.default_retention_days })}>撤回授权</button>
-        </>}
-      </div>
-    </fieldset>
-  </form>
 }

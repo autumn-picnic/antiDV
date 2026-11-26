@@ -66,7 +66,7 @@ test('failed sends persist independently of the backend and derive account ident
   const response = await failures.POST(failureRequest())
   assert.equal(response.status, 200)
   assert.equal(guestCalls.length, 0)
-  assert.deepEqual(queryCalls[0].values, ['f1', 'user_alice', null, null, failedInput.question, 'create_conversation', 503, failedInput.reason, null])
+  assert.deepEqual(queryCalls[0].values, ['f1', 'user_alice', null, null, failedInput.question, 'create_conversation', 503, failedInput.reason, null, null])
   assert.match(queryCalls[0].sql, /ON CONFLICT \(id\) DO NOTHING/)
 })
 
@@ -282,7 +282,7 @@ test('contact submissions are anonymous, parameterized and preserve the requeste
   assert.equal(response.status, 200)
   assert.deepEqual(await response.json(), { success: true, id: 'contact-1' })
   assert.match(queryCalls[0].sql, /"createdAt"/)
-  assert.deepEqual(queryCalls[0].values.slice(1), ["用户的 '留言'", '姓名', null, null, null])
+  assert.deepEqual(queryCalls[0].values.slice(1), ["用户的 '留言'", '姓名', null, null, null, null, null])
   assert(!queryCalls[0].sql.includes("用户的 '留言'"))
 })
 
@@ -411,4 +411,56 @@ test('backfill freezes inventory, preserves personal consent and records prior e
   assert.match(sql, /previous_expires_at/)
   assert.doesNotMatch(sql, /(?:INSERT INTO|UPDATE) xiaoan_analysis_consent/)
   assert.doesNotMatch(sql, /(?:INSERT INTO|UPDATE) xiaoan_conversation_analysis_consent/)
+})
+
+test('analysis withdrawal requires an active session, same origin and exact body', async () => {
+  const route = load('app/v1/analysis-consent/route.ts')
+  const request = (body, origin = 'https://site.example') => req('/v1/analysis-consent', {
+    method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+  process.env.FRONTEND_ORIGIN = 'https://site.example'
+  assert.equal((await route.POST(request({ action: 'withdraw' }, 'https://other.example'))).status, 403)
+  assert.equal((await route.POST(request({ action: 'withdraw', userId: 'user_bob' }))).status, 400)
+  liveSession.status = 'revoked'
+  assert.equal((await route.POST(request({ action: 'withdraw' }))).status, 401)
+  assert.equal((await route.GET()).status, 401)
+  assert.equal(queryCalls.length, 0)
+
+  liveSession.status = 'active'
+  assert.deepEqual(await (await route.GET()).json(), { granted: false, decidedAt: null, version: null })
+  queryCalls = []
+  queryRows = [{ granted: false, decidedAt: '2026-11-26T00:00:00.000Z', version: '2026-11-24' }]
+  const response = await route.POST(request({ action: 'withdraw' }))
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).granted, false)
+  assert.equal(queryCalls[0].sql, 'BEGIN')
+  assert.match(queryCalls[1].sql, /ON CONFLICT.*DO UPDATE SET granted=false/)
+  assert.equal(queryCalls[1].values[0], 'user_alice')
+  assert.match(queryCalls[2].sql, /UPDATE xiaoan_conversation_analysis_consent/)
+  assert.match(queryCalls[3].sql, /'withdraw'/)
+  assert.equal(queryCalls[4].sql, 'COMMIT')
+})
+
+
+test('data removal uses live Clerk identity or a hashed guest credential and rejects cross-site requests', async () => {
+  const route = load('app/v1/me/data/[[...parts]]/route.ts')
+  const detail = { params: Promise.resolve({ parts: ['failures', 'f1'] }) }
+  const bulk = { params: Promise.resolve({ parts: ['failures'] }) }
+  const request = (options = {}) => req('/v1/me/data/failures', { method: 'DELETE',
+    headers: { Origin: 'https://site.example' }, ...options })
+  assert.equal((await route.DELETE(request({ headers: { Origin: 'https://elsewhere.example' } }), detail)).status, 403)
+  assert.equal((await route.DELETE(request(), bulk)).status, 422)
+  assert.equal(queryCalls.length, 0)
+  assert.equal((await route.DELETE(request(), detail)).status, 404)
+  assert.match(queryCalls[0].sql, /DELETE FROM xiaoan_chat_failures WHERE clerk_user_id=\$1 AND id=\$2/)
+  assert.deepEqual(queryCalls[0].values, ['user_alice', 'f1'])
+  queryCalls = []
+  authState = { userId: null, sessionId: null }
+  assert.equal((await route.DELETE(request(), detail)).status, 404)
+  assert.equal(queryCalls.length, 0)
+  const token = 'a'.repeat(43)
+  const guest = request({ headers: { Origin: 'https://site.example', Cookie: `xiaoan_guest=${token}` } })
+  assert.equal((await route.DELETE(guest, detail)).status, 404)
+  assert.match(queryCalls[0].sql, /clerk_user_id IS NULL AND guest_hash=\$1/)
+  assert.equal(queryCalls[0].values[0], require('node:crypto').createHash('sha256').update(token).digest('hex'))
 })
