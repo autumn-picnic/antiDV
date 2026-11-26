@@ -29,7 +29,7 @@ test('recording persistence preserves exact uploaded bytes, server identity and 
   const id = await h.repo.saveSpeechRecording(user, bytes)
   assert.match(id, /^[0-9a-f-]{36}$/)
   const q = h.queries[0]
-  assert.match(q.sql, /VALUES \(\$1,\$2,\$3,\$4,\$5\)/)
+  assert.match(q.sql, /VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,now\(\) \+ interval '30 days'\)/)
   assert.equal(q.values[1], 'ordinary')
   assert.deepEqual(q.values[2], Buffer.from(bytes))
   assert.equal(q.values[3], require('node:crypto').createHash('sha256').update(bytes).digest('hex'))

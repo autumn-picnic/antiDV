@@ -14,7 +14,7 @@ const base = process.env.TEST_BASE_URL || 'http://localhost:3000'
         const path = new URL(route.request().url()).pathname
         return route.fulfill({ status: path.endsWith('/current') ? 404 : 200, contentType: 'application/json', body: JSON.stringify(path === '/v1/conversations' ? { items: [], next_offset: null } : path.endsWith('/options') ? { fields: [], default_allowed: false, default_retention_days: 30, max_retention_days: 90, provinces: {}, city_codes: [] } : {}) })
       })
-      await page.route('**/api/speech/transcribe', route => { transcribed++; return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ text: '合成麥克風轉寫測試' }) }) })
+      await page.route('**/v1/speech/transcribe', route => { transcribed++; return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ text: '合成麥克風轉寫測試' }) }) })
       await page.goto(base + '/chat', { waitUntil: 'domcontentloaded', timeout: 60000 })
       const start = page.getByRole('button', { name: '按住说话，松开转写', exact: true })
       await start.waitFor(); await page.waitForTimeout(1000); await start.focus(); await page.keyboard.down('Space'); await page.keyboard.up('Space')

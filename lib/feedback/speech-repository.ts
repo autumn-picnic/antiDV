@@ -4,11 +4,11 @@ import { feedbackDatabase } from './database'
 import type { Actor } from '@/lib/auth/policy'
 import { assertAdmin } from '@/lib/auth/policy'
 
-export async function saveSpeechRecording(actor: Actor | null, audio: Uint8Array) {
+export async function saveSpeechRecording(actor: Actor | null, audio: Uint8Array, guestHash: string | null = null) {
   const id = randomUUID()
   await feedbackDatabase().query(`INSERT INTO xiaoan_speech_recordings
-    (id, clerk_user_id, audio, sha256, duration_ms) VALUES ($1,$2,$3,$4,$5)`,
-  [id, actor?.userId ?? null, Buffer.from(audio), createHash('sha256').update(audio).digest('hex'), Math.floor((audio.length - 44) / 32)])
+    (id, clerk_user_id, audio, sha256, duration_ms, guest_hash, expires_at) VALUES ($1,$2,$3,$4,$5,$6,now() + interval '30 days')`,
+  [id, actor?.userId ?? null, Buffer.from(audio), createHash('sha256').update(audio).digest('hex'), Math.floor((audio.length - 44) / 32), actor ? null : guestHash])
   return id
 }
 

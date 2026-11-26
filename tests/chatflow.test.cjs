@@ -46,7 +46,7 @@ afterEach(() => {
 test('failure report uses independent frontend endpoint, original input and bounded request', async () => {
   const failure = { id: 'f1', conversationId: null, responseId: null, question: '失败输入', stage: 'create_conversation', status: 503, reason: 'HTTP 503', code: null }
   globalThis.fetch = async (url, init) => {
-    assert.equal(url, '/api/feedback/failures')
+    assert.equal(url, '/v1/feedback/failures')
     assert.equal(init.credentials, 'include')
     assert.equal(init.keepalive, true)
     assert.ok(init.signal)
@@ -618,37 +618,20 @@ test('review client saves score/comment with credentials and reloads persisted r
   await assert.rejects(api.saveReview('c1', 'r1', { score: 5, comment: '' }), /评价未保存/)
 })
 
-test('gateway signs platform IP metadata and discards caller-supplied context', async () => {
-  const { createHmac } = require('node:crypto')
-  const savedVercel = process.env.VERCEL
-  const savedSecret = process.env.FEEDBACK_CONTEXT_SECRET
-  process.env.VERCEL = '1'
-  process.env.FEEDBACK_CONTEXT_SECRET = 'test-secret'
+test('gateway discards caller-supplied tracking headers', async () => {
   process.env.BACKEND_API_URL = 'https://backend.example'
   process.env.FRONTEND_ORIGIN = 'https://frontend.example'
-  try {
-    for (const ip of ['203.0.113.5', 'invalid']) {
-      globalThis.fetch = async (_url, init) => {
-        const raw = init.headers.get('x-xiaoan-feedback-context')
-        if (ip === 'invalid') {
-          assert.equal(raw, null)
-          assert.equal(init.headers.get('x-xiaoan-feedback-signature'), null)
-        } else {
-          assert.equal(JSON.parse(raw).ip, ip)
-          assert.equal(JSON.parse(raw).city, 'Hong%20Kong')
-          assert.equal(init.headers.get('x-xiaoan-feedback-signature'), createHmac('sha256', 'test-secret').update(raw).digest('hex'))
-        }
-        return Response.json({})
-      }
-      const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations/c1/responses', {
-        method: 'POST', headers: { Origin: 'https://frontend.example', 'x-vercel-forwarded-for': ip, 'x-vercel-ip-city': 'Hong%20Kong', 'x-xiaoan-feedback-context': 'forged', 'x-xiaoan-feedback-signature': 'forged' },
-      }))
-      assert.equal(response.status, 200)
-    }
-  } finally {
-    if (savedVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = savedVercel
-    if (savedSecret === undefined) delete process.env.FEEDBACK_CONTEXT_SECRET; else process.env.FEEDBACK_CONTEXT_SECRET = savedSecret
+  globalThis.fetch = async (_url, init) => {
+    assert.equal(init.headers.get('x-xiaoan-feedback-context'), null)
+    assert.equal(init.headers.get('x-xiaoan-feedback-signature'), null)
+    assert.equal(init.headers.get('x-forwarded-for'), null)
+    return Response.json({})
   }
+  const response = await proxyChatflow(new NextRequest('https://frontend.example/v1/conversations', {
+    method: 'POST', headers: { Origin: 'https://frontend.example', 'x-forwarded-for': '203.0.113.5',
+      'x-vercel-forwarded-for': '203.0.113.6', 'x-xiaoan-feedback-context': 'forged', 'x-xiaoan-feedback-signature': 'forged' },
+  }))
+  assert.equal(response.status, 200)
 })
 
 test('Azure metadata uses the platform-appended IP and keeps IP when lookup fails', async () => {
@@ -703,7 +686,6 @@ test('SSE keeps reasoning separate from answer across split frames', async () =>
   assert.equal(reasoning, '推理文本')
   await assert.rejects(api.readChatStream(stream(start + frame('reasoning_delta', { delta: 42 }) + done), 'c1', { onDelta() {} }), /推理片段格式无效/)
 })
-
 
 test('content-filter failure retains authorized diagnostics without completing', async () => {
   const diagnostic = { diagnostics: { request_id: 'r1', code: 'content_filter', stage: 'response' } }

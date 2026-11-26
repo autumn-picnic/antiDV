@@ -2,7 +2,7 @@
 
 每輪已完成對話的 `account_turns.content.request_context` 保存開始／完成時間（Unix 秒）、用戶 IP、國家、地區、城市及來源。管理頁以 UTC+8 顯示時間，地點標示為 IP 推測。歷史未保存的資料顯示未記錄／未取得。
 
-Vercel 環境採用平台提供的 `x-vercel-forwarded-for` 和 IP 地理位置請求頭，Azure Container Apps 環境採用 Azure 追加的 X-Forwarded-For 最右側 IP，透過 GeoJS HTTPS API 推測國家／地區／城市（只傳送 IP，不傳送對話內容；超時 1.2 秒後放棄查詢並保留 IP）。參考：[Vercel request headers](https://vercel.com/docs/headers/request-headers)。本地或其他未識別平台環境不採信客戶端自行提供的地理位置請求頭。
+Azure Container Apps 環境採用 Azure 追加的 X-Forwarded-For 最右側 IP，透過 GeoJS HTTPS API 推測國家／地區／城市。查詢只傳送 IP，超時 1.2 秒後仍保留入口 IP。網關丟棄用戶端自行提供的地理位置與回饋來源標頭。
 
 前端 `FEEDBACK_CONTEXT_SECRET` 和後端 `XIAOAN_FEEDBACK_CONTEXT_SECRET` 須設定相同的伺服器密鑰（使用高強度隨機值，不帶 NEXT_PUBLIC 前綴）。前端以 HMAC-SHA256 簽名，後端驗證後才接受 IP 地點；未配置或驗證失敗仍保存時間，IP 地點留空。密鑰只透過現有部署密鑰機制配置。
 

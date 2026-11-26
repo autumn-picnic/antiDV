@@ -53,7 +53,7 @@ flowchart TD
 
 ### 所有页面共用的内容
 
-- `app/layout.tsx`：HTML 布局、SEO metadata、Google Fonts、QuickExit，以及 Vercel Analytics / Speed Insights。
+- `app/layout.tsx`：HTML 布局、SEO metadata、Google Fonts 与 QuickExit。
 - `app/styles/globals.css`：全站基础样式；`figma-home.css` 与 `figma-chat.css` 分别服务当前首页和聊天页。
 - `config/brand-assets.ts` → `public/brand/`：统一品牌图路径，当前页面确实使用，应保留。
 - `config/index.ts`：名称、简介、版权和语言等。仍有旧 APP_ID/提示词常量，可随旧模块一起精简。
@@ -148,7 +148,6 @@ sequenceDiagram
 | 原生会话 | HttpOnly Cookie + 后端会话记录 | 清理 Web Storage 不会清除 Cookie/服务端记录；如要提供删除/结束会话功能，应走明确 API 流程 |
 | i18n | 服务端读 locale Cookie/语言头，客户端导入多语言资源；聊天将语言设为中文 | 当前大量内容为中文硬编码；若只做中文，应先统一 locale 流程，再裁剪字典 |
 | SEO | 多处硬编码 `anti-dv.vercel.app` | 换正式域名时统一 metadata、sitemap、robots 与页面 canonical |
-| Vercel 监测 | 根布局仍导入 Analytics / SpeedInsights | 是否保留由观测需求决定；迁往 Azure 不会让这些 import 自动消失 |
 | Docker | Node 22、pnpm 冻结锁、多阶段构建、非 root 运行 | 运行时提供后端地址和本站 Origin；容器构建还需实际验收 |
 | TypeScript | 主 tsconfig 收录全项目 TS/TSX；专项配置只覆盖聊天链 | 删除旧源码后再删除其包，否则全量类型检查仍可能解析旧 import |
 | 构建门禁 | next.config.js 仍忽略 TypeScript/ESLint 构建错误 | 完成全量基线修复后恢复门禁 |

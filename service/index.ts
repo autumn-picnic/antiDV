@@ -265,7 +265,7 @@ export async function saveReview(conversationId: string, responseId: string, rev
 }
 
 export async function saveChatFailure(failure: FailureInput) {
-  const response = await fetch('/api/feedback/failures', {
+  const response = await fetch('/v1/feedback/failures', {
     method: 'POST', credentials: 'include', cache: 'no-store', keepalive: true,
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(failure),
     signal: AbortSignal.timeout(8000),

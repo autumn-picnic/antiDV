@@ -1,3 +1,5 @@
+import type { NextRequest } from 'next/server'
+import { guestCredentialHash } from '@/lib/feedback/data-owner'
 import { saveSpeechRecording, completeSpeechRecording } from '@/lib/feedback/speech-repository'
 import { optionalActor } from '@/lib/auth/server'
 import { AccessError, accessResponse, assertSameOrigin } from '@/lib/auth/policy'
@@ -9,7 +11,7 @@ export const dynamic = 'force-dynamic'
 const limits = new Map<string, { start: number, count: number }>()
 let inFlight = 0
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   let acquired = false
   let recordingId: string | null = null
   try {
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
     let offset = 0
     for (const chunk of chunks) { audio.set(chunk, offset); offset += chunk.length }
     if (!validSpeechWav(audio)) { throw new AccessError(400, '录音无效或太短，请重新录音') }
-    recordingId = await saveSpeechRecording(actor, audio)
+    recordingId = await saveSpeechRecording(actor, audio, guestCredentialHash(request))
     const controller = new AbortController()
     const abort = () => controller.abort()
     request.signal.addEventListener('abort', abort, { once: true })

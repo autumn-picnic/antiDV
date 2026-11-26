@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { optionalActor, requireActor } from '@/lib/auth/server'
 import { AccessError, accessResponse, assertSameOrigin } from '@/lib/auth/policy'
-import { completeAnalysisConsent, prepareAnalysisConsent } from '@/lib/feedback/analysis-consent'
+import { analysisConsentStatus, completeAnalysisConsent, prepareAnalysisConsent, withdrawAnalysisConsent } from '@/lib/feedback/analysis-consent'
 import { ANALYSIS_CONSENT_COOKIE, ANALYSIS_CONSENT_MAX_AGE, ANALYSIS_CONSENT_VERSION } from '@/lib/privacy/analysis-consent'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+export async function GET() {
+  try {
+    return NextResponse.json(await analysisConsentStatus(await requireActor()), { headers: { 'Cache-Control': 'no-store' } })
+  }
+  catch (error) { return accessResponse(error) }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +24,9 @@ export async function POST(request: NextRequest) {
     try { payload = JSON.parse(text) }
     catch { throw new AccessError(400, '授权选择格式无效') }
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) { throw new AccessError(400, '授权选择格式无效') }
+    if (payload.action === 'withdraw' && Object.keys(payload).length === 1) {
+      return NextResponse.json(await withdrawAnalysisConsent(await requireActor()), { headers: { 'Cache-Control': 'no-store' } })
+    }
     if (payload.action === 'complete' && Object.keys(payload).length === 1) {
       const actor = await requireActor()
       const token = request.cookies.get(ANALYSIS_CONSENT_COOKIE)?.value
