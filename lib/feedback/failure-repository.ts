@@ -16,6 +16,13 @@ export async function saveFailure(actor: Actor | null, failure: FailureInput, gu
     failure.question, failure.stage, failure.status, failure.reason, failure.code, actor ? null : guestHash])
 }
 
+export async function deleteConversationFailures(conversationId: string, clerkUserId: string | null, guestHash: string | null) {
+  if (!clerkUserId && !guestHash) { return }
+  await feedbackDatabase().query(`DELETE FROM xiaoan_chat_failures
+    WHERE conversation_id = $1 AND (clerk_user_id = $2 OR (clerk_user_id IS NULL AND guest_hash = $3))`,
+    [conversationId, clerkUserId, guestHash])
+}
+
 export async function listFailures(actor: Actor, offset: number) {
   assertAdmin(actor)
   const client = await feedbackDatabase().connect()

@@ -8,7 +8,7 @@ export function clearedSessionResponse(request: NextRequest, revoked: boolean) {
     'Clear-Site-Data': '"cookies", "storage", "cache"',
     'Content-Type': 'application/json',
   })
-  const names = new Set([ANALYSIS_CONSENT_COOKIE, 'xiaoan_guest', 'xiaoan_current', 'xiaoan_session', 'session_id', 'feedback_auth', 'locale', '__session', '__client_uat', '__clerk_db_jwt'])
+  const names = new Set([ANALYSIS_CONSENT_COOKIE, 'xiaoan_guest', 'xiaoan_current', 'xiaoan_session', 'xiaoan_deletion_receipt', 'session_id', 'feedback_auth', 'locale', '__session', '__client_uat', '__clerk_db_jwt'])
   for (const { name } of request.cookies.getAll()) {
     if (/^[!#$%&'*+.^_`|~\w-]+$/.test(name)) { names.add(name) }
   }

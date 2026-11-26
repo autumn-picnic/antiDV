@@ -1,5 +1,6 @@
 const { test, afterEach } = require('node:test')
 const assert = require('node:assert/strict')
+const { createHmac } = require('node:crypto')
 const fs = require('node:fs')
 const path = require('node:path')
 const Module = require('node:module')
@@ -32,10 +33,10 @@ function load(file) {
   mod.paths = Module._nodeModulePaths(path.dirname(filename))
   const originalRequire = mod.require.bind(mod)
   mod.require = name => {
-    if (name === '@/lib/backend') return { fetchBackend: async (path, init) => { guestCalls.push({ path, init }); return Response.json({ conversation_id: 'c1' }, { status: guestStatus }) } }
+    if (name === '@/lib/backend') return { BackendError: class BackendError extends Error {}, fetchBackend: async (path, init) => { guestCalls.push({ path, init }); return guestStatus === 204 ? new Response(null, { status: 204 }) : Response.json({ conversation_id: 'c1' }, { status: guestStatus }) } }
     if (name === 'server-only') return {}
     if (name === '@clerk/nextjs/server') return { auth: async () => authState, clerkClient: async () => clerk }
-    if (name === './database') return { feedbackDatabase: () => db }
+    if (name === './database' || name === '@/lib/feedback/database') return { feedbackDatabase: () => db }
     if (name.startsWith('@/')) return load(`${name.slice(2)}.ts`)
     if (name.startsWith('.')) return load(path.relative(path.resolve(__dirname, '..'), path.resolve(path.dirname(filename), name + '.ts')))
     return originalRequire(name)
@@ -462,4 +463,63 @@ test('data removal uses live Clerk identity or a hashed guest credential and rej
   assert.equal((await route.DELETE(guest, detail)).status, 404)
   assert.match(queryCalls[0].sql, /clerk_user_id IS NULL AND guest_hash=\$1/)
   assert.equal(queryCalls[0].values[0], require('node:crypto').createHash('sha256').update(token).digest('hex'))
+})
+
+test('account deletion gateway validates origin and confirmation and forwards the authenticated DELETE body', async () => {
+  const { proxyChatflow } = load('app/api/utils/proxy.ts')
+  const request = (body, origin) => req('/v1/me', { method: 'DELETE', headers: { Origin: origin }, body: JSON.stringify(body) })
+  assert.equal((await proxyChatflow(request({ confirmation: 'DELETE' }, 'https://wrong.example'))).status, 403)
+  assert.equal((await proxyChatflow(request({ confirmation: 'DELETE', userId: 'user_other' }, 'https://site.example'))).status, 422)
+  assert.equal(guestCalls.length, 0)
+  guestStatus = 202
+  assert.equal((await proxyChatflow(request({ confirmation: 'DELETE' }, 'https://site.example'))).status, 202)
+  assert.equal(guestCalls[0].init.body, '{"confirmation":"DELETE"}')
+  assert.equal(guestCalls[0].init.headers.get('authorization'), 'Bearer session-token')
+})
+
+test('deletion receipt is relayed after Clerk revocation and does not authorize other routes', async () => {
+  const { proxyChatflow } = load('app/api/utils/proxy.ts')
+  failClerk = true
+  const headers = { Cookie: 'xiaoan_deletion_receipt=synthetic; xiaoan_guest=unrelated' }
+  assert.equal((await proxyChatflow(req('/v1/me/deletion', { headers }))).status, 200)
+  assert.equal(guestCalls[0].init.headers.get('cookie'), 'xiaoan_deletion_receipt=synthetic')
+  assert.equal(guestCalls[0].init.headers.get('authorization'), null)
+  authState = {}
+  assert.equal((await proxyChatflow(req('/v1/me/privacy', { headers }))).status, 401)
+})
+
+test('internal cleanup validates a service signature bound to the exact account before touching SQL', async () => {
+  const { POST } = load('app/api/internal/account-cleanup/route.ts')
+  const previous = process.env.XIAOAN_ACCOUNT_CLEANUP_SECRET
+  const secret = 'synthetic-account-cleanup-key-for-tests'
+  process.env.XIAOAN_ACCOUNT_CLEANUP_SECRET = secret
+  try {
+    const signature = createHmac('sha256', secret).update('cleanup:user_alice').digest('hex')
+    const request = (clerkUserId, header) => req('/api/internal/account-cleanup', {
+      method: 'POST', body: JSON.stringify({ clerkUserId }), headers: { 'X-Xiaoan-Cleanup-Signature': header },
+    })
+    assert.equal((await POST(request('user_alice', 'bad'))).status, 401)
+    assert.equal((await POST(request('user_bob', signature))).status, 401)
+    assert.equal(queryCalls.length, 0)
+    assert.equal((await POST(request('user_alice', signature))).status, 204)
+    assert.deepEqual(queryCalls, [{ sql: 'SELECT public.xiaoan_cleanup_account($1)', values: ['user_alice'] }])
+  }
+  finally {
+    if (previous === undefined) { delete process.env.XIAOAN_ACCOUNT_CLEANUP_SECRET }
+    else { process.env.XIAOAN_ACCOUNT_CLEANUP_SECRET = previous }
+  }
+})
+
+test('successful conversation deletion removes only failure rows scoped to its owner', async () => {
+  const { proxyChatflow } = load('app/api/utils/proxy.ts')
+  const request = () => req('/v1/conversations/current', { method: 'DELETE', headers: {
+    Origin: 'https://site.example', Cookie: 'xiaoan_current=synthetic-chat',
+  } })
+  guestStatus = 404
+  assert.equal((await proxyChatflow(request())).status, 404)
+  assert.equal(queryCalls.length, 0)
+  guestStatus = 204
+  assert.equal((await proxyChatflow(request())).status, 204)
+  assert.deepEqual(queryCalls[0].values, ['synthetic-chat', 'user_alice', null])
+  assert.match(queryCalls[0].sql, /conversation_id = \$1 AND \(clerk_user_id = \$2/)
 })
