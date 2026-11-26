@@ -7,6 +7,7 @@ export interface ProfileItem {
   target?: string
   stance?: string
   names?: string[]
+  confirmed_names?: string[]
 }
 
 export interface Profile {
@@ -22,7 +23,8 @@ export interface Profile {
 export type ProfileAction = { action: 'set_enabled', enabled: boolean }
   | { action: 'clear' | 'export' }
   | { action: 'delete_item', item_id: string }
-  | { action: 'delete_alias', item_id: string, alias_value: string }
+  | { action: 'delete_alias' | 'confirm_alias', item_id: string, alias_value: string }
+  | { action: 'rename_alias', item_id: string, alias_value: string, new_value: string }
 
 async function requestProfile(signal: AbortSignal, body?: ProfileAction & { version: number }) {
   const response = await fetch(`/v1/me/memory/profile${body ? '/actions' : ''}`, {

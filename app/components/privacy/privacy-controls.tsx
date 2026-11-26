@@ -7,6 +7,7 @@ import type { ConversationPolicy, PrivacyField, PrivacyOptions, PrivacyStatus } 
 import PrivacyDialog from './privacy-dialog'
 import RetentionForm from './retention-form'
 import ConsentForm from './consent-form'
+import AccountSection from './sections/account-section'
 import AnalysisSection from './sections/analysis-section'
 import DataSection from './sections/data-section'
 import ProfileSection from './sections/profile-section'
@@ -130,6 +131,7 @@ export default function PrivacyControls({ conversationId, signedIn, authReady, b
       <DataSection key={String(signedIn)} reload={reload} disabled={saving || busy} mutate={mutate} />
       <AnalysisSection signedIn={signedIn} disabled={saving || busy} reload={reload} mutate={mutate} />
       <ProfileSection signedIn={signedIn} disabled={saving || busy} temporary={policy?.mode === 'ephemeral'} reload={reload} mutate={mutate} />
+      <AccountSection signedIn={signedIn} disabled={saving || busy} />
     </PrivacyDialog>}
   </div>
 }

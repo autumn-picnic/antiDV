@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { changeProfile, fetchProfile, type Profile, type ProfileAction } from '@/service/profile'
-import { buttonClass } from '../privacy-form-styles'
+import { buttonClass, inputClass } from '../privacy-form-styles'
 
 export default function ProfileSection({ signedIn, disabled, temporary, reload, mutate }: {
   signedIn: boolean, disabled: boolean, temporary: boolean, reload: number,
@@ -8,6 +8,7 @@ export default function ProfileSection({ signedIn, disabled, temporary, reload, 
 }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [error, setError] = useState(false)
+  const [rename, setRename] = useState<{ itemId: string, alias: string, value: string } | null>(null)
   const [confirm, setConfirm] = useState<{ action: ProfileAction, message: string } | null>(null)
   useEffect(() => {
     if (!signedIn) { return }
@@ -15,6 +16,7 @@ export default function ProfileSection({ signedIn, disabled, temporary, reload, 
     setProfile(null)
     setError(false)
     setConfirm(null)
+    setRename(null)
     void fetchProfile(controller.signal).then(value => {
       if (!controller.signal.aborted) { setProfile(value) }
     }).catch(() => {
@@ -39,7 +41,7 @@ export default function ProfileSection({ signedIn, disabled, temporary, reload, 
       else {
         setProfile(null)
         const latest = await fetchProfile(signal)
-        if (!signal.aborted) { setProfile(latest); setConfirm(null) }
+        if (!signal.aborted) { setProfile(latest); setConfirm(null); setRename(null) }
       }
     })
   }
@@ -74,6 +76,26 @@ export default function ProfileSection({ signedIn, disabled, temporary, reload, 
               {!items.length && <p>暂无已整理的内容。</p>}
               {items.map(item => <div key={item.id} className='space-y-2 rounded-lg border border-[#E6DDD5] p-3'>
                 <p className='break-words'>{item.text || item.label || [item.target, item.stance].filter(Boolean).join(' · ')}</p>
+                {item.names?.map(alias => <div key={alias} className='space-y-2'>
+                  <p className='break-words'>{alias}{item.confirmed_names?.includes(alias) ? '（已确认）' : ''}</p>
+                  {rename?.itemId === item.id && rename.alias === alias ? <form onSubmit={event => {
+                    event.preventDefault()
+                    if (disabled || !rename.value.trim() || rename.value.trim() === alias) { return }
+                    run({ action: 'rename_alias', item_id: item.id, alias_value: alias, new_value: rename.value.trim() })
+                  }}>
+                    <label className='block'>新的别名
+                      <input className={inputClass} maxLength={64} autoFocus value={rename.value} onChange={event => setRename({ ...rename, value: event.target.value })} />
+                    </label>
+                    <div className='mt-2 flex gap-2'>
+                      <button type='button' className={buttonClass} disabled={disabled} onClick={() => setRename(null)}>取消</button>
+                      <button type='submit' className={buttonClass} disabled={disabled || !rename.value.trim() || rename.value.trim() === alias}>保存别名</button>
+                    </div>
+                  </form> : <div className='flex flex-wrap gap-2'>
+                    {!item.confirmed_names?.includes(alias) && <button type='button' className={buttonClass} disabled={disabled || !!confirm || !!rename} onClick={() => run({ action: 'confirm_alias', item_id: item.id, alias_value: alias })}>确认别名</button>}
+                    <button type='button' className={buttonClass} disabled={disabled || !!confirm || !!rename} onClick={() => setRename({ itemId: item.id, alias, value: alias })}>修改别名</button>
+                    <button type='button' className={buttonClass} disabled={disabled || !!confirm || !!rename} onClick={() => setConfirm({ action: { action: 'delete_alias', item_id: item.id, alias_value: alias }, message: '删除这个别名？' })}>删除别名</button>
+                  </div>}
+                </div>)}
                 <button type='button' className={buttonClass} disabled={disabled || !!confirm} onClick={() => setConfirm({ action: { action: 'delete_item', item_id: item.id }, message: '删除这一条跨对话记忆？' })}>删除此条</button>
               </div>)}
             </details>

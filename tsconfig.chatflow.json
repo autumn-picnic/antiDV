@@ -24,6 +24,7 @@
     "app/api/feedback/failures/route.ts",
     "app/api/feedback/speech/**/*.ts",
     "app/api/session/clear/route.ts",
+    "app/api/internal/account-cleanup/route.ts",
     "app/components/account/**/*.tsx",
     "app/components/feedback/**/*.tsx",
     "app/feedback/page.tsx",
