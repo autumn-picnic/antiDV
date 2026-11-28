@@ -5,8 +5,6 @@ import { useUser } from '@clerk/nextjs'
 import useGuestLoginPrompt from '@/hooks/use-guest-login-prompt'
 import GuestLoginPrompt from '@/app/components/account/guest-login-prompt'
 import AnalysisConsentCompletion from '@/app/components/account/analysis-consent-completion'
-import CrisisDialog from '@/app/components/crisis-dialog'
-import useCrisisPrompt from '@/hooks/use-crisis-prompt'
 import StreamdownMarkdown from '@/app/components/base/streamdown-markdown'
 import Sidebar from '@/app/components/sidebar'
 import Header from '@/app/components/header'
@@ -39,7 +37,6 @@ const Main: FC<IMainProps> = () => {
   const [composerTarget, setComposerTarget] = useState<HTMLDivElement | null>(null)
   const { operation, prepareConversation, conversationList, conversationId: currConversationId, chatList, busy, isResponding, failure, send: handleSend, selectConversation, remove: handleDeleteConversation, clearAll: handleClearAll, recover, retry, stop, review, reviewError, debugEnabled } = useChatflow({ authReady: isLoaded, signedIn: Boolean(isSignedIn), debug: automaticDebug, onCompleted: guestPrompt.completed, historyOpen: drawer === 'history', authKey: user?.id })
   const conversationName = conversationList.find(item => item.id === currConversationId)?.name || '和小安聊聊'
-  const crisisPrompt = useCrisisPrompt(currConversationId, operation)
   const chatListDomRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLElement>(null)
   const followLatest = useRef(true)
@@ -112,9 +109,8 @@ const Main: FC<IMainProps> = () => {
       <div className="chat-skip-links"><a href="#chat-content">跳到对话内容</a><a href="#chat-input">跳到输入框</a></div>
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only"><span key={`${operation?.id}:${operation?.kind}:${announcement}`}>{announcement}</span></div>
       <div aria-live="polite" aria-atomic="true" className="sr-only">{fullAnnouncement}</div>
-      {memoryOpen && isSignedIn && !crisisPrompt.visible && <MemoryManager key={currConversationId} conversationId={currConversationId} conversationName={conversationName} disabled={busy || isResponding || Boolean(failure?.needsRecovery)} onClose={() => setMemoryOpen(false)} onSend={text => { setMemoryOpen(false); void handleSend(text) }} />}
+      {memoryOpen && isSignedIn && <MemoryManager key={currConversationId} conversationId={currConversationId} conversationName={conversationName} disabled={busy || isResponding || Boolean(failure?.needsRecovery)} onClose={() => setMemoryOpen(false)} onSend={text => { setMemoryOpen(false); void handleSend(text) }} />}
       <BackExitGuard />
-      {crisisPrompt.visible && <CrisisDialog onContinue={crisisPrompt.dismiss} onExit={() => { crisisPrompt.dismiss(); window.location.assign('/safety-pack') }} />}
       <Header
         title={APP_INFO.title}
         isSidebarOpen={drawer === 'history'}
@@ -127,7 +123,7 @@ const Main: FC<IMainProps> = () => {
 
       />
       {isLoaded && isSignedIn && <AnalysisConsentCompletion key={user?.id} />}
-      {guestPrompt.visible && isLoaded && !crisisPrompt.visible && <GuestLoginPrompt onContinue={guestPrompt.dismiss} conversationId={currConversationId} />}
+      {guestPrompt.visible && isLoaded && <GuestLoginPrompt onContinue={guestPrompt.dismiss} conversationId={currConversationId} />}
       <div ref={contentRef} className="flex min-h-0 flex-1 overflow-hidden">
         {/* main + resource panel */}
         <div className='flex min-w-0 flex-1 overflow-hidden'>
