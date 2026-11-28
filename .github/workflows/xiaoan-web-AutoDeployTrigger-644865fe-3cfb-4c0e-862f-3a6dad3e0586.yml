@@ -12,6 +12,13 @@ on:
   # Allow manual trigger
   workflow_dispatch:
 
+env:
+  WEB_APP: xiaoan-web-session
+
+concurrency:
+  group: xiaoan-web-production
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -37,20 +44,18 @@ jobs:
 
       - name: Check frontend runtime configuration
         run: |
-          az containerapp show -n xiaoan-web -g xiaoan-pilot-rg -o json |
+          az containerapp show -n "$WEB_APP" -g xiaoan-pilot-rg -o json |
             jq -e '
               .location as $location |
-              .properties.configuration.secrets as $secrets |
               .properties.configuration.ingress as $ingress |
               .properties.template.containers[0].env as $env |
               $location == "Japan East" and
-              ([$secrets[] | select(.name == "azure-speech-key")] | length) == 1 and
               ([$env[] | select(.name == "CHATFLOW_DATABASE_URL" and
                 .secretRef == "feedback-database-url")] | length) == 1 and
               ([$env[] | select(.name == "CLERK_SECRET_KEY" and
                 .secretRef == "clerk-secret-key")] | length) == 1 and
               ([$env[] | select(.name == "BACKEND_API_URL" and
-                .value == "http://xiaoan-api")] | length) == 1 and
+                (.value == "http://xiaoan-api-session" or .value == "http://xiaoan-api-session-rollback"))] | length) == 1 and
               ([$env[] | select(.name == "FRONTEND_ORIGIN" and
                 (.value == ("https://" + $ingress.fqdn) or
                   .value == "https://xiaoan.app" and
@@ -70,12 +75,18 @@ jobs:
             --tag "$IMAGE" .
           docker push "$IMAGE"
 
-      - name: Bind feedback metadata signature secret
+      - name: Sync speech credential to Key Vault
         run: |
-          identity=$(az containerapp show -n xiaoan-web -g xiaoan-pilot-rg --query 'keys(identity.userAssignedIdentities)[0]' -o tsv)
+          az deployment group create --resource-group xiaoan-pilot-rg \
+            --name xiaoan-web-speech-key --template-file .github/azure/speech-key.bicep --output none
+
+      - name: Bind runtime secrets
+        run: |
+          identity=$(az containerapp show -n "$WEB_APP" -g xiaoan-pilot-rg --query 'keys(identity.userAssignedIdentities)[0]' -o tsv)
           test -n "$identity"
-          az containerapp secret set -n xiaoan-web -g xiaoan-pilot-rg \
+          az containerapp secret set -n "$WEB_APP" -g xiaoan-pilot-rg \
             --secrets "feedback-context-secret=keyvaultref:https://xiaoan-hd5dc8-kv.vault.azure.net/secrets/xiaoan-feedback-context-secret,identityref:$identity" \
+              "azure-speech-key=keyvaultref:https://xiaoan-hd5dc8-kv.vault.azure.net/secrets/xiaoan-web-azure-speech-key,identityref:$identity" \
               "account-cleanup=keyvaultref:https://xiaoan-hd5dc8-kv.vault.azure.net/secrets/xiaoan-account-cleanup-secret,identityref:$identity" --output none
 
       - name: Update existing web container
@@ -84,7 +95,7 @@ jobs:
         run: |
           az extension add --name containerapp --upgrade --yes
           az containerapp update \
-            --name xiaoan-web \
+            --name "$WEB_APP" \
             --resource-group xiaoan-pilot-rg \
             --container-name web \
             --image "$IMAGE" \
@@ -96,11 +107,11 @@ jobs:
       - name: Verify deployed revision
         run: |
           for attempt in {1..24}; do
-            latest=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query properties.latestRevisionName -o tsv)
-            ready=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query properties.latestReadyRevisionName -o tsv)
-            image=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'properties.template.containers[0].image' -o tsv)
-            containers=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query 'length(properties.template.containers)' -o tsv)
-            feedback_secret=$(az containerapp show --name xiaoan-web --resource-group xiaoan-pilot-rg --query "properties.template.containers[0].env[?name=='FEEDBACK_CONTEXT_SECRET'].secretRef | [0]" -o tsv)
+            latest=$(az containerapp show --name "$WEB_APP" --resource-group xiaoan-pilot-rg --query properties.latestRevisionName -o tsv)
+            ready=$(az containerapp show --name "$WEB_APP" --resource-group xiaoan-pilot-rg --query properties.latestReadyRevisionName -o tsv)
+            image=$(az containerapp show --name "$WEB_APP" --resource-group xiaoan-pilot-rg --query 'properties.template.containers[0].image' -o tsv)
+            containers=$(az containerapp show --name "$WEB_APP" --resource-group xiaoan-pilot-rg --query 'length(properties.template.containers)' -o tsv)
+            feedback_secret=$(az containerapp show --name "$WEB_APP" --resource-group xiaoan-pilot-rg --query "properties.template.containers[0].env[?name=='FEEDBACK_CONTEXT_SECRET'].secretRef | [0]" -o tsv)
             if [[ "$feedback_secret" == "feedback-context-secret" && "$latest" == "$ready" && "$containers" == "1" && "$image" == "xiaoanhd5dc8acr.azurecr.io/xiaoan-web:${GITHUB_SHA}" ]]; then
               echo "Healthy revision: $latest"
               exit 0
